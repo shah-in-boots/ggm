@@ -54,3 +54,5 @@ docs
 
 /.quarto/
 **/*.quarto_ipynb
+data-raw/ort.dat
+data-raw/ort.hea
