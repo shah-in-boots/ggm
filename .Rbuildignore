@@ -3,3 +3,11 @@
 ^LICENSE\.md$
 ^README\.Rmd$
 ^cran-comments\.md$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^codecov\.yml$
+^[.]?air[.]toml$
+^\.vscode$
+^blueprint\.md$
