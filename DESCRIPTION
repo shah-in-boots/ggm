@@ -1,13 +1,29 @@
 Package: ggm
-Title: What the Package Does (One Line, Title Case)
+Title: A Grammar for Exploring and Presenting Cardiac Electrograms
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:
     person("Anish S.", "Shah", , "shah.in.boots@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-9729-1558"))
-Description: What the package does (one paragraph).
+Description: Visualization and interaction layer for cardiac
+    electrophysiology signal data. 'ggm' (Grammar of Electrograms) builds
+    on the 'EGM' data backend to view, annotate, and present
+    electrograms. The signal store stays canonical in 'EGM' (WFDB
+    byte-seek reads); 'ggm' adds windowed access, a multi-resolution
+    overview, and a declarative grammar for animated and print-ready
+    figures. Sample index (integer) is the canonical key for storage and
+    joins, while time (seconds) is the display unit.
 License: MIT + file LICENSE
-Suggests: 
+Depends:
+    EGM,
+    R (>= 4.1.0)
+Imports:
+    arrow,
+    data.table,
+    jsonlite
+Suggests:
     testthat (>= 3.0.0)
+Remotes:
+    shah-in-boots/EGM
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -56,3 +56,6 @@ docs
 **/*.quarto_ipynb
 data-raw/ort.dat
 data-raw/ort.hea
+
+# Regenerable pyramid sidecars (built by build_pyramid())
+*.ggm-pyramid/
