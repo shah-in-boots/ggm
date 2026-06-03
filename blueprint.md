@@ -220,15 +220,18 @@ Parquet sidecar.
   levels are tiny, and even the finest overview tier is a fraction of
   the raw data.
 - **Regenerable:** sidecar lives next to the record; deletable; rebuilt
-  on demand by `build_pyramid()`. Never on the canonical data path.
+  on demand by
+  [`build_pyramid()`](https://shah-in-boots.github.io/ggm/reference/build_pyramid.md).
+  Never on the canonical data path.
 
 **What actually lives in the Parquet sidecar:**
 
 - **Downsample tiers** (the bulk) — for each `(channel, tier)`: a sample
   index (or time) + the LTTB-reduced signal value.
 - **A tier manifest** — “tier T = N samples/bucket; use when
-  points-per-pixel exceeds X.” This is what `get_window()` consults to
-  choose a tier.
+  points-per-pixel exceeds X.” This is what
+  [`get_window()`](https://shah-in-boots.github.io/ggm/reference/get_window.md)
+  consults to choose a tier.
 - **Optional per-bucket min/max envelopes** alongside the LTTB points —
   so at extreme zoom-out we can shade the signal’s range and never
   visually drop a sharp spike. Cheap insurance where a missed deflection
@@ -357,19 +360,21 @@ get_annotations(study, range = NULL,        # filtered annotation query
                 filter = NULL)              #   e.g. filter = type == "AVB"
 ```
 
-**`get_window()` return contract (technical requirement).** A list
-containing: `sample` (int vector), `time` (double vector,
-`= sample / fs`), one numeric vector per requested channel (named by
-label), `tier` (which tier served it, or `"raw"` for a `.dat` read), and
-— when envelopes exist — `vmin`/`vmax` per channel for shading. Carrying
-both `sample` and `time` *is* the §3.0 boundary in practice: the
-renderer joins annotations on `sample` and labels its axis in `time`.
+**[`get_window()`](https://shah-in-boots.github.io/ggm/reference/get_window.md)
+return contract (technical requirement).** A list containing: `sample`
+(int vector), `time` (double vector, `= sample / fs`), one numeric
+vector per requested channel (named by label), `tier` (which tier served
+it, or `"raw"` for a `.dat` read), and — when envelopes exist —
+`vmin`/`vmax` per channel for shading. Carrying both `sample` and `time`
+*is* the §3.0 boundary in practice: the renderer joins annotations on
+`sample` and labels its axis in `time`.
 
-**Open questions** - Does `open_study()` eagerly build the pyramid, or
-lazily on first overview request with a progress bar? (Leaning lazy +
-cached.) - Memory ceiling: do we ever hold full-res in memory, or always
-stream windows? (Leaning always-stream; full-res only for the visible
-window.)
+**Open questions** - Does
+[`open_study()`](https://shah-in-boots.github.io/ggm/reference/open_study.md)
+eagerly build the pyramid, or lazily on first overview request with a
+progress bar? (Leaning lazy + cached.) - Memory ceiling: do we ever hold
+full-res in memory, or always stream windows? (Leaning always-stream;
+full-res only for the visible window.)
 
 ### 3.5 How signal data reaches uPlot — `DECIDED`
 
@@ -501,10 +506,13 @@ The motivating case is a cross-channel arrow: ventricular overdrive
 pacing in SVT, drawing from the RV stim up to the retrograde A (or His),
 then following the return sequence. That arrow crosses panels — and
 **faceted ggplot cannot draw across coordinate systems, even in a
-still.** EGM’s `ggm()` uses `facet_wrap(~label)`; facets are isolated
-coordinate spaces. So facets break the figure whether or not it moves.
-This is *the* fork that makes presentation its own renderer rather than
-a thin skin over `ggm()`. (See §9 D-5.)
+still.** EGM’s
+[`ggm()`](https://shah-in-boots.github.io/ggm/reference/ggm-package.md)
+uses `facet_wrap(~label)`; facets are isolated coordinate spaces. So
+facets break the figure whether or not it moves. This is *the* fork that
+makes presentation its own renderer rather than a thin skin over
+[`ggm()`](https://shah-in-boots.github.io/ggm/reference/ggm-package.md).
+(See §9 D-5.)
 
 **The layout instead: a single coordinate space**, channels stacked by
 additive vertical offset — the way EP figures are actually drawn by
@@ -593,7 +601,8 @@ space as everything else. One engine removes a dependency, removes the
 “two renderers must match” risk entirely, and keeps the
 print-still-is-terminal-frame guarantee (D-6) airtight.
 
-**Faceted ggplot is not part of presentation** (§5.0). EGM’s `ggm()`
+**Faceted ggplot is not part of presentation** (§5.0). EGM’s
+[`ggm()`](https://shah-in-boots.github.io/ggm/reference/ggm-package.md)
 facets are fine for the *interactive finisher* path, but the
 presentation engine is SVG only.
 
@@ -624,8 +633,9 @@ resolution rule against the annotation index. - How much of the spec is
 One persistent state object (`study` + working `annotation_table`). The
 mode toggle swaps *interaction grammar + chrome*, not the underlying
 data. “Send to presentation” is the snapshot handoff: pick a window in
-the interactive view, hand it to `ggm()`/`scene()` **carrying its
-annotations along** as the animation’s binding points.
+the interactive view, hand it to
+[`ggm()`](https://shah-in-boots.github.io/ggm/reference/ggm-package.md)/`scene()`
+**carrying its annotations along** as the animation’s binding points.
 
       viewing ──select window──▶ annotation ──refine A/H──▶ presentation
          ▲                                                       │
@@ -665,17 +675,20 @@ nouns (`scene`, `study`).
 
 Each milestone is a runnable vertical slice.
 
-- **M0 — Pyramid + window read.** `build_pyramid()` writing the §3.2
-  Parquet schema + manifest, and `get_window()` (the §3.4 router)
-  returning the documented contract at adaptive resolution.
-  *Acceptance:* against a real \>1 GB study, the manifest round-trips
-  `fs`/tiers, a zoomed-out call reads a Parquet tier, a zoomed-in call
-  falls through to a `.dat` range read, and both return matching
-  `sample`+`time` vectors. *No UI yet — just prove the data layer is
-  fast.* ⭐ **start here**
-- **M1 — Static multi-panel render.** Feed `get_window()` output to a
-  basic uPlot htmlwidget; N synced panels; correct shared time scale. No
-  editing.
+- **M0 — Pyramid + window read.**
+  [`build_pyramid()`](https://shah-in-boots.github.io/ggm/reference/build_pyramid.md)
+  writing the §3.2 Parquet schema + manifest, and
+  [`get_window()`](https://shah-in-boots.github.io/ggm/reference/get_window.md)
+  (the §3.4 router) returning the documented contract at adaptive
+  resolution. *Acceptance:* against a real \>1 GB study, the manifest
+  round-trips `fs`/tiers, a zoomed-out call reads a Parquet tier, a
+  zoomed-in call falls through to a `.dat` range read, and both return
+  matching `sample`+`time` vectors. *No UI yet — just prove the data
+  layer is fast.* ⭐ **start here**
+- **M1 — Static multi-panel render.** Feed
+  [`get_window()`](https://shah-in-boots.github.io/ggm/reference/get_window.md)
+  output to a basic uPlot htmlwidget; N synced panels; correct shared
+  time scale. No editing.
 - **M2 — Navigation.** Sweep-speed presets, wheel-zoom, resolution
   handoff (M0 tiers wired to `setScale`), overview/minimap.
 - **M2.5 — Annotated overview (navigation map).** Build the event

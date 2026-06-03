@@ -7,11 +7,12 @@
 
 ## Citation
 
-Shah A (2026). *ggm: What the Package Does (One Line, Title Case)*. R
-package version 0.0.0.9000, <https://shah-in-boots.github.io/ggm/>.
+Shah A (2026). *ggm: A Grammar for Exploring and Presenting Cardiac
+Electrograms*. R package version 0.0.0.9000,
+<https://shah-in-boots.github.io/ggm/>.
 
     @Manual{,
-      title = {ggm: What the Package Does (One Line, Title Case)},
+      title = {ggm: A Grammar for Exploring and Presenting Cardiac Electrograms},
       author = {Anish S. Shah},
       year = {2026},
       note = {R package version 0.0.0.9000},

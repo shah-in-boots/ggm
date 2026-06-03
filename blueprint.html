@@ -85,7 +85,7 @@
 <p>Small examples of what each mode should <em>feel</em> like. These are our litmus tests — if the built thing doesn’t make these feel natural, we built the wrong thing.</p>
 <p><strong>Look (viewing).</strong> Open a multi-hour study and land on something fast:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu">open_study</span><span class="op">(</span><span class="st">"svt-case"</span>, <span class="st">"~/studies"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/open_study.html">open_study</a></span><span class="op">(</span><span class="st">"svt-case"</span>, <span class="st">"~/studies"</span><span class="op">)</span></span>
 <span><span class="fu">browse</span><span class="op">(</span><span class="va">study</span>, filter <span class="op">=</span> <span class="va">type</span> <span class="op">==</span> <span class="st">"VStim"</span><span class="op">)</span>   <span class="co"># jump straight to the pacing trains</span></span></code></pre></div>
 <p><strong>Fix (annotation).</strong> A His detector misfired on one beat. Correct it on that channel alone, in the same window, and save without clobbering the algorithm:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -93,7 +93,7 @@
 <span><span class="co"># drag / delete / reclassify → writes &lt;record&gt;.hisr, leaving &lt;record&gt;.his intact</span></span></code></pre></div>
 <p><strong>Tell (presentation).</strong> Take one tracing window and narrate it — the running example for the whole §5 design, ventricular overdrive pacing during SVT:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggm</span><span class="op">(</span><span class="va">study</span>, channels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HRA"</span>, <span class="st">"HIS D"</span>, <span class="st">"HIS M"</span>, <span class="st">"RV"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggm-package.html">ggm</a></span><span class="op">(</span><span class="va">study</span>, channels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HRA"</span>, <span class="st">"HIS D"</span>, <span class="st">"HIS M"</span>, <span class="st">"RV"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">scene</span><span class="op">(</span>window <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12.4</span>, <span class="fl">16.0</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">reveal</span><span class="op">(</span>channels <span class="op">=</span> <span class="fu">everything</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span>            <span class="co"># pen-draw the strip</span></span>
 <span>  <span class="fu">arrow</span><span class="op">(</span>from <span class="op">=</span> <span class="va">V_stim</span><span class="op">[</span><span class="va">last</span><span class="op">]</span>, to <span class="op">=</span> <span class="va">A</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">|&gt;</span>      <span class="co"># "this paced V drove this A"</span></span>
@@ -190,18 +190,18 @@
 <li>
 <strong>Size:</strong> small. A 1 GB record yields a few MB of tiers — coarse levels are tiny, and even the finest overview tier is a fraction of the raw data.</li>
 <li>
-<strong>Regenerable:</strong> sidecar lives next to the record; deletable; rebuilt on demand by <code>build_pyramid()</code>. Never on the canonical data path.</li>
+<strong>Regenerable:</strong> sidecar lives next to the record; deletable; rebuilt on demand by <code><a href="reference/build_pyramid.html">build_pyramid()</a></code>. Never on the canonical data path.</li>
 </ul><p><strong>What actually lives in the Parquet sidecar:</strong></p>
 <ul><li>
 <strong>Downsample tiers</strong> (the bulk) — for each <code>(channel, tier)</code>: a sample index (or time) + the LTTB-reduced signal value.</li>
 <li>
-<strong>A tier manifest</strong> — “tier T = N samples/bucket; use when points-per-pixel exceeds X.” This is what <code>get_window()</code> consults to choose a tier.</li>
+<strong>A tier manifest</strong> — “tier T = N samples/bucket; use when points-per-pixel exceeds X.” This is what <code><a href="reference/get_window.html">get_window()</a></code> consults to choose a tier.</li>
 <li>
 <strong>Optional per-bucket min/max envelopes</strong> alongside the LTTB points — so at extreme zoom-out we can shade the signal’s range and never visually drop a sharp spike. Cheap insurance where a missed deflection matters.</li>
 </ul><p><strong>What is <em>not</em> here:</strong> full-resolution signal (stays in <code>.dat</code>) and annotations (stay in WFDB annotation files, per D-1). Parquet is purely the derived, regenerable overview.</p>
 <p>Proposed interface:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">build_pyramid</span><span class="op">(</span><span class="va">record</span>, record_dir <span class="op">=</span> <span class="st">"."</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/build_pyramid.html">build_pyramid</a></span><span class="op">(</span><span class="va">record</span>, record_dir <span class="op">=</span> <span class="st">"."</span>,</span>
 <span>              tiers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">100</span>, <span class="fl">1000</span>, <span class="fl">10000</span><span class="op">)</span>,</span>
 <span>              envelope <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>     <span class="co"># also store per-bucket min/max</span></span>
 <span><span class="co"># writes  &lt;record&gt;.ggm-pyramid/  (Parquet) alongside the .dat/.hea</span></span></code></pre></div>
@@ -287,20 +287,20 @@
 <a class="anchor" aria-label="anchor" href="#id_34-r-data-access-api--todo"></a></h3>
 <p>The clean surface L3/L4 sit on. Sketch:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu">open_study</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span><span class="op">)</span>   <span class="co"># binds signal + header + anns + both pyramids</span></span>
+<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/open_study.html">open_study</a></span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span><span class="op">)</span>   <span class="co"># binds signal + header + anns + both pyramids</span></span>
 <span></span>
 <span><span class="co"># All time arguments are SECONDS; converted to samples internally via fs (§3.0).</span></span>
-<span><span class="fu">get_window</span><span class="op">(</span><span class="va">study</span>, <span class="va">channels</span>, <span class="va">begin</span>, <span class="va">end</span>,    <span class="co"># ROUTER. begin/end in seconds.</span></span>
+<span><span class="fu"><a href="reference/get_window.html">get_window</a></span><span class="op">(</span><span class="va">study</span>, <span class="va">channels</span>, <span class="va">begin</span>, <span class="va">end</span>,    <span class="co"># ROUTER. begin/end in seconds.</span></span>
 <span>           <span class="va">px_width</span><span class="op">)</span>                        <span class="co">#   1. samples = time * fs</span></span>
 <span>                                            <span class="co">#   2. ppp = (end-begin)*fs / px_width</span></span>
 <span>                                            <span class="co">#   3. ppp high -&gt; read Parquet signal tier</span></span>
 <span>                                            <span class="co">#      ppp ~ 1   -&gt; EGM .dat range read</span></span>
-<span><span class="fu">get_overview</span><span class="op">(</span><span class="va">study</span>, <span class="va">channels</span>,              <span class="co"># whole-study map: faint signal tier</span></span>
+<span><span class="fu"><a href="reference/get_overview.html">get_overview</a></span><span class="op">(</span><span class="va">study</span>, <span class="va">channels</span>,              <span class="co"># whole-study map: faint signal tier</span></span>
 <span>             filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>                  <span class="co">#   + event-pyramid spans/ticks (§3.3b)</span></span>
-<span><span class="fu">get_annotations</span><span class="op">(</span><span class="va">study</span>, range <span class="op">=</span> <span class="cn">NULL</span>,        <span class="co"># filtered annotation query</span></span>
+<span><span class="fu"><a href="reference/get_annotations.html">get_annotations</a></span><span class="op">(</span><span class="va">study</span>, range <span class="op">=</span> <span class="cn">NULL</span>,        <span class="co"># filtered annotation query</span></span>
 <span>                filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>              <span class="co">#   e.g. filter = type == "AVB"</span></span></code></pre></div>
-<p><strong><code>get_window()</code> return contract (technical requirement).</strong> A list containing: <code>sample</code> (int vector), <code>time</code> (double vector, <code>= sample / fs</code>), one numeric vector per requested channel (named by label), <code>tier</code> (which tier served it, or <code>"raw"</code> for a <code>.dat</code> read), and — when envelopes exist — <code>vmin</code>/<code>vmax</code> per channel for shading. Carrying both <code>sample</code> and <code>time</code> <em>is</em> the §3.0 boundary in practice: the renderer joins annotations on <code>sample</code> and labels its axis in <code>time</code>.</p>
-<p><strong>Open questions</strong> - Does <code>open_study()</code> eagerly build the pyramid, or lazily on first overview request with a progress bar? (Leaning lazy + cached.) - Memory ceiling: do we ever hold full-res in memory, or always stream windows? (Leaning always-stream; full-res only for the visible window.)</p>
+<p><strong><code><a href="reference/get_window.html">get_window()</a></code> return contract (technical requirement).</strong> A list containing: <code>sample</code> (int vector), <code>time</code> (double vector, <code>= sample / fs</code>), one numeric vector per requested channel (named by label), <code>tier</code> (which tier served it, or <code>"raw"</code> for a <code>.dat</code> read), and — when envelopes exist — <code>vmin</code>/<code>vmax</code> per channel for shading. Carrying both <code>sample</code> and <code>time</code> <em>is</em> the §3.0 boundary in practice: the renderer joins annotations on <code>sample</code> and labels its axis in <code>time</code>.</p>
+<p><strong>Open questions</strong> - Does <code><a href="reference/open_study.html">open_study()</a></code> eagerly build the pyramid, or lazily on first overview request with a progress bar? (Leaning lazy + cached.) - Memory ceiling: do we ever hold full-res in memory, or always stream windows? (Leaning always-stream; full-res only for the visible window.)</p>
 </div>
 <div class="section level3">
 <h3 id="id_35-how-signal-data-reaches-uplot--decided">3.5 How signal data reaches uPlot — <code>DECIDED</code>
@@ -360,7 +360,7 @@
 <div class="section level3">
 <h3 id="id_50-why-faceted-ggplot-is-retired-here--decided">5.0 Why faceted ggplot is retired here — <code>DECIDED</code>
 <a class="anchor" aria-label="anchor" href="#id_50-why-faceted-ggplot-is-retired-here--decided"></a></h3>
-<p>The motivating case is a cross-channel arrow: ventricular overdrive pacing in SVT, drawing from the RV stim up to the retrograde A (or His), then following the return sequence. That arrow crosses panels — and <strong>faceted ggplot cannot draw across coordinate systems, even in a still.</strong> EGM’s <code>ggm()</code> uses <code>facet_wrap(~label)</code>; facets are isolated coordinate spaces. So facets break the figure whether or not it moves. This is <em>the</em> fork that makes presentation its own renderer rather than a thin skin over <code>ggm()</code>. (See §9 D-5.)</p>
+<p>The motivating case is a cross-channel arrow: ventricular overdrive pacing in SVT, drawing from the RV stim up to the retrograde A (or His), then following the return sequence. That arrow crosses panels — and <strong>faceted ggplot cannot draw across coordinate systems, even in a still.</strong> EGM’s <code><a href="reference/ggm-package.html">ggm()</a></code> uses <code>facet_wrap(~label)</code>; facets are isolated coordinate spaces. So facets break the figure whether or not it moves. This is <em>the</em> fork that makes presentation its own renderer rather than a thin skin over <code><a href="reference/ggm-package.html">ggm()</a></code>. (See §9 D-5.)</p>
 <p><strong>The layout instead: a single coordinate space</strong>, channels stacked by additive vertical offset — the way EP figures are actually drawn by hand. In that space x comes from time and y from (channel offset + deflection height), so an arrow from <em>any</em> deflection to <em>any</em> other is one path element with two endpoints. Cross-panel or not, it’s trivial.</p>
 </div>
 <div class="section level3">
@@ -374,7 +374,7 @@
 <h3 id="id_52-worked-example--vop-in-svt-the-vaav-response">5.2 Worked example — VOP in SVT (the VAAV response)<a class="anchor" aria-label="anchor" href="#id_52-worked-example--vop-in-svt-the-vaav-response"></a></h3>
 <p>The case that locks the design down. Ventricular overdrive pacing entrains an SVT; on cessation, the return sequence (VAV vs VAAV) helps separate AT from AVNRT/AVRT.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggm</span><span class="op">(</span><span class="va">study</span>, channels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HRA"</span>, <span class="st">"HIS D"</span>, <span class="st">"HIS M"</span>, <span class="st">"RV"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggm-package.html">ggm</a></span><span class="op">(</span><span class="va">study</span>, channels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HRA"</span>, <span class="st">"HIS D"</span>, <span class="st">"HIS M"</span>, <span class="st">"RV"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">scene</span><span class="op">(</span>window <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12.4</span>, <span class="fl">16.0</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">reveal</span><span class="op">(</span>channels <span class="op">=</span> <span class="fu">everything</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span>                <span class="co"># pen-draw the strip</span></span>
 <span>  <span class="fu">play</span><span class="op">(</span><span class="fu">arrow</span><span class="op">(</span>from <span class="op">=</span> <span class="va">V_stim</span><span class="op">[</span><span class="va">last</span><span class="op">]</span>, to <span class="op">=</span> <span class="va">A</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span>    <span class="co"># last paced V → first return A</span></span>
@@ -400,7 +400,7 @@
 </td>
 <td>sole engine</td>
 </tr></tbody></table><p><strong>No gganimate.</strong> Earlier drafts kept gganimate for one job: data-state subplots (the <code>track(AH ~ S1S2)</code> plot building up). Dropped — that subplot is just another SVG element, a scatter/line whose points enter over the timeline, which GSAP animates trivially in the same coordinate space as everything else. One engine removes a dependency, removes the “two renderers must match” risk entirely, and keeps the print-still-is-terminal-frame guarantee (D-6) airtight.</p>
-<p><strong>Faceted ggplot is not part of presentation</strong> (§5.0). EGM’s <code>ggm()</code> facets are fine for the <em>interactive finisher</em> path, but the presentation engine is SVG only.</p>
+<p><strong>Faceted ggplot is not part of presentation</strong> (§5.0). EGM’s <code><a href="reference/ggm-package.html">ggm()</a></code> facets are fine for the <em>interactive finisher</em> path, but the presentation engine is SVG only.</p>
 <p><em>(Lineage note: gganimate’s grammar — <code>transition_*</code>, <code>enter_*</code>, <code>view_*</code>, <code>shadow_*</code> — still informed our verb design, even though we don’t use the engine.)</em></p>
 </div>
 <div class="section level3">
@@ -417,7 +417,7 @@
 <div class="section level2">
 <h2 id="id_6-modes--how-they-connect--open">6. Modes &amp; how they connect — <code>OPEN</code>
 <a class="anchor" aria-label="anchor" href="#id_6-modes--how-they-connect--open"></a></h2>
-<p>One persistent state object (<code>study</code> + working <code>annotation_table</code>). The mode toggle swaps <em>interaction grammar + chrome</em>, not the underlying data. “Send to presentation” is the snapshot handoff: pick a window in the interactive view, hand it to <code>ggm()</code>/<code>scene()</code> <strong>carrying its annotations along</strong> as the animation’s binding points.</p>
+<p>One persistent state object (<code>study</code> + working <code>annotation_table</code>). The mode toggle swaps <em>interaction grammar + chrome</em>, not the underlying data. “Send to presentation” is the snapshot handoff: pick a window in the interactive view, hand it to <code><a href="reference/ggm-package.html">ggm()</a></code>/<code>scene()</code> <strong>carrying its annotations along</strong> as the animation’s binding points.</p>
 <pre><code>  viewing ──select window──▶ annotation ──refine A/H──▶ presentation
      ▲                                                       │
      └───────────────── same study + annotations ───────────┘</code></pre>
@@ -446,10 +446,10 @@
 <h2 id="id_8-implementation-roadmap--piecemeal-milestones">8. Implementation roadmap — piecemeal milestones<a class="anchor" aria-label="anchor" href="#id_8-implementation-roadmap--piecemeal-milestones"></a></h2>
 <p>Each milestone is a runnable vertical slice.</p>
 <ul><li>
-<strong>M0 — Pyramid + window read.</strong> <code>build_pyramid()</code> writing the §3.2 Parquet schema + manifest, and <code>get_window()</code> (the §3.4 router) returning the documented contract at adaptive resolution. <em>Acceptance:</em> against a real &gt;1 GB study, the manifest round-trips <code>fs</code>/tiers, a zoomed-out call reads a Parquet tier, a zoomed-in call falls through to a <code>.dat</code> range read, and both return matching <code>sample</code>+<code>time</code> vectors. <em>No UI yet — just prove the data layer is fast.</em> ⭐ <strong>start here</strong>
+<strong>M0 — Pyramid + window read.</strong> <code><a href="reference/build_pyramid.html">build_pyramid()</a></code> writing the §3.2 Parquet schema + manifest, and <code><a href="reference/get_window.html">get_window()</a></code> (the §3.4 router) returning the documented contract at adaptive resolution. <em>Acceptance:</em> against a real &gt;1 GB study, the manifest round-trips <code>fs</code>/tiers, a zoomed-out call reads a Parquet tier, a zoomed-in call falls through to a <code>.dat</code> range read, and both return matching <code>sample</code>+<code>time</code> vectors. <em>No UI yet — just prove the data layer is fast.</em> ⭐ <strong>start here</strong>
 </li>
 <li>
-<strong>M1 — Static multi-panel render.</strong> Feed <code>get_window()</code> output to a basic uPlot htmlwidget; N synced panels; correct shared time scale. No editing.</li>
+<strong>M1 — Static multi-panel render.</strong> Feed <code><a href="reference/get_window.html">get_window()</a></code> output to a basic uPlot htmlwidget; N synced panels; correct shared time scale. No editing.</li>
 <li>
 <strong>M2 — Navigation.</strong> Sweep-speed presets, wheel-zoom, resolution handoff (M0 tiers wired to <code>setScale</code>), overview/minimap.</li>
 <li>
