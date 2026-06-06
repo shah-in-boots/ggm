@@ -21,6 +21,7 @@ Imports:
     data.table,
     jsonlite
 Suggests:
+    piggyback,
     testthat (>= 3.0.0)
 Remotes:
     shah-in-boots/EGM

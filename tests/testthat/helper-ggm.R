@@ -28,6 +28,7 @@ local_bard_dir <- function(env = parent.frame()) {
 ort_record_dir <- function() {
   cache <- tools::R_user_dir("ggm", "cache")
   if (!all(file.exists(file.path(cache, c("ort.dat", "ort.hea"))))) {
+    skip_if_not_installed("piggyback")
     skip_if_offline()
     tryCatch(
       cache_example_data("ort", dir = cache, quiet = TRUE),

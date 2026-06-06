@@ -19,11 +19,10 @@ cache_example_data(
 (\code{tools::R_user_dir("ggm", "cache")}), the CRAN-sanctioned location for
 downloaded data. Pass e.g. \code{"data-raw"} to download elsewhere.}
 
-\item{force}{Re-download even if the files are already present (useful if a
-cached copy is suspected truncated).}
+\item{force}{Re-download even if the files are already cached (useful if a
+cached copy is suspected truncated or stale).}
 
-\item{quiet}{Passed to \code{\link[utils:download.file]{utils::download.file()}}; \code{FALSE} (default) shows a
-progress bar, reassuring for a multi-hundred-MB transfer.}
+\item{quiet}{Suppress piggyback's download progress bar.}
 }
 \value{
 The path to \code{dir} (invisibly when a download happened, so a fresh
@@ -39,10 +38,13 @@ and both are fetched. The returned directory drops straight into
 \code{\link[=open_study]{open_study()}}.
 }
 \details{
-Each file downloads to a \code{.part} sidecar and is renamed into place only on
-success, so an interrupted transfer never leaves a truncated file that later
-looks "cached". The download timeout is raised for the call (the 60 s default
-is far too short for these files) and restored on exit.
+Downloads use the \pkg{piggyback} package (the same tool that publishes the
+assets). Install it with \code{install.packages("piggyback")} if prompted.
+
+If the record's files are already present in \code{dir}, this returns immediately
+without contacting GitHub. Otherwise it delegates to
+\code{\link[piggyback:pb_download]{piggyback::pb_download()}}, which fetches only the missing files (or, with
+\code{force}, re-fetches them regardless of timestamps).
 }
 \examples{
 \dontrun{
