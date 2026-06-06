@@ -3,6 +3,7 @@
 S3method(print,ggm_study)
 S3method(print,ggm_window)
 export(build_pyramid)
+export(cache_example_data)
 export(get_annotations)
 export(get_overview)
 export(get_window)

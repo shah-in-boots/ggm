@@ -22,25 +22,18 @@ local_bard_dir <- function(env = parent.frame()) {
   dir
 }
 
-# Large ORT record (~1 GB), stored as a GitHub Release asset via piggyback.
-# Downloads once to the user cache and reuses it on subsequent runs.
+# Large ORT record (~516 MB), served as a GitHub Release asset. Routes through
+# the package's own downloader so tests exercise the same path users do; a
+# download failure (e.g. the data release isn't published yet) becomes a skip.
 ort_record_dir <- function() {
   cache <- tools::R_user_dir("ggm", "cache")
-  files <- c("ort.dat", "ort.hea")
-  missing <- !file.exists(file.path(cache, files))
-
-  if (any(missing)) {
-    skip_if_not_installed("piggyback")
+  if (!all(file.exists(file.path(cache, c("ort.dat", "ort.hea"))))) {
     skip_if_offline()
-    dir.create(cache, recursive = TRUE, showWarnings = FALSE)
-    piggyback::pb_download(
-      files[missing],
-      dest = cache,
-      repo = "shah-in-boots/ggm",
-      tag = "v0.0.0.9000-data"
+    tryCatch(
+      cache_example_data("ort", dir = cache, quiet = TRUE),
+      error = function(e) skip(paste("ORT data unavailable:", conditionMessage(e)))
     )
   }
-
   cache
 }
 
