@@ -33,15 +33,12 @@ cache_example_data(
 
 - force:
 
-  Re-download even if the files are already present (useful if a cached
-  copy is suspected truncated).
+  Re-download even if the files are already cached (useful if a cached
+  copy is suspected truncated or stale).
 
 - quiet:
 
-  Passed to
-  [`utils::download.file()`](https://rdrr.io/r/utils/download.file.html);
-  `FALSE` (default) shows a progress bar, reassuring for a
-  multi-hundred-MB transfer.
+  Suppress piggyback's download progress bar.
 
 ## Value
 
@@ -52,11 +49,14 @@ guaranteed present on return, so
 
 ## Details
 
-Each file downloads to a `.part` sidecar and is renamed into place only
-on success, so an interrupted transfer never leaves a truncated file
-that later looks "cached". The download timeout is raised for the call
-(the 60 s default is far too short for these files) and restored on
-exit.
+Downloads use the piggyback package (the same tool that publishes the
+assets). Install it with `install.packages("piggyback")` if prompted.
+
+If the record's files are already present in `dir`, this returns
+immediately without contacting GitHub. Otherwise it delegates to
+[`piggyback::pb_download()`](https://docs.ropensci.org/piggyback/reference/pb_download.html),
+which fetches only the missing files (or, with `force`, re-fetches them
+regardless of timestamps).
 
 ## See also
 

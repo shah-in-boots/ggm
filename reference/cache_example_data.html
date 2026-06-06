@@ -73,13 +73,12 @@ downloaded data. Pass e.g. <code>"data-raw"</code> to download elsewhere.</p></d
 
 
 <dt id="arg-force">force<a class="anchor" aria-label="anchor" href="#arg-force"></a></dt>
-<dd><p>Re-download even if the files are already present (useful if a
-cached copy is suspected truncated).</p></dd>
+<dd><p>Re-download even if the files are already cached (useful if a
+cached copy is suspected truncated or stale).</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
-<dd><p>Passed to <code><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">utils::download.file()</a></code>; <code>FALSE</code> (default) shows a
-progress bar, reassuring for a multi-hundred-MB transfer.</p></dd>
+<dd><p>Suppress piggyback's download progress bar.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -91,10 +90,12 @@ guaranteed present on return, so
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Each file downloads to a <code>.part</code> sidecar and is renamed into place only on
-success, so an interrupted transfer never leaves a truncated file that later
-looks "cached". The download timeout is raised for the call (the 60 s default
-is far too short for these files) and restored on exit.</p>
+    <p>Downloads use the <span class="pkg">piggyback</span> package (the same tool that publishes the
+assets). Install it with <code>install.packages("piggyback")</code> if prompted.</p>
+<p>If the record's files are already present in <code>dir</code>, this returns immediately
+without contacting GitHub. Otherwise it delegates to
+<code><a href="https://docs.ropensci.org/piggyback/reference/pb_download.html" class="external-link">piggyback::pb_download()</a></code>, which fetches only the missing files (or, with
+<code>force</code>, re-fetches them regardless of timestamps).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
