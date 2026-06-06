@@ -4,6 +4,8 @@
 
 - [`build_pyramid()`](https://shah-in-boots.github.io/ggm/reference/build_pyramid.md)
   : Build the signal pyramid
+- [`cache_example_data()`](https://shah-in-boots.github.io/ggm/reference/cache_example_data.md)
+  : Download an example study to the local cache
 - [`time_to_sample()`](https://shah-in-boots.github.io/ggm/reference/convert.md)
   [`sample_to_time()`](https://shah-in-boots.github.io/ggm/reference/convert.md)
   : Convert between sample index and time
