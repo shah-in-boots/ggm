@@ -19,9 +19,12 @@ Depends:
 Imports:
     arrow,
     data.table,
+    htmlwidgets,
     jsonlite
 Suggests:
+    knitr,
     piggyback,
+    rmarkdown,
     testthat (>= 3.0.0)
 Remotes:
     shah-in-boots/EGM
@@ -30,3 +33,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
 URL: https://shah-in-boots.github.io/ggm/
+VignetteBuilder: knitr

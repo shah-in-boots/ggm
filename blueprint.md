@@ -387,7 +387,7 @@ list → wire), not "WFDB↔uPlot compatibility" — because that pairing doesn'
 
 > One canvas, two modes layered on it. Built on a multi-panel synced uPlot.
 
-### 4.1 Multi-panel synced display — `TODO`
+### 4.1 Multi-panel synced display — `DONE (M1)`
 
 For 12–20 channels on a shared time scale: **N separate uPlot instances linked
 by uPlot's `sync` API**, *not* one chart with 20 y-axes. Sync binds x-range,
@@ -455,8 +455,9 @@ getting an EP-specific UI instead of a generic charting one. Plain HTML/CSS +
 thin JS (or Alpine.js for reactivity without a framework); wrap in a Shiny module
 for R-side state (bookmarks, filters, annotation jumps).
 
-🔵 **DECISION NEEDED** — htmlwidget-first (usable outside Shiny) vs
-Shiny-module-first (faster to a working app). See §9 D-3.
+✅ **DECIDED (D-3) — htmlwidget-first.** The renderer is an htmlwidget
+(`view_signal()`), usable standalone and embeddable in Shiny via its
+output/render pair with no rewrite. GUI chrome is still M5.
 
 ---
 
@@ -648,8 +649,9 @@ Each milestone is a runnable vertical slice.
   zoomed-in call falls through to a `.dat` range read, and both return matching
   `sample`+`time` vectors. *No UI yet — just prove the data layer is fast.*
   ⭐ **start here**
-- **M1 — Static multi-panel render.** Feed `get_window()` output to a basic
-  uPlot htmlwidget; N synced panels; correct shared time scale. No editing.
+- **M1 — Static multi-panel render.** ✅ **Done** (`view_signal()`). Feeds
+  `get_window()` output to a synced uPlot htmlwidget (vendored); N panels, one
+  per channel, cursor + x-zoom synced; correct shared time scale. No editing.
 - **M2 — Navigation.** Sweep-speed presets, wheel-zoom, resolution handoff
   (M0 tiers wired to `setScale`), overview/minimap.
 - **M2.5 — Annotated overview (navigation map).** Build the event pyramid (§3.3b)
@@ -690,9 +692,12 @@ exist.
   coarse data + clean partitioning. Stores only derived downsample tiers (+
   manifest, + optional min/max envelopes), never raw `.dat` samples. Renderer-
   independent — uPlot never sees the on-disk format (§3.5).
-- **D-3 `OPEN`** — Interactive UI: **htmlwidget-first** vs **Shiny-module-first**.
-  *Tradeoff:* widget = usable standalone (RMarkdown, Quarto, plain R); module =
-  faster path to a full app with R state. 🔵 your call.
+- **D-3 `DECIDED`** — Interactive UI: **htmlwidget-first** (chosen). The renderer
+  (`view_signal()`) is an htmlwidget — usable standalone (RMarkdown, Quarto, plain
+  R) *and* the substrate Shiny renders, embeddable later via its auto-generated
+  output/render pair with no rewrite (and the JS↔R channel M4 editing needs). The
+  Shiny-module-first path was rejected: it would confine the renderer to a running
+  app, losing the console/Quarto/print-export reach the presentation engine wants.
 - **D-4 `OPEN`** — Interval syntax in the grammar: indexed `VA[1]` vs `span(V, A)`.
 - **D-5 `DECIDED`** — Presentation layout is a **single coordinate space**
   (channels stacked by vertical offset), **not** faceted ggplot. *Rationale:*

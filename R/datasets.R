@@ -18,8 +18,7 @@
 #' Fetch a `ggm` example WFDB record to a local directory, downloading it once
 #' and reusing the cached copy thereafter. A WFDB record is a pair of files that
 #' together form one dataset — a `.hea` text header and a `.dat` binary signal —
-#' and both are fetched. The returned directory drops straight into
-#' [open_study()].
+#' and both are fetched. 
 #'
 #' Downloads use the \pkg{piggyback} package (the same tool that publishes the
 #' assets). Install it with `install.packages("piggyback")` if prompted.
@@ -44,16 +43,8 @@
 #' [piggyback::pb_download()], which fetches only the missing files (or, with
 #' `force`, re-fetches them regardless of timestamps).
 #'
-#' @seealso [open_study()] to open the downloaded record.
-#'
-#' @examples
-#' \dontrun{
-#' # Download (once) and open the large ORT study:
-#' study <- open_study("ort", cache_example_data("ort"))
-#' study
-#' }
 #' @export
-cache_example_data <- function(dataset = "ort",
+cache_study_data <- function(dataset = "ort",
                                dir = tools::R_user_dir("ggm", "cache"),
                                force = FALSE,
                                quiet = FALSE) {
