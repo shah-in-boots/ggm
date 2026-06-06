@@ -1,21 +1,11 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://shah-in-boots.github.io/ggm/404.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/CODE_OF_CONDUCT.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/CONTRIBUTING.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/ggm/LICENSE-text.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/ggm/LICENSE.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/SUPPORT.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/ggm/authors.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/ggm/blueprint.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/ggm/index.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/build_pyramid.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/cache_example_data.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/convert.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/get_annotations.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/get_overview.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/get_window.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/ggm-package.html</loc></url>
+<url><loc>https://shah-in-boots.github.io/ggm/reference/cache_study_data.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/ggm/reference/index.html</loc></url>
-<url><loc>https://shah-in-boots.github.io/ggm/reference/open_study.html</loc></url>
 </urlset>
 
