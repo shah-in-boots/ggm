@@ -24,6 +24,7 @@ Imports:
 Suggests:
     knitr,
     piggyback,
+    quarto,
     rmarkdown,
     testthat (>= 3.0.0)
 Remotes:
@@ -33,4 +34,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
 URL: https://shah-in-boots.github.io/ggm/
-VignetteBuilder: knitr
+VignetteBuilder: knitr, quarto
