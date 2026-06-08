@@ -13,3 +13,9 @@ storage and joins, while time (seconds) is the display unit.
 - [`cache_study_data()`](https://shah-in-boots.github.io/ggm/reference/cache_study_data.md)
   : Download an example study to the local cache
 
+# Articles
+
+### All vignettes
+
+- [Design
+  Documentation](https://shah-in-boots.github.io/ggm/articles/design.md):
