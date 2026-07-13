@@ -8,27 +8,50 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+brand: "../inst/brand/_brand.yml"
+format:
+  html:
+    theme:
+      - brand
+      - ../inst/brand/colors.scss
+      - ../inst/brand/mermaid.scss
 ---
 
 ```{r}
 #| label: setup
 #| include: false
-# Function stubs are scaffolding — not run. The nomnoml chunks ARE run so the
-# diagrams render; each is marked `#| eval: true` individually.
+# Function stubs are scaffolding — not run. The Mermaid diagrams are rendered
+# natively by Quarto, independent of these R chunks.
 knitr::opts_chunk$set(eval = FALSE)
+
+# Get theme colors (semantic is first layer, named is under $palette)
+# Check both directory levels depending on where we are bulding vignette from
+brand_path <- if (file.exists("inst/brand/_brand.yml")) {
+  "inst/brand/_brand.yml"
+} else {
+  "../inst/brand/_brand.yml"
+}
+colors <- yaml::read_yaml(brand_path)$color
 ```
+
 
 # Introduction
 
-This vignette is the design plan and blueprint for the package. 
-It is organized into multiple developmental **arms** — the load-bearing parts of the project. 
-Each arm is drawn as a `{nomnoml}` class box listing its functions, sitting right above the stubs it describes.
+This vignette is the design plan and blueprint for the package.
+It is organized into multiple developmental **arms** — the load-bearing parts of the project.
+Each arm is drawn as a Mermaid flowchart box listing its functions, sitting right above the stubs it describes.
 
-By using this document as a developmental *blueprint*, we can quickly see how the package was put together and the reasoning. 
+By using this document as a developmental *blueprint*, we can quickly see how the package was put together and the reasoning.
 
 The set-up is that for each family of functions in the arm of the project, we are setting up a function stubs that describe the signature and general purpose, without having it completed. This helps to make sure the needed components for this project are available.
 
-The stubs are aggregated in a `{nomnoml}` diagram to serve as a visual map of progress. If the content is [blue]{.blue}, it currently is implemented, and if it is [orange]{.orange}, it is planned but not yet implemented.
+The stubs are aggregated in a Mermaid diagram to serve as a visual map of progress. If the content is [blue]{.blue}, it currently is implemented, and if it is [orange]{.orange}, it is planned but not yet implemented.
+
+## Goal
+
+`ggm` explores, annotates, and presents cardiac electrophysiology studies.
+`{EGM}` owns vendor import and WFDB-compatible signal/annotation I/O. `ggm`
+starts after normalization to WFDB and does not duplicate the raw signal.
 
 ## Arms of the project
 
@@ -37,11 +60,375 @@ The stubs are aggregated in a `{nomnoml}` diagram to serve as a visual map of pr
 1. Annotation Interaction
 1. Mark-up and Presentation
 
+```{mermaid}
+%%| label: project-arms
+
+%%| uses mermaid.scss preferences for the boxes so the colors can be branded 
+flowchart LR
+    EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
+    Backend["Data Backend<br/>study handle<br/>overview cache"]:::planned
+    Viz["Visualization Engine<br/>uPlot explorer"]:::planned
+    Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
+    Bookmarks["Bookmarks<br/>saved view state"]:::planned
+    Presentation["Mark-up and Presentation<br/>scene grammar; anime.js; export"]:::planned
+
+    EGM --> Backend
+    Backend --> Viz
+    Backend --> Annot
+    Annot --> Viz
+    Viz --> Bookmarks
+    Bookmarks --> Presentation
+    Annot --> Presentation
+```
+
 # Data Backend
+
+```{mermaid}
+%%| label: data-backend-map
+flowchart LR
+    EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
+    GgmBackend["ggm data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+
+    EGMIO --> GgmBackend
+```
+
+## Study handle
+
+`ggm_study` contains paths, header metadata, record fingerprint, cache manifest,
+and annotation-layer metadata. It contains **no full-study signal table**.
+
+```{r}
+# Read header and locate sidecars; do not read the signal.
+open_study <- function(record, record_dir = ".", cache_dir = NULL) {
+  # TODO
+}
+
+# Stream the WFDB record in fixed-size chunks and build derived tiers.
+build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
+  # TODO
+}
+
+# Return only the samples needed for a viewport.
+read_viewport <- function(study, window, channels, width_px,
+                          resolution = c("auto", "raw", "overview")) {
+  # TODO
+}
+```
+
+Requirements:
+
+- Raw `.dat`/`.hea` files remain canonical and unmodified.
+- Raw windows come from `EGM::read_signal(begin, end, channels)`.
+- Chunk size bounds peak R memory during cache construction.
+- Cache is regenerable, versioned, and invalidated by the record fingerprint.
+- Default cache location is user-writable; read-only study directories must work.
+- Interrupted builds are resumable or safely discarded; publish cache atomically.
+
+## Overview pyramid
+
+Initial reduction: **min/max per channel per bucket**, retaining each extremum's
+sample index and emitting the pair in time order. Advantages: narrow spikes are
+not averaged away; levels can be built by merging adjacent buckets; one streaming
+pass with bounded memory.
+
+- Geometric bucket sizes, e.g. `64, 256, 1024, ...` samples.
+- Choose the finest tier that returns at most about 2--4 points/pixel/channel.
+- Use raw signal once the visible range is already near screen resolution.
+- Prototype with a compact indexed binary cache by channel and tier plus
+  `manifest.json`; keep this format internal until Parquet benchmarks pass.
+- Manifest: cache version, algorithm, record fingerprint, sampling frequency,
+  sample count, channels, units, bucket sizes, and completion state.
+- Never silently use an overview tier for measurement or annotation snapping.
+
+`LTTB` remains a benchmark alternative, not the first implementation. Clinical
+acceptance tests should compare reductions on narrow His/stim artifacts and noisy
+intracardiac channels.
+
+## Viewport return contract
+
+- Raw: one shared `sample`/`time` array plus aligned channel arrays.
+- Overview: one `sample`/`time`/`value` triplet per channel; extrema differ by
+  channel. Collapse a min/max pair when both refer to the same sample.
+- Sample representation must remain exact for the supported maximum study size.
+- `resolution`: `"raw"` or the cache bucket size.
+- `request_id`: used to reject stale asynchronous responses.
 
 # Visualization Engine
 
+```{mermaid}
+%%| label: visualization-map
+flowchart LR
+    RangeReads["EGM range reads<br/>viewport source"]:::implemented
+    UplotRenderer["uPlot renderer<br/>synced channels<br/>pan; zoom; cursor"]:::planned
+    StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
+
+    RangeReads --> UplotRenderer
+    UplotRenderer --> StudyExplorer
+```
+
+uPlot is the canvas renderer, not the data backend. Its numeric x-scale,
+`setScale()`, `setData()`, hooks, and chart synchronization fit this use case;
+its input must remain viewport-sized. See the
+[uPlot API documentation](https://github.com/leeoniya/uPlot/blob/master/docs/README.md).
+
+```{r}
+# Server-backed explorer: R services viewport and annotation requests.
+explore_study <- function(study, channels = NULL, annotators = NULL, ...) {
+  # TODO
+}
+
+# Standalone widget for an already-materialized window; no dynamic disk reads.
+view_segment <- function(x, annotations = NULL, ...) {
+  # TODO
+}
+```
+
+Design:
+
+- Shiny controller for the MWE; a static htmlwidget cannot request new R reads.
+- One uPlot per visible channel, synchronized on x-range and cursor.
+- Separate charts permit independent y-gain and channel-specific min/max x values.
+- One controller issues a single data request for all panels.
+- Keep the old tier visible while the next tier loads; discard stale responses.
+- Debounce zoom/pan requests; later prefetch a small margin in the pan direction.
+- Overview navigator always shows the study extent and current viewport.
+- Wheel/pinch zoom around cursor; drag pan; keyboard next/previous window.
+- Channel order, visibility, gain, grid, and polarity are view state.
+- Annotations render in a plugin layer, not as dense uPlot signal series.
+
+The canonical interactive control is visible duration. Conventional sweep-speed
+presets map to that duration. Exact `mm/s` is only meaningful after screen
+calibration; print output can use physical dimensions exactly.
+
 # Annotation Interaction
+
+```{mermaid}
+%%| label: annotation-map
+flowchart LR
+    AnnotIO["EGM annotation I/O<br/>annotation_table()<br/>read_annotation()<br/>write_annotation()"]:::implemented
+    Schema["Annotation schema<br/>archetypes<br/>channel scope<br/>snap rules"]:::planned
+    Review["Review and navigate<br/>query; jump<br/>add; move; save"]:::planned
+    Bookmarks["Bookmarks<br/>saved view state"]:::planned
+
+    AnnotIO --> Schema
+    Schema --> Review
+    Review --> Bookmarks
+```
+
+## Logical model
+
+The UI depends on a richer logical model than a hard-coded list of QRS symbols.
+The model is adapted to/from `{EGM}` annotation tables.
+
+| Field | Purpose |
+|---|---|
+| `id` | Stable identity across edits |
+| `code` | Schema-defined type: `QRS`, `A`, `H`, `V`, `stim`, ... |
+| `sample`, `end_sample` | Point or span in canonical coordinates |
+| `channel` | Header channel id; missing/zero means study-wide |
+| `source` | Imported, algorithm, user, or named annotator |
+| `group_id` | Relate pulses/deflections to an episode or beat |
+| `attributes` | Typed schema-defined values |
+
+Annotation schemas are user-supplied and versioned. Each archetype defines:
+code, label, point/span/group geometry, channel scope, style, allowed attributes,
+and optional snap rule (`none`, peak, trough, maximum absolute slope).
+
+Programmed stimulation should be a span/group with child stimulus marks and
+attributes such as site and coupling intervals. This supports useful filtering;
+hundreds of unrelated ticks do not.
+
+```{r}
+annotation_schema <- function(definition) {
+  # TODO: validate and register archetypes
+}
+
+load_annotations <- function(study, annotator, schema = NULL) {
+  # TODO
+}
+
+query_annotations <- function(x, window = NULL, channel = NULL,
+                              code = NULL, source = NULL, ...) {
+  # TODO
+}
+
+save_annotations <- function(x, annotator, overwrite = FALSE) {
+  # TODO: write a new EGM/WFDB annotator atomically
+}
+```
+
+Interaction requirements:
+
+- Filter by type, channel, source, group attributes, tags, and time range.
+- Jump next/previous; select from a result list; show event density when zoomed out.
+- Add, select, drag, delete, and reclassify; channel inferred from clicked panel.
+- Snapping reads raw signal around the candidate sample, never an overview tier.
+- Optimistic browser movement; R confirms canonical sample/channel state.
+- Undo/redo within a session; unsaved-change indicator; explicit save.
+- Imported/detector annotator is immutable by default. Save review as a new name.
+- Reopening the saved annotator reproduces the edited sample and channel exactly.
+
+WFDB remains the interoperable exchange layer. If stable ids, spans, relations,
+or audit metadata cannot round-trip through WFDB fields, store them in a versioned
+companion sidecar rather than silently packing semantics into `aux`. Finalize that
+mapping only after the intracardiac archetypes are supplied.
+
+## Bookmarks
+
+A bookmark is a **saved view**, not copied signal data: record fingerprint,
+sample range, channel order, gains, visible annotation layers, label, notes, and
+tags. It appears in navigation like an event and is the input to `scene()`.
+
+```{r}
+bookmark_view <- function(study, window, label = NULL, state = NULL, ...) {
+  # TODO
+}
+
+list_bookmarks <- function(study, filter = NULL) {
+  # TODO
+}
+```
 
 # Mark-up and Presentation
 
+```{mermaid}
+%%| label: presentation-map
+flowchart LR
+    SceneGrammar["R scene grammar<br/>scene(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
+    SvgCompiler["SVG compiler<br/>one coordinate space<br/>explicit final state"]:::planned
+    AnimeJs["anime.js v4<br/>timeline<br/>interpolation; playback"]:::planned
+    Exports["Exports<br/>SVG; PDF<br/>HTML; later GIF/video"]:::planned
+
+    SceneGrammar --> SvgCompiler
+    SvgCompiler --> AnimeJs
+    SvgCompiler --> Exports
+    AnimeJs --> Exports
+```
+
+Exploration and presentation use different renderers. uPlot/canvas prioritizes
+latency; short selected segments can be rendered as SVG for precise print and
+cross-channel markup. Both consume the same samples, annotations, and bookmark
+state.
+
+`ggm_scene` is a declarative, serializable scene graph plus timeline. Marks bind
+to data (`annotation id`, `sample`, `channel`), not pixels. R code is the authoring
+surface; the rendered image/animation is its preview.
+
+## Animation engine: anime.js
+
+**Decision: use anime.js v4.** It is a good fit for this layer:
+
+- MIT licensed and small enough to vendor with the htmlwidget; no CDN required.
+- Animates SVG attributes, DOM properties, and JavaScript values.
+- [`createTimeline()`](https://animejs.com/documentation/timeline/) supports
+  ordered and concurrent steps, labels, timers, callbacks, and nested timelines.
+- Playback methods provide play, pause, restart, reverse, and seek controls.
+- [SVG helpers](https://animejs.com/documentation/svg/) support line drawing,
+  motion paths, and later morphing.
+
+Responsibility boundary:
+
+- `ggm_scene`: semantic objects, timing, and explicit final state.
+- SVG compiler: traces, arrows, calipers, labels, and channel layout.
+- anime.js: interpolation and timeline playback only.
+- Exporter: SVG/PDF from the explicit final state; animated HTML from the same
+  scene plus anime.js.
+
+This boundary keeps the R grammar stable if the JavaScript runtime changes. It
+also ensures a print still does not depend on replaying an animation to discover
+where its elements finish.
+
+| Scene operation | anime.js compilation |
+|---|---|
+| reveal trace/arrow | SVG drawable from `0` to `1` |
+| emphasize | opacity, color, or stroke-width tween |
+| caliper | line growth plus numeric label tween |
+| pan/zoom | SVG view-box or group transform tween |
+| hold | timeline timer |
+| simultaneous steps | shared timeline label/position |
+
+Vendor one pinned anime.js v4 build under `inst/htmlwidgets/lib/`. Keep selectors,
+timeline positions, and anime.js option names inside the compiler rather than in
+the public R object.
+
+```{r}
+scene <- function(x, ...) {
+  # TODO: create from a bookmark or explicit study window
+}
+
+add_caliper <- function(x, from, to, label = NULL, ...) {
+  # TODO
+}
+
+add_arrow <- function(x, from, to, label = NULL, ...) {
+  # TODO
+}
+
+emphasize <- function(x, target, ...) {
+  # TODO
+}
+
+reveal <- function(x, target, at = NULL, duration = NULL, ...) {
+  # TODO: append a timeline operation
+}
+
+render_scene <- function(x, format = c("svg", "pdf"), ...) {
+  # TODO
+}
+
+animate_scene <- function(x, autoplay = TRUE, controls = TRUE, ...) {
+  # TODO: compile the scene timeline to an anime.js-backed htmlwidget
+}
+```
+
+Requirements:
+
+- Single scene coordinate system so arrows/calipers may cross channel lanes.
+- Static SVG first; PDF from the same terminal frame.
+- Animated HTML via anime.js second; GIF/video capture later.
+- Presentation layers: trace, marker, label, arrow, caliper, highlight, inset.
+- Camera operations: reveal, pan, zoom, hold, and transition.
+- A scene resolves referenced annotations before rendering and fails clearly if
+  they are missing or ambiguous.
+- Optional materialization later: bundle only selected raw segments for a
+  portable presentation, without copying the full study.
+
+# Delivery Plan
+
+1. **Data proof:** study handle, streaming min/max cache, viewport router.
+2. **Viewer proof:** full-study overview, raw-resolution zoom, pan, channels/gain.
+3. **Navigation:** overview navigator, annotation overlay, filter/jump.
+4. **Editing:** move/add/delete, raw-data snapping, derived-annotator save.
+5. **Bookmarks:** saved view list and rapid high-resolution review.
+6. **Static grammar:** bookmark to SVG/PDF with labels, arrows, and calipers.
+7. **Timeline:** anime.js-backed HTML; portable media export after the grammar stabilizes.
+
+## Acceptance gates
+
+- Cache build memory is bounded by chunk size, not record duration.
+- Cached full-study view and local pan/zoom remain viewport-sized in R and JS.
+- Random cache buckets contain the exact raw minima/maxima and sample locations.
+- Tier boundaries do not shift annotations, cursors, or bookmarked windows.
+- Raw and overview views share the same x-range without a visible jump.
+- Source annotation file remains byte-for-byte unchanged after review save.
+- Saved edits and bookmarks survive restart and resolve against the same record.
+- Benchmark the current `ort` record (27 channels, 977 Hz, 9,562,353 samples,
+  about 0.5 GB) and repeat the gate on a record larger than 1 GB.
+
+Initial latency targets on a local SSD, to revise after measurement:
+
+- cached overview visible in under 1 second;
+- interaction feedback in under 100 ms;
+- refined viewport visible in under 250 ms;
+- no more than 4 plotted points/pixel/channel.
+
+## Open decisions
+
+- Final intracardiac archetypes and their WFDB field mapping.
+- Compare the compact indexed binary prototype with Parquet before stabilizing
+  the cache format.
+- Required maximum duration, sampling frequency, and channel count.
+- Multi-segment WFDB records and discontinuous recordings.
+- Screen sweep-speed calibration and default EP gain conventions.
+- Presentation interchange: self-contained HTML only, or a portable scene bundle.
+- GIF/video capture mechanism and reproducible frame timing.

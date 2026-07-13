@@ -14,3 +14,4 @@
 ^data-raw$
 ^vignettes/\.quarto$
 ^vignettes/*_files$
+^branding$

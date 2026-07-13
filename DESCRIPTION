@@ -14,18 +14,19 @@ Description: Visualization and interaction layer for cardiac
     joins, while time (seconds) is the display unit.
 License: MIT + file LICENSE
 Depends:
-    EGM,
     R (>= 4.1.0)
 Imports:
-    arrow,
-    data.table,
+    EGM,
     htmlwidgets,
-    jsonlite
+    jsonlite,
+    nanoparquet,
+    S7
 Suggests:
     knitr,
     piggyback,
     quarto,
     rmarkdown,
+    shiny,
     testthat (>= 3.0.0)
 Remotes:
     shah-in-boots/EGM

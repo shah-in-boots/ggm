@@ -2,3 +2,5 @@
 	path = branding
 	url = https://github.com/shah-in-boots/branding
 	branch = main
+	update = rebase
+	fetchRecurseSubmodules = true

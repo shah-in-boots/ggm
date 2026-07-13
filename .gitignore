@@ -61,3 +61,7 @@ data-raw/ort.hea
 *.ggm-pyramid/
 inst/doc
 **/.quarto/
+
+# Package-owned copy of branding assets
+# (tracked so they ship with the package)
+# inst/brand/
