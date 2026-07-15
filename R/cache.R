@@ -131,11 +131,13 @@ S7::method(print, StudyCache) <- function(x, ...) {
 #' @param header_ext Header extension, without the dot.
 #' @return A `StudyCache`.
 #' @export
-study_cache <- function(path,
-                        cache_dir = NULL,
-                        annotators = NULL,
-                        raw_ext = "dat",
-                        header_ext = "hea") {
+study_cache <- function(
+  path,
+  cache_dir = NULL,
+  annotators = NULL,
+  raw_ext = "dat",
+  header_ext = "hea"
+) {
   record <- parse_record_path(path)
   dir <- normalizePath(record$dir, winslash = "/", mustWork = FALSE)
   stem <- record$stem
@@ -165,23 +167,23 @@ study_cache <- function(path,
   )
 
   cache <- StudyCache(
-    stem             = stem,
-    dir              = dir,
-    cache_dir        = cacheDir,
-    raw_path         = rawPath,
-    header_path      = headerPath,
+    stem = stem,
+    dir = dir,
+    cache_dir = cacheDir,
+    raw_path = rawPath,
+    header_path = headerPath,
     annotation_paths = annotationPaths,
-    cache_path       = file.path(cacheDir, paste0(stem, ".cache.parquet")),
-    manifest_path    = file.path(cacheDir, paste0(stem, ".cache.json")),
-    channels         = hdr$channels,
-    units            = hdr$units,
-    sample_rate      = hdr$sample_rate,
-    n_samples        = hdr$n_samples,
-    fingerprint      = fingerprint,
-    header           = hdr$header,
-    level_factor     = NA_integer_,
-    levels           = data.frame(),
-    created_at       = NA_character_
+    cache_path = file.path(cacheDir, paste0(stem, ".cache.parquet")),
+    manifest_path = file.path(cacheDir, paste0(stem, ".cache.json")),
+    channels = hdr$channels,
+    units = hdr$units,
+    sample_rate = hdr$sample_rate,
+    n_samples = hdr$n_samples,
+    fingerprint = fingerprint,
+    header = hdr$header,
+    level_factor = NA_integer_,
+    levels = data.frame(),
+    created_at = NA_character_
   )
 
   if (file.exists(cache@manifest_path)) {

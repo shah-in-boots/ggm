@@ -11,12 +11,14 @@
 #          list(kind = "time", unit = "s")
 # series:  optional list of per-channel lists(label, color)
 # backend: adapter name registered in GGM.adapters (JS side)
-ggm_plot <- function(columns,
-                     scale  = list(kind = "index", rate = 1),
-                     series = NULL,
-                     width  = NULL, height = NULL,
-                     elementId = NULL) {
-
+ggm_plot <- function(
+  columns,
+  scale = list(kind = "index", rate = 1),
+  series = NULL,
+  width = NULL,
+  height = NULL,
+  elementId = NULL
+) {
   # default series config: one entry per non-x column
   n_ch <- length(columns) - 1L
   if (is.null(series)) {
@@ -30,19 +32,20 @@ ggm_plot <- function(columns,
   x <- list(
     backend = "uplot",
     columns = lapply(columns, I),
-    scale   = scale,
-    series  = series
+    scale = scale,
+    series = series
   )
 
   htmlwidgets::createWidget(
     name = "ggm_plot",
     x,
-    width = width, height = height,
+    width = width,
+    height = height,
     package = "ggm",
     elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
-      browser.fill = TRUE,   # fill viewer/browser
-      viewer.fill  = TRUE
+      browser.fill = TRUE, # fill viewer/browser
+      viewer.fill = TRUE
     )
   )
 }

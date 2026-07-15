@@ -41,24 +41,31 @@ ggm_send <- function(proxy, channel, payload) {
 # columns: list(x, ch1, ch2, ...) -- columnar, uPlot/Arrow shaped.
 # vectors must stay arrays in JSON even at length 1, so wrap with I()
 ggm_set_data <- function(proxy, columns) {
-  ggm_send(proxy, "ggm:set_data",
-           list(columns = lapply(columns, I)))
+  ggm_send(proxy, "ggm:set_data", list(columns = lapply(columns, I)))
 }
 
 # set visible x (and optionally y) range in domain units
-ggm_set_viewport <- function(proxy, xmin, xmax,
-                             ymin = NULL, ymax = NULL) {
-  ggm_send(proxy, "ggm:set_viewport",
-           list(xmin = xmin, xmax = xmax,
-                ymin = ymin, ymax = ymax))
+ggm_set_viewport <- function(proxy, xmin, xmax, ymin = NULL, ymax = NULL) {
+  ggm_send(
+    proxy,
+    "ggm:set_viewport",
+    list(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax)
+  )
 }
 
 # per-channel display config
 # series_idx: 1-based channel index (x excluded), matches R habits;
 # adapter converts to backend indexing
-ggm_set_series <- function(proxy, series_idx, visible = NULL,
-                           color = NULL, label = NULL) {
-  ggm_send(proxy, "ggm:set_series",
-           list(series = series_idx, visible = visible,
-                color = color, label = label))
+ggm_set_series <- function(
+  proxy,
+  series_idx,
+  visible = NULL,
+  color = NULL,
+  label = NULL
+) {
+  ggm_send(
+    proxy,
+    "ggm:set_series",
+    list(series = series_idx, visible = visible, color = color, label = label)
+  )
 }
