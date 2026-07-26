@@ -55,7 +55,7 @@ ggm_set_viewport <- function(proxy, xmin, xmax, ymin = NULL, ymax = NULL) {
 
 # per-channel display config
 # series_idx: 1-based channel index (x excluded), matches R habits;
-# adapter converts to backend indexing
+# a faceted adapter maps it to the corresponding panel
 ggm_set_series <- function(
   proxy,
   series_idx,

@@ -1,0 +1,30 @@
+.ggm-uplot-stack {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: contain;
+  background: #fff;
+}
+
+.ggm-uplot-panels {
+  width: 100%;
+}
+
+.ggm-uplot-panel {
+  width: 100%;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ggm-uplot-panel:last-child {
+  border-bottom: 0;
+}
+
+.ggm-uplot-panel .uplot {
+  margin: 0 auto;
+}
+
+.ggm-uplot-panel .u-legend {
+  padding-left: 8px;
+  text-align: left;
+}

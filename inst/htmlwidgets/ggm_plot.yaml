@@ -12,6 +12,7 @@ dependencies:
   - name: ggm-core
     version: 0.1.0
     src: htmlwidgets/lib/ggm
+    stylesheet: ggm-uplot.css
     script:
       - ggm-dispatch.js
       - ggm-adapter-uplot.js
