@@ -36,3 +36,4 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
 URL: https://shah-in-boots.github.io/ggm/
 VignetteBuilder: knitr, quarto
+Config/Needs/website: quarto
