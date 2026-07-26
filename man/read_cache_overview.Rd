@@ -6,8 +6,9 @@
 \usage{
 read_cache_overview(
   cache,
-  begin,
-  end,
+  begin = NULL,
+  end = NULL,
+  interval = NULL,
   channels = NULL,
   level = NULL,
   pixel_width = 1000,
@@ -17,7 +18,15 @@ read_cache_overview(
 \arguments{
 \item{cache}{A built \code{StudyCache}.}
 
-\item{begin, end}{Window bounds in seconds.}
+\item{begin, end}{Times delimiting a half-open range. These follow
+\code{\link[EGM:validate_time_parameters]{EGM::validate_time_parameters()}}: time-only character values are elapsed
+from the record start, dated character values and \code{POSIXt} objects are
+absolute, and \code{difftime} values are elapsed durations. Numeric values are
+not accepted.}
+
+\item{interval}{A duration after \code{begin} that takes precedence over \code{end}.
+Numeric values are seconds; compact durations such as \code{"100 ms"} are also
+accepted.}
 
 \item{channels}{Channel labels. Defaults to all channels.}
 

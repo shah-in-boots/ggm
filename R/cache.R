@@ -490,8 +490,8 @@ build_study_cache <- function(cache,
       record = cache@stem,
       record_dir = cache@dir,
       header = cache@header,
-      begin = startSample / sampleRate,
-      end = endSample / sampleRate,
+      begin = study_elapsed_time(cache, startSample / sampleRate),
+      end = study_elapsed_time(cache, endSample / sampleRate),
       units = units,
       channels = cache@channels
     )
@@ -753,14 +753,22 @@ cache_col <- function(channel, statistic) {
 #' in the `StudyCache`.
 #'
 #' @param cache A `StudyCache`.
-#' @param begin,end Window bounds in seconds.
+#' @param begin,end Times delimiting a half-open range. These follow
+#'   [EGM::validate_time_parameters()]: time-only character values are elapsed
+#'   from the record start, dated character values and `POSIXt` objects are
+#'   absolute, and `difftime` values are elapsed durations. Numeric values are
+#'   not accepted.
+#' @param interval A duration after `begin` that takes precedence over `end`.
+#'   Numeric values are seconds; compact durations such as `"100 ms"` are also
+#'   accepted.
 #' @param channels Channel labels or indices. Defaults to all channels.
 #' @param units Units passed to [EGM::read_signal()].
 #' @return An `EGM` signal table.
 #' @export
 read_study_signal <- function(cache,
-                              begin = 0,
-                              end = NA_real_,
+                              begin = NULL,
+                              end = NULL,
+                              interval = NULL,
                               channels = NULL,
                               units = c("physical", "digital")) {
   units <- match.arg(units)
@@ -772,9 +780,45 @@ read_study_signal <- function(cache,
     header = cache@header,
     begin = begin,
     end = end,
+    interval = interval,
     units = units,
     channels = channels
   )
+}
+
+study_start_time <- function(cache) {
+  startTime <- attr(cache@header, "record_line")$start_time
+  if (!inherits(startTime, "POSIXt") || length(startTime) != 1L) {
+    return(as.POSIXct(NA))
+  }
+  startTime
+}
+
+study_elapsed_time <- function(cache, seconds) {
+  startTime <- study_start_time(cache)
+  if (!is.na(startTime)) {
+    return(startTime + seconds)
+  }
+  as.difftime(seconds, units = "secs")
+}
+
+normalize_study_window <- function(cache,
+                                   begin = NULL,
+                                   end = NULL,
+                                   interval = NULL) {
+  EGM::validate_time_parameters(
+    begin = begin,
+    end = end,
+    interval = interval,
+    start_time = study_start_time(cache),
+    study_duration = cache@n_samples / cache@sample_rate
+  )
+}
+
+study_seconds_to_sample <- function(seconds, sample_rate) {
+  rawSample <- seconds * sample_rate
+  tolerance <- .Machine$double.eps * max(1, abs(rawSample)) * 8
+  ceiling(rawSample - tolerance)
 }
 
 #' Pick the best source level for a viewport
@@ -823,7 +867,7 @@ select_cache_level <- function(cache,
 #' Read an overview cache window
 #'
 #' @param cache A built `StudyCache`.
-#' @param begin,end Window bounds in seconds.
+#' @inheritParams read_study_signal
 #' @param channels Channel labels. Defaults to all channels.
 #' @param level Overview level to read. Defaults to automatic level selection.
 #' @param pixel_width Plot width used when `level = NULL`.
@@ -831,8 +875,9 @@ select_cache_level <- function(cache,
 #' @return Data frame with `sample`, `time`, `channel`, `value`, and `statistic`.
 #' @export
 read_cache_overview <- function(cache,
-                                begin,
-                                end,
+                                begin = NULL,
+                                end = NULL,
+                                interval = NULL,
                                 channels = NULL,
                                 level = NULL,
                                 pixel_width = 1000,
@@ -843,16 +888,20 @@ read_cache_overview <- function(cache,
   if (!requireNamespace("nanoparquet", quietly = TRUE)) {
     stop("Reading the overview cache needs the 'nanoparquet' package.", call. = FALSE)
   }
-  if (!is.finite(begin) || !is.finite(end) || end <= begin) {
-    stop("`begin` and `end` must define a positive window in seconds", call. = FALSE)
-  }
+  window <- normalize_study_window(cache, begin, end, interval)
+  beginSeconds <- window$begin
+  endSeconds <- window$end
 
   channels <- resolve_cache_channels(cache, channels)
+
+  if (endSeconds <= beginSeconds) {
+    return(cache_points_from_rows(data.frame(), channels, cache@sample_rate))
+  }
 
   if (is.null(level)) {
     selected <- select_cache_level(
       cache = cache,
-      window_seconds = end - begin,
+      window_seconds = endSeconds - beginSeconds,
       pixel_width = pixel_width,
       points_per_pixel = points_per_pixel
     )
@@ -877,8 +926,8 @@ read_cache_overview <- function(cache,
   overview <- nanoparquet::read_parquet(cache@cache_path, col_select = required)
   overview <- as.data.frame(overview)
 
-  beginSample <- floor(begin * cache@sample_rate)
-  endSample <- ceiling(end * cache@sample_rate)
+  beginSample <- study_seconds_to_sample(beginSeconds, cache@sample_rate)
+  endSample <- study_seconds_to_sample(endSeconds, cache@sample_rate)
   overview <- overview[
     overview$level == level &
       overview$start_sample < endSample &
@@ -976,7 +1025,7 @@ resolve_cache_channels <- function(cache, channels = NULL) {
 #' Read the appropriate data for a viewport
 #'
 #' @param cache A `StudyCache`.
-#' @param begin,end Window bounds in seconds.
+#' @inheritParams read_study_signal
 #' @param channels Channel labels or indices.
 #' @param pixel_width Plot width in device pixels.
 #' @param resolution `"auto"`, `"raw"`, or `"overview"`.
@@ -985,8 +1034,9 @@ resolve_cache_channels <- function(cache, channels = NULL) {
 #' @return A list with `data`, `resolution`, and `level`.
 #' @export
 read_study_viewport <- function(cache,
-                                begin,
-                                end,
+                                begin = NULL,
+                                end = NULL,
+                                interval = NULL,
                                 channels = NULL,
                                 pixel_width,
                                 resolution = c("auto", "raw", "overview"),
@@ -994,14 +1044,23 @@ read_study_viewport <- function(cache,
                                 units = c("physical", "digital")) {
   resolution <- match.arg(resolution)
   units <- match.arg(units)
+  window <- normalize_study_window(cache, begin, end, interval)
+  windowSeconds <- window$end - window$begin
 
   if (resolution == "overview" && !cache_is_built(cache)) {
     stop("cache not built yet; run build_study_cache() first", call. = FALSE)
   }
 
-  if (resolution == "raw" || !cache_is_built(cache)) {
+  if (resolution == "raw" || !cache_is_built(cache) || windowSeconds <= 0) {
     return(list(
-      data = read_study_signal(cache, begin, end, channels, units),
+      data = read_study_signal(
+        cache = cache,
+        begin = begin,
+        end = end,
+        interval = interval,
+        channels = channels,
+        units = units
+      ),
       resolution = "raw",
       level = 0L
     ))
@@ -1009,14 +1068,21 @@ read_study_viewport <- function(cache,
 
   selected <- select_cache_level(
     cache,
-    window_seconds = end - begin,
+    window_seconds = windowSeconds,
     pixel_width = pixel_width,
     points_per_pixel = points_per_pixel
   )
 
   if (resolution == "auto" && selected$level[[1L]] == 0L) {
     return(list(
-      data = read_study_signal(cache, begin, end, channels, units),
+      data = read_study_signal(
+        cache = cache,
+        begin = begin,
+        end = end,
+        interval = interval,
+        channels = channels,
+        units = units
+      ),
       resolution = "raw",
       level = 0L
     ))
@@ -1032,6 +1098,7 @@ read_study_viewport <- function(cache,
       cache = cache,
       begin = begin,
       end = end,
+      interval = interval,
       channels = channels,
       level = selected$level[[1L]],
       pixel_width = pixel_width,
