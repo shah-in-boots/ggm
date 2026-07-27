@@ -10,7 +10,6 @@
 ^codecov\.yml$
 ^[.]?air[.]toml$
 ^\.vscode$
-^blueprint\.md$
 ^data-raw$
 ^vignettes/\.quarto$
 ^vignettes/*_files$
