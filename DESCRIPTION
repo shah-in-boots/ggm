@@ -20,7 +20,10 @@ Imports:
     htmlwidgets,
     jsonlite,
     nanoparquet,
-    S7
+    S7,
+    stats,
+    tools,
+    utils
 Suggests:
     knitr,
     piggyback,

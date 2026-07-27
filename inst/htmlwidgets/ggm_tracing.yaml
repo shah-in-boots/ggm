@@ -1,0 +1,14 @@
+# load order matters:
+#   anime    -> window.anime (UMD build, no module loader needed)
+#   ggm-anim -> creates window.GGMAnim, reads the anime global
+# ggm_tracing.js (the binding) is loaded automatically by name
+dependencies:
+  - name: anime
+    version: 4.5.0
+    src: htmlwidgets/lib/anime
+    script: anime.umd.min.js
+  - name: ggm-anim
+    version: 0.1.0
+    src: htmlwidgets/lib/ggm
+    stylesheet: ggm-tracing.css
+    script: ggm-anim.js
