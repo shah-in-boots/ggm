@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ggm harness</title>
+  {{ headContent() }}
+  <style>
+    /* The harness skin. Shiny keeps the reactive server; the Bootstrap
+       look is deliberately absent. Edit freely -- nothing in R reads
+       these rules, and the widgets bring their own styles. */
+    :root {
+      --paper:  #f5f0e8;
+      --sheet:  #fffdf9;
+      --ink:    #2a2520;
+      --muted:  #6b6660;
+      --rule:   #d0c0a0;
+      --accent: #b03a2e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 400 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    .masthead {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .masthead h1 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+    .masthead .record {
+      font: 500 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+      gap: 1px;
+      background: var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .pane {
+      background: var(--sheet);
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+    .pane.stacked { gap: 1px; background: var(--rule); padding: 0; }
+    .pane.stacked > .pane { border: 0; }
+
+    .pane h2 {
+      margin: 0;
+      font: 500 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* --- console ------------------------------------------------- */
+
+    .console .shiny-input-container { width: 100%; margin: 0; }
+    .console label { display: none; }
+
+    .console textarea {
+      width: 100%;
+      min-height: 190px;
+      resize: vertical;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      font: 400 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+      tab-size: 2;
+    }
+    .console textarea:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .console button {
+      align-self: flex-start;
+      font: 500 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.06em;
+      color: var(--paper);
+      background: var(--ink);
+      border: 1px solid var(--ink);
+      border-radius: 3px;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+    .console button:hover { background: var(--accent); border-color: var(--accent); }
+    .console button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* the error and script-state surface */
+    .console pre {
+      margin: 0;
+      padding: 10px 12px;
+      min-height: 96px;
+      max-height: 260px;
+      overflow: auto;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--rule);
+      border-radius: 3px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 400 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--muted);
+    }
+    .console pre.ggm-failed {
+      border-left-color: var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="masthead">
+    <h1>ggm harness</h1>
+    <span class="record">{{ record }}</span>
+  </div>
+
+  <div class="layout">
+
+    <div class="pane stacked">
+      <div class="pane">
+        <h2>Signal</h2>
+        {{ viewer }}
+      </div>
+      <div class="pane">
+        <h2>Tracing</h2>
+        {{ tracing }}
+      </div>
+    </div>
+
+    <div class="pane console">
+      <h2>Script</h2>
+      {{ script }}
+      {{ run }}
+      {{ status }}
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -10,6 +10,7 @@
 ^codecov\.yml$
 ^[.]?air[.]toml$
 ^\.vscode$
+^\.claude$
 ^data-raw$
 ^vignettes/\.quarto$
 ^vignettes/*_files$
