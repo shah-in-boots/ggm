@@ -7,14 +7,14 @@
 
 ## Citation
 
-Shah A (2026). *ggm: A Grammar for Exploring and Presenting Cardiac
+Shah A (2026). *gram: A Grammar for Exploring and Presenting Cardiac
 Electrograms*. R package version 0.0.0.9000,
-<https://shah-in-boots.github.io/ggm/>.
+<https://shah-in-boots.github.io/gram/>.
 
     @Manual{,
-      title = {ggm: A Grammar for Exploring and Presenting Cardiac Electrograms},
+      title = {gram: A Grammar for Exploring and Presenting Cardiac Electrograms},
       author = {Anish S. Shah},
       year = {2026},
       note = {R package version 0.0.0.9000},
-      url = {https://shah-in-boots.github.io/ggm/},
+      url = {https://shah-in-boots.github.io/gram/},
     }

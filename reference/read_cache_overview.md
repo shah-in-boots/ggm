@@ -7,8 +7,9 @@ Read an overview cache window
 ``` r
 read_cache_overview(
   cache,
-  begin,
-  end,
+  begin = NULL,
+  end = NULL,
+  interval = NULL,
   channels = NULL,
   level = NULL,
   pixel_width = 1000,
@@ -24,7 +25,17 @@ read_cache_overview(
 
 - begin, end:
 
-  Window bounds in seconds.
+  Times delimiting a half-open range. These follow
+  `EGM::validate_time_parameters()`: time-only character values are
+  elapsed from the record start, dated character values and `POSIXt`
+  objects are absolute, and `difftime` values are elapsed durations.
+  Numeric values are not accepted.
+
+- interval:
+
+  A duration after `begin` that takes precedence over `end`. Numeric
+  values are seconds; compact durations such as `"100 ms"` are also
+  accepted.
 
 - channels:
 

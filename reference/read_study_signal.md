@@ -9,8 +9,9 @@ that uses the parsed header stored in the `StudyCache`.
 ``` r
 read_study_signal(
   cache,
-  begin = 0,
-  end = NA_real_,
+  begin = NULL,
+  end = NULL,
+  interval = NULL,
   channels = NULL,
   units = c("physical", "digital")
 )
@@ -24,7 +25,17 @@ read_study_signal(
 
 - begin, end:
 
-  Window bounds in seconds.
+  Times delimiting a half-open range. These follow
+  `EGM::validate_time_parameters()`: time-only character values are
+  elapsed from the record start, dated character values and `POSIXt`
+  objects are absolute, and `difftime` values are elapsed durations.
+  Numeric values are not accepted.
+
+- interval:
+
+  A duration after `begin` that takes precedence over `end`. Numeric
+  values are seconds; compact durations such as `"100 ms"` are also
+  accepted.
 
 - channels:
 

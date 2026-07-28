@@ -26,7 +26,7 @@ build_study_cache(
 - cache:
 
   A `StudyCache` from
-  [`study_cache()`](https://shah-in-boots.github.io/ggm/reference/study_cache.md).
+  [`study_cache()`](https://shah-in-boots.github.io/gram/reference/study_cache.md).
 
 - bucket_samples:
 

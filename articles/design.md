@@ -23,9 +23,9 @@ it is orange, it is planned but not yet implemented.
 
 ### Goal
 
-`ggm` explores, annotates, and presents cardiac electrophysiology
+`gram` explores, annotates, and presents cardiac electrophysiology
 studies. [EGM](https://shah-in-boots.github.io/EGM/) owns vendor import
-and WFDB-compatible signal/annotation I/O. `ggm` starts after
+and WFDB-compatible signal/annotation I/O. `gram` starts after
 normalization to WFDB and does not duplicate the raw signal.
 
 ### Arms of the project
@@ -59,14 +59,14 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GgmBackend["ggm data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
 
-    EGMIO --> GgmBackend
+    EGMIO --> GramBackend
 ```
 
 ### Study handle
 
-`ggm_study` contains paths, header metadata, record fingerprint, cache
+`gram_study` contains paths, header metadata, record fingerprint, cache
 manifest, and annotation-layer metadata. It contains **no full-study
 signal table**.
 
@@ -312,7 +312,7 @@ prioritizes latency; short selected segments can be rendered as SVG for
 precise print and cross-channel markup. Both consume the same samples,
 annotations, and bookmark state.
 
-`ggm_scene` is a declarative, serializable scene graph plus timeline.
+`gram_scene` is a declarative, serializable scene graph plus timeline.
 Marks bind to data (`annotation id`, `sample`, `channel`), not pixels. R
 code is the authoring surface; the rendered image/animation is its
 preview.
@@ -334,7 +334,7 @@ preview.
 
 Responsibility boundary:
 
-- `ggm_scene`: semantic objects, timing, and explicit final state.
+- `gram_scene`: semantic objects, timing, and explicit final state.
 - SVG compiler: traces, arrows, calipers, labels, and channel layout.
 - anime.js: interpolation and timeline playback only.
 - Exporter: SVG/PDF from the explicit final state; animated HTML from
@@ -475,9 +475,9 @@ it is orange, it is planned but not yet implemented.
 
 ### Goal
 
-`ggm` explores, annotates, and presents cardiac electrophysiology
+`gram` explores, annotates, and presents cardiac electrophysiology
 studies. [EGM](https://shah-in-boots.github.io/EGM/) owns vendor import
-and WFDB-compatible signal/annotation I/O. `ggm` starts after
+and WFDB-compatible signal/annotation I/O. `gram` starts after
 normalization to WFDB and does not duplicate the raw signal.
 
 ### Arms of the project
@@ -511,14 +511,14 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GgmBackend["ggm data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
 
-    EGMIO --> GgmBackend
+    EGMIO --> GramBackend
 ```
 
 ### Study handle
 
-`ggm_study` contains paths, header metadata, record fingerprint, cache
+`gram_study` contains paths, header metadata, record fingerprint, cache
 manifest, and annotation-layer metadata. It contains **no full-study
 signal table**.
 
@@ -764,7 +764,7 @@ prioritizes latency; short selected segments can be rendered as SVG for
 precise print and cross-channel markup. Both consume the same samples,
 annotations, and bookmark state.
 
-`ggm_scene` is a declarative, serializable scene graph plus timeline.
+`gram_scene` is a declarative, serializable scene graph plus timeline.
 Marks bind to data (`annotation id`, `sample`, `channel`), not pixels. R
 code is the authoring surface; the rendered image/animation is its
 preview.
@@ -786,7 +786,7 @@ preview.
 
 Responsibility boundary:
 
-- `ggm_scene`: semantic objects, timing, and explicit final state.
+- `gram_scene`: semantic objects, timing, and explicit final state.
 - SVG compiler: traces, arrows, calipers, labels, and channel layout.
 - anime.js: interpolation and timeline playback only.
 - Exporter: SVG/PDF from the explicit final state; animated HTML from
@@ -927,9 +927,9 @@ it is orange, it is planned but not yet implemented.
 
 ### Goal
 
-`ggm` explores, annotates, and presents cardiac electrophysiology
+`gram` explores, annotates, and presents cardiac electrophysiology
 studies. [EGM](https://shah-in-boots.github.io/EGM/) owns vendor import
-and WFDB-compatible signal/annotation I/O. `ggm` starts after
+and WFDB-compatible signal/annotation I/O. `gram` starts after
 normalization to WFDB and does not duplicate the raw signal.
 
 ### Arms of the project
@@ -963,14 +963,14 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GgmBackend["ggm data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
 
-    EGMIO --> GgmBackend
+    EGMIO --> GramBackend
 ```
 
 ### Study handle
 
-`ggm_study` contains paths, header metadata, record fingerprint, cache
+`gram_study` contains paths, header metadata, record fingerprint, cache
 manifest, and annotation-layer metadata. It contains **no full-study
 signal table**.
 
@@ -1216,7 +1216,7 @@ prioritizes latency; short selected segments can be rendered as SVG for
 precise print and cross-channel markup. Both consume the same samples,
 annotations, and bookmark state.
 
-`ggm_scene` is a declarative, serializable scene graph plus timeline.
+`gram_scene` is a declarative, serializable scene graph plus timeline.
 Marks bind to data (`annotation id`, `sample`, `channel`), not pixels. R
 code is the authoring surface; the rendered image/animation is its
 preview.
@@ -1238,7 +1238,7 @@ preview.
 
 Responsibility boundary:
 
-- `ggm_scene`: semantic objects, timing, and explicit final state.
+- `gram_scene`: semantic objects, timing, and explicit final state.
 - SVG compiler: traces, arrows, calipers, labels, and channel layout.
 - anime.js: interpolation and timeline playback only.
 - Exporter: SVG/PDF from the explicit final state; animated HTML from

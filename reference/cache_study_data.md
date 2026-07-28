@@ -1,6 +1,6 @@
 # Download an example study to the local cache
 
-Fetch a `ggm` example WFDB record to a local directory, downloading it
+Fetch a `gram` example WFDB record to a local directory, downloading it
 once and reusing the cached copy thereafter. A WFDB record is a pair of
 files that together form one dataset — a `.hea` text header and a `.dat`
 binary signal — and both are fetched.
@@ -10,7 +10,7 @@ binary signal — and both are fetched.
 ``` r
 cache_study_data(
   dataset = "ort",
-  dir = tools::R_user_dir("ggm", "cache"),
+  dir = tools::R_user_dir("gram", "cache"),
   force = FALSE,
   quiet = FALSE
 )
@@ -26,7 +26,7 @@ cache_study_data(
 - dir:
 
   Directory to cache into. Defaults to the package's per-user cache
-  (`tools::R_user_dir("ggm", "cache")`), the CRAN-sanctioned location
+  (`tools::R_user_dir("gram", "cache")`), the CRAN-sanctioned location
   for downloaded data. Pass e.g. `"data-raw"` to download elsewhere.
 
 - force:

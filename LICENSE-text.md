@@ -1,4 +1,4 @@
 # License
 
     YEAR: 2026
-    COPYRIGHT HOLDER: ggm authors
+    COPYRIGHT HOLDER: gram authors

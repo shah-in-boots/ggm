@@ -1,0 +1,818 @@
+# The gram style lab
+
+## How to use this document
+
+This page is the atomic workspace for gram’s visual identity. It is a
+*style lab*: a set of small, self-contained examples that together show
+how the package should look and move. Nothing here touches Shiny, the
+package code, or real data — this is tier zero of the testing ladder.
+
+The workflow:
+
+1.  Open this `.qmd` next to a terminal and run
+    `quarto preview gram-style-lab.qmd`. The page re-renders on save.
+2.  Every visual element on this page traces back to a code chunk *on*
+    this page. CSS chunks and JS chunks are live: Quarto injects them
+    into the rendered HTML, so what you read is what runs.
+3.  Each section ends with a **Knobs** callout listing the two or three
+    values most worth changing. Edit, save, watch the page update.
+4.  When a section looks right, its chunk is the file you port — the
+    final section maps every chunk to its destination in the package.
+
+Two practical notes. The rendered page loads anime.js, uPlot, and the
+IBM Plex fonts from CDNs, so it needs an internet connection to view
+(the package itself will vendor these through htmlwidgets, as uPlot
+already is). And this document is meant for the website, not the package
+build: place it at `vignettes/articles/gram-style-lab.qmd`, which
+pkgdown renders but CRAN never sees
+(`usethis::use_article("gram-style-lab")` sets up the folder and the
+`.Rbuildignore` entry for you).
+
+## A ninety-second orientation
+
+You know R well, so here is the shortest honest mapping of the three
+browser languages onto ideas you already have.
+
+**HTML is the data.** It declares what exists on the page — a nested
+structure of elements, each with a tag (`div`, `svg`, `button`),
+optional attributes, and an `id` or `class` used to find it later. Think
+of it as the data frame: rows exist, but nothing says how they look or
+behave.
+
+**CSS is `theme()` for the whole app.** A CSS rule is a *selector*
+(which elements does this apply to — `.gg-panel` means “everything with
+class `gg-panel`”, like a
+[`filter()`](https://rdrr.io/r/stats/filter.html) on the page) plus
+properties (what to set). The feature doing the heavy lifting in this
+document is the *custom property*: a variable like `--gg-ink` defined
+once at the root and readable from every rule. It is a global
+[`options()`](https://rdrr.io/r/base/options.html) list for style.
+Change `--gg-ink` in one place and every line of “ink” on the page
+changes with it.
+
+**JavaScript is the verbs.** The one anime.js call to internalize is:
+
+``` js
+animate(targets, { property: value, duration: 450, ease: "outExpo" })
+```
+
+`targets` is a selector, and anime applies the animation to *every*
+element it matches — vectorized, like
+[`lapply()`](https://rdrr.io/r/base/lapply.html) over matched elements
+with interpolation over time. The handful of v4 words used below:
+
+| word | what it does |
+|----|----|
+| `animate(t, p)` | tween properties `p` on all elements matching `t` |
+| `createTimeline()` | chain several `animate()` steps with overlap control |
+| `stagger(80)` | give the *n*-th matched element an extra `n × 80` ms delay |
+| `svg.createDrawable(t)` | wrap stroked SVG shapes so their `draw` state can tween |
+| `ease: "outExpo"` | the easing curve; fast start, long settle |
+
+That last row is the whole secret of the anime.js homepage effect: a
+stroked SVG shape can report “how much of me is drawn” as a value from 0
+to 1, and `createDrawable` makes that value tweenable. Animate it from 0
+to 1 and the shape draws itself like pen on paper.
+
+## Design tokens
+
+Everything starts here. One CSS chunk defines the palette, the type, the
+stroke weights, and the motion durations. Every later example —
+including the uPlot canvas theming and the anime.js timings — reads from
+these tokens, which is what makes the page feel like one hand drew it.
+
+The palette follows a drafting-room convention that suits gram’s
+subject: **graphite** ink for the signal itself, **drafting blue** for
+annotations and interactive elements, and **red pencil** reserved for
+the single thing that must be seen — a detected event, an unsaved mark.
+Color encodes role, not decoration.
+
+``` css
+/*-- gram design tokens -----------------------------------*/
+/*-- destined for: inst/assets/gram-tokens.css ------------*/
+
+:root {
+  /* paper & ink */
+  --gg-paper:     #f5f4ef;   /* chart-paper white       */
+  --gg-paper-2:   #edece4;   /* recessed surfaces       */
+  --gg-grid:      #e7e6db;   /* faint sheet grid        */
+  --gg-ink:       #26271f;   /* graphite: signal, text  */
+  --gg-ink-soft:  #75766a;   /* pencil gray: secondary  */
+  --gg-ink-faint: #d6d5c9;   /* hairlines, axes, rules  */
+  --gg-anno:      #1e5288;   /* drafting blue: marks    */
+  --gg-red:       #b13425;   /* red pencil: the event   */
+
+  /* type */
+  --gg-font-ui:   "IBM Plex Sans", system-ui, sans-serif;
+  --gg-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* strokes */
+  --gg-stroke-hair: 1px;     /* rules, borders          */
+  --gg-stroke-line: 1.5px;   /* signal traces           */
+  --gg-stroke-draw: 2px;     /* drawn annotations       */
+
+  /* motion: the shared clock, read by css AND js */
+  --gg-dur-quick: 180ms;     /* hovers, toggles         */
+  --gg-dur-flow:  450ms;     /* panels, transitions     */
+  --gg-dur-draw:  1400ms;    /* pen-on-paper drawing    */
+  --gg-ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* re-skin this article so the lab sits on its own paper */
+body {
+  background: var(--gg-paper);
+  color: var(--gg-ink);
+  font-family: var(--gg-font-ui);
+}
+h1, h2, h3, h4, .title { font-family: var(--gg-font-ui); }
+h2 {
+  border-bottom: var(--gg-stroke-hair) solid var(--gg-ink-faint);
+  padding-bottom: 0.3rem;
+}
+.subtitle, #TOC { color: var(--gg-ink-soft); }
+a { color: var(--gg-anno); }
+code { font-family: var(--gg-font-mono); color: var(--gg-ink); }
+div.sourceCode {
+  background: var(--gg-paper-2);
+  border: var(--gg-stroke-hair) solid var(--gg-ink-faint);
+  border-radius: 2px;
+}
+table { font-size: 0.95rem; }
+```
+
+The swatches below are ordinary `div`s whose backgrounds point at the
+tokens — live proof the variables resolve, and the fastest way to judge
+a palette edit.
+
+`--gg-paper`
+
+`--gg-paper-2`
+
+`--gg-ink-faint`
+
+`--gg-ink-soft`
+
+`--gg-ink`
+
+`--gg-anno`
+
+`--gg-red`
+
+``` css
+/* swatch strip: lab furniture, not part of the theme */
+.gg-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.gg-swatches div {
+  flex: 1 1 90px;
+  min-height: 58px;
+  padding: 6px;
+  border: var(--gg-stroke-hair) solid var(--gg-ink-faint);
+  border-radius: 2px;
+  font-size: 11px;
+  display: flex;
+  align-items: flex-end;
+}
+.gg-swatches code {
+  font-size: 10px;
+  background: none;
+  color: inherit;
+}
+```
+
+> **Knobs to turn**
+>
+> Change `--gg-anno` and watch every annotation, link, and blue plot
+> series on this page move with it. Swap both font stacks to try a
+> different voice. Nudge `--gg-paper` warmer (`#f7f4ec`) or cooler
+> (`#f4f4f1`) to feel how much the background temperature changes the
+> whole sheet.
+
+## The sheet
+
+Demos in this lab sit on a “sheet”: a bordered panel with the faint grid
+of chart-recorder paper. In the app, the same treatment becomes the plot
+container. The grid is drawn with two repeating CSS gradients — no
+images — so its pitch and color are just more tokens to turn.
+
+``` css
+/*-- sheet + shared chrome --------------------------------*/
+/*-- destined for: the shiny htmlTemplate skin ------------*/
+
+.gg-sheet {
+  position: relative;
+  margin: 1rem 0 0.5rem;
+  padding: 1.1rem;
+  background:
+    linear-gradient(var(--gg-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gg-grid) 1px, transparent 1px),
+    var(--gg-paper);
+  background-size: 24px 24px, 24px 24px, auto;
+  border: var(--gg-stroke-hair) solid var(--gg-ink-faint);
+  border-radius: 2px;
+}
+
+/* small caps label, used on sheets and panels alike */
+.gg-kicker {
+  font-family: var(--gg-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gg-ink-soft);
+}
+```
+
+## The motion vocabulary
+
+One JS chunk defines how *everything* moves. Two decisions here do most
+of the work for visual consistency:
+
+- **Durations live in the CSS tokens.** `cssToken()` reads them back
+  out, so a CSS hover transition and an anime.js timeline tick to the
+  same clock. Retune `--gg-dur-flow` once; both worlds follow.
+- **Every duration passes through `ggDur()`**, which collapses to
+  instant when the visitor’s OS asks for reduced motion. Polish includes
+  the people who opt out of it.
+
+``` js
+//-- gram motion vocabulary -------------------------------
+//-- destined for: inst/htmlwidgets/lib/gram-motion.js ----
+
+// pull the verbs out of the anime.js global once
+const { animate, createTimeline, stagger, svg } = anime;
+
+// read one design token from css, so js + css agree
+function cssToken(name) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name).trim();
+}
+
+// honor the os-level "reduce motion" preference
+const ggReduceMotion =
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// scale a duration, collapsing to instant when reduced
+function ggDur(ms) { return ggReduceMotion ? 0 : ms; }
+
+// shared clock + curves; durations come from tokens.css
+const ggMotion = {
+  quick:    parseFloat(cssToken("--gg-dur-quick")),
+  flow:     parseFloat(cssToken("--gg-dur-flow")),
+  draw:     parseFloat(cssToken("--gg-dur-draw")),
+  easeOut:  "outExpo",
+  easeFlow: "inOutQuad",
+};
+
+// draw stroked svg shapes like pen on paper
+function ggDrawIn(targets, opts) {
+  opts = opts || {};
+  return animate(svg.createDrawable(targets), {
+    draw:     ["0 0", "0 1"],
+    duration: ggDur(opts.duration || ggMotion.draw),
+    delay:    stagger(opts.stagger || 0),
+    ease:     opts.ease || ggMotion.easeFlow,
+  });
+}
+
+// rise + fade, for panels entering a view
+function ggRiseIn(targets, opts) {
+  opts = opts || {};
+  return animate(targets, {
+    opacity:    [0, 1],
+    translateY: [14, 0],
+    duration:   ggDur(opts.duration || ggMotion.flow),
+    delay:      stagger(opts.stagger || 80),
+    ease:       ggMotion.easeOut,
+  });
+}
+
+// plain fade, for labels and captions
+function ggFadeIn(targets, opts) {
+  opts = opts || {};
+  return animate(targets, {
+    opacity:  [0, 1],
+    duration: ggDur(opts.duration || ggMotion.flow),
+    delay:    stagger(opts.stagger || 60),
+    ease:     ggMotion.easeFlow,
+  });
+}
+```
+
+A minimal proof the vocabulary works — five tick marks drawn in with a
+stagger, the “hello world” of `ggDrawIn()`:
+
+motion check
+![](data:image/svg+xml;base64,PHN2ZyBpZD0iZ2dUaWNrcyIgdmlld2JveD0iMCAwIDY0MCA0MCIgc3R5bGU9IndpZHRoOiAxMDAlOyBkaXNwbGF5OiBibG9jazsiPjxwYXRoIGNsYXNzPSJ0aWNrIiBkPSJNICA2MCAzMCBMICA4MCAxMCIgLz48cGF0aCBjbGFzcz0idGljayIgZD0iTSAxOTAgMzAgTCAyMTAgMTAiIC8+PHBhdGggY2xhc3M9InRpY2siIGQ9Ik0gMzIwIDMwIEwgMzQwIDEwIiAvPjxwYXRoIGNsYXNzPSJ0aWNrIiBkPSJNIDQ1MCAzMCBMIDQ3MCAxMCIgLz48cGF0aCBjbGFzcz0idGljayIgZD0iTSA1ODAgMzAgTCA2MDAgMTAiIC8+PC9zdmc+)
+
+Replay
+
+``` css
+/* lab svg defaults: strokes only, round pen tips */
+#ggTicks .tick {
+  stroke: var(--gg-anno);
+  stroke-width: var(--gg-stroke-draw);
+  stroke-linecap: round;
+  fill: none;
+}
+```
+
+``` js
+// replay hook for the tick demo
+function playTicks() {
+  ggDrawIn("#ggTicks .tick", { duration: 500, stagger: 90 });
+}
+playTicks();
+```
+
+> **Knobs to turn**
+>
+> The `stagger` value is the personality dial: 90 ms reads deliberate,
+> 30 ms reads eager. Try `ease: "outElastic(1, .6)"` in `playTicks()`
+> for a pen with a springy nib — then decide the lab is better without
+> it. Restraint is a choice you get to make knowingly.
+
+## The signature: a schematic that draws itself
+
+This is the moment from the anime.js homepage, rebuilt with gram’s own
+subject matter: a recording sheet with three channels, an event, and a
+checker’s marks. The frame draws first, the traces sweep in like pen
+recorders, the blue annotation marks arrive, red circles the event, and
+only then do the labels fade up. Order tells the story: paper, signal,
+interpretation.
+
+The trace paths are not hand-typed — a small function generates them
+from a sine plus jitter, the same shape of code that will one day be
+real data. `createDrawable` does not care where a path came from.
+
+![](data:image/svg+xml;base64,PHN2ZyBpZD0iZ2dTY2hlbWF0aWMiIHZpZXdib3g9IjAgMCA2NDAgMzAwIiBzdHlsZT0id2lkdGg6IDEwMCU7IGRpc3BsYXk6IGJsb2NrOyI+PCEtLSBzaGVldCBmcmFtZSAtLT48cGF0aCBjbGFzcz0iZ2ctZnJhbWUiIGQ9Ik0gOCA4IEggNjMyIFYgMjkyIEggOCBaIiAvPjwhLS0gY2hhbm5lbCB0cmFjZXM7IGQgYXR0cmlidXRlcyBhcmUgZmlsbGVkIGluIGJ5IGpzIC0tPjxwYXRoIGNsYXNzPSJnZy10cmFjZSIgaWQ9ImdnVHIxIiAvPjxwYXRoIGNsYXNzPSJnZy10cmFjZSIgaWQ9ImdnVHIyIiAvPjxwYXRoIGNsYXNzPSJnZy10cmFjZSIgaWQ9ImdnVHIzIiAvPjwhLS0gY2hlY2tlcidzIG1hcmtzOiBibHVlIGJyYWNrZXQgKyBsZWFkZXIsIHJlZCBjaXJjbGUgLS0+PHBhdGggY2xhc3M9ImdnLWFubm8tbWFyayIgZD0iTSAzNzIgMTAwIHYgNiBNIDM3MiAxMDMgSCA0MjAgTSA0MjAgMTAwIHYgNiIgLz48cGF0aCBjbGFzcz0iZ2ctYW5uby1tYXJrIiBkPSJNIDQ2NiA0MCBRIDQzOCAzMCA0MTAgMzgiIC8+PGNpcmNsZSBjbGFzcz0iZ2ctYW5uby1ldmVudCIgY3g9IjM5NiIgY3k9IjQyIiByPSIxMyI+PC9jaXJjbGU+PCEtLSBsYWJlbHMgZmFkZSBpbiBsYXN0IC0tPjx0ZXh0IGNsYXNzPSJnZy1sYWJlbCIgeD0iMTYiIHk9IjgyIiBvcGFjaXR5PSIwIj5jaCAwMTwvdGV4dD48dGV4dCBjbGFzcz0iZ2ctbGFiZWwiIHg9IjE2IiB5PSIxNjIiIG9wYWNpdHk9IjAiPmNoIDAyPC90ZXh0Pjx0ZXh0IGNsYXNzPSJnZy1sYWJlbCIgeD0iMTYiIHk9IjI0MiIgb3BhY2l0eT0iMCI+Y2ggMDM8L3RleHQ+PHRleHQgY2xhc3M9ImdnLWxhYmVsIGdnLWxhYmVsLWFubm8iIHg9IjQ3MiIgeT0iNDAiIG9wYWNpdHk9IjAiPmV2ZW50IDA3PC90ZXh0Pjx0ZXh0IGNsYXNzPSJnZy1sYWJlbCIgeD0iNjI0IiB5PSIyODQiIHRleHQtYW5jaG9yPSJlbmQiIG9wYWNpdHk9IjAiPmdyYW0g4oCUIHNoZWV0IDAxIC8gNjAgcyBAIDI1NiBoejwvdGV4dD48L3N2Zz4=)
+
+Replay
+
+``` css
+/* schematic roles: graphite signal, blue marks, red event */
+#ggSchematic .gg-frame {
+  stroke: var(--gg-ink-soft);
+  stroke-width: var(--gg-stroke-hair);
+  fill: none;
+}
+#ggSchematic .gg-trace {
+  stroke: var(--gg-ink);
+  stroke-width: var(--gg-stroke-line);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+#ggSchematic .gg-anno-mark {
+  stroke: var(--gg-anno);
+  stroke-width: var(--gg-stroke-draw);
+  stroke-linecap: round;
+  fill: none;
+}
+#ggSchematic .gg-anno-event {
+  stroke: var(--gg-red);
+  stroke-width: var(--gg-stroke-draw);
+  fill: none;
+}
+#ggSchematic .gg-label {
+  font-family: var(--gg-font-mono);
+  font-size: 10px;
+  fill: var(--gg-ink-soft);
+}
+#ggSchematic .gg-label-anno { fill: var(--gg-anno); }
+```
+
+``` js
+//-- the self-drawing schematic ---------------------------
+
+// pen-plotted channel path: sine + jitter (+ one event)
+function ggTracePath(y0, amp, freq, phase, spikeAt) {
+  let d = "";
+  for (let x = 44; x <= 596; x += 4) {
+    const t = (x - 44) / 552;
+    let y = y0 + Math.sin(2 * Math.PI * freq * t + phase) * amp;
+    y += (Math.random() - 0.5) * 3;
+    if (spikeAt) {
+      const dx = Math.abs(x - spikeAt);
+      if (dx < 14) y -= (14 - dx) * 2.6;
+    }
+    d += (x === 44 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+  }
+  return d;
+}
+
+// lay fresh "recordings" onto the three channels
+function ggDrawTraces() {
+  document.getElementById("ggTr1")
+    .setAttribute("d", ggTracePath(78, 15, 4.0, 0.0, 396));
+  document.getElementById("ggTr2")
+    .setAttribute("d", ggTracePath(158, 11, 2.6, 1.3, null));
+  document.getElementById("ggTr3")
+    .setAttribute("d", ggTracePath(238, 13, 3.2, 2.4, null));
+}
+
+// the orchestrated moment: paper, signal, interpretation
+function playSchematic() {
+  ggDrawTraces();
+  const tl = createTimeline({
+    defaults: { ease: ggMotion.easeFlow },
+  });
+  tl.add(svg.createDrawable("#ggSchematic .gg-frame"),
+         { draw: ["0 0", "0 1"], duration: ggDur(700) })
+    .add(svg.createDrawable("#ggSchematic .gg-trace"),
+         { draw: ["0 0", "0 1"], duration: ggDur(1500),
+           delay: stagger(ggDur(180)) }, "-=250")
+    .add(svg.createDrawable("#ggSchematic .gg-anno-mark"),
+         { draw: ["0 0", "0 1"], duration: ggDur(550),
+           delay: stagger(ggDur(140)) }, "-=500")
+    .add(svg.createDrawable("#ggSchematic .gg-anno-event"),
+         { draw: ["0 0", "0 1"], duration: ggDur(450) }, "-=200")
+    .add("#ggSchematic .gg-label",
+         { opacity: [0, 1], duration: ggDur(400),
+           delay: stagger(ggDur(70)) }, "-=200");
+}
+playSchematic();
+```
+
+Three things worth noticing in `playSchematic()`:
+
+- **Timeline positions** like `"-=250"` start a step 250 ms before the
+  previous one ends. Overlap is what makes a sequence feel fluid instead
+  of mechanical; remove the offsets and feel it turn stilted.
+- **`createTimeline` + a shared `defaults`** is the orchestration
+  pattern the package’s `fx_seq()` / `fx_par()` DSL compiles down to.
+  What you tune here by hand is what the R layer will emit.
+- **Regenerated traces on every replay.** The drawing is cheap; only the
+  choreography is precious.
+
+> **Knobs to turn**
+>
+> `--gg-dur-draw` sets the whole page’s drawing tempo. The stagger of
+> 180 ms between traces is what sells “three pens, one carriage” — set
+> it to 0 to see them draw as one. Move the event by changing `396` in
+> `ggDrawTraces()` and the three mark coordinates in the SVG; when that
+> gets tedious, you have rediscovered why `fx_arrow()` takes data
+> coordinates, not pixels.
+
+## Interface chrome: panels that rise in
+
+Shiny does not have to look like Shiny — the “gallery look” is just
+Bootstrap defaults. These panels are three plain `div`s using gram’s
+real nouns, entering with `ggRiseIn()`. In the app, this is how a
+sidebar, a settings drawer, or a scene’s caption card should arrive.
+
+channels
+
+32 loaded
+
+Fp1 … O2 @ 256 Hz
+
+viewport
+
+00:12:04 – 00:12:34
+
+30 s window · sweep 15 mm/s
+
+annotations
+
+14 marks
+
+2 unsaved
+
+Replay
+
+``` css
+/* raised cards; promote the background to a token if kept */
+.gg-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1rem;
+}
+.gg-panel {
+  flex: 1 1 180px;
+  padding: 0.8rem 0.9rem;
+  background: #fbfaf6;
+  border: var(--gg-stroke-hair) solid var(--gg-ink-faint);
+  border-radius: 2px;
+}
+.gg-panel-value {
+  font-weight: 600;
+  font-size: 1.02rem;
+  margin: 0.15rem 0 0.1rem;
+}
+.gg-panel-note {
+  font-family: var(--gg-font-mono);
+  font-size: 11px;
+  color: var(--gg-ink-soft);
+}
+```
+
+``` js
+// replay hook for the panel demo
+function playPanels() {
+  ggRiseIn("#ggPanels .gg-panel");
+}
+playPanels();
+```
+
+> **Knobs to turn**
+>
+> `translateY: [14, 0]` in `ggRiseIn()` is the size of the “rise” — past
+> ~20 px it starts to feel like a jump, not a settle. The 80 ms stagger
+> is doing the same job as the schematic’s 180 ms, scaled down because
+> chrome should be quicker than content.
+
+## Micro-interactions in pure CSS
+
+Not everything should go through anime.js. Constant, cheap interactions
+— hovers, focus rings, toggles — belong to CSS transitions, which cost
+nothing and never miss. Cohesion survives because they read the *same*
+duration and easing tokens the JS does.
+
+The hover underline below is the CSS cousin of `createDrawable`: a 2 px
+rule scaling from `scaleX(0)` to `scaleX(1)`, left to right, like a
+quick pen stroke under the word.
+
+``` css
+/*-- buttons: outlined, mono, underline draws on hover ----*/
+.gg-btn {
+  position: relative;
+  display: inline-block;
+  padding: 0.45rem 0.9rem 0.5rem;
+  border: var(--gg-stroke-hair) solid var(--gg-ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--gg-ink);
+  font-family: var(--gg-font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    color        var(--gg-dur-quick) var(--gg-ease-out),
+    border-color var(--gg-dur-quick) var(--gg-ease-out);
+}
+.gg-btn::after {
+  content: "";
+  position: absolute;
+  left: 0.55rem;
+  right: 0.55rem;
+  bottom: 4px;
+  height: 2px;
+  background: var(--gg-anno);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--gg-dur-flow) var(--gg-ease-out);
+}
+.gg-btn:hover,
+.gg-btn:focus-visible {
+  color: var(--gg-anno);
+  border-color: var(--gg-anno);
+}
+.gg-btn:hover::after,
+.gg-btn:focus-visible::after { transform: scaleX(1); }
+.gg-btn:focus-visible {
+  outline: 2px solid var(--gg-anno);
+  outline-offset: 2px;
+}
+.gg-replay { margin: 0.4rem 0 1rem; }
+
+/* motion opt-out applies to css transitions too */
+@media (prefers-reduced-motion: reduce) {
+  .gg-btn, .gg-btn::after { transition: none; }
+}
+```
+
+Play sweep
+
+Add annotation
+
+Export scene
+
+The rule of thumb this section encodes: **CSS transitions for reactions,
+anime.js for narration.** A hover reacts to the user; the schematic
+tells them a story. Both tick to `--gg-dur-*`.
+
+## Theming uPlot to match the paper
+
+uPlot draws to a `<canvas>`, which cannot read CSS classes — but it
+*can* be handed values that came from CSS. `cssToken()` bridges the gap:
+axis colors, grid lines, and fonts are pulled from the tokens at
+construction time, so the canvas obeys the same theme file as everything
+else. This is exactly the trick `backend_uplot.R` should use when it
+builds default opts.
+
+uplot / themed from tokens
+
+``` js
+//-- uplot themed from the same tokens --------------------
+
+// shared axis style built from tokens
+function ggAxis() {
+  return {
+    stroke: cssToken("--gg-ink-soft"),
+    font: "11px " + cssToken("--gg-font-mono"),
+    grid:  { stroke: cssToken("--gg-grid"), width: 1 },
+    ticks: { stroke: cssToken("--gg-ink-faint"), width: 1 },
+  };
+}
+
+// two-channel opts; graphite signal, drafting-blue second
+function ggPlotOpts(width) {
+  return {
+    width: width,
+    height: 220,
+    scales: { x: { time: false } },
+    legend: { live: false },
+    cursor: { points: { size: 7 } },
+    series: [
+      { label: "t (s)" },
+      { label: "ch 01", stroke: cssToken("--gg-ink"),  width: 1.5 },
+      { label: "ch 02", stroke: cssToken("--gg-anno"), width: 1.5 },
+    ],
+    axes: [ggAxis(), ggAxis()],
+  };
+}
+
+// fake recording: two sines + noise, one clear event
+function ggFakeData(n) {
+  const xs = [], ch1 = [], ch2 = [];
+  for (let i = 0; i < n; i++) {
+    const t = i / 100;
+    xs.push(t);
+    ch1.push(Math.sin(2 * Math.PI * 1.3 * t) * 0.6
+             + (Math.random() - 0.5) * 0.16);
+    ch2.push(Math.sin(2 * Math.PI * 0.7 * t + 1) * 0.4
+             + (Math.random() - 0.5) * 0.12 - 1.8);
+  }
+  const k = Math.round(n * 0.62);
+  ch1[k - 1] += 0.9;
+  ch1[k]     += 1.7;
+  ch1[k + 1] += 0.7;
+  return { data: [xs, ch1, ch2], eventIdx: k };
+}
+
+// build the themed demo plot
+const ggElA = document.getElementById("ggPlotA");
+new uPlot(ggPlotOpts(ggElA.clientWidth || 620),
+          ggFakeData(600).data, ggElA);
+```
+
+``` css
+/* uplot's dom parts (legend) can be styled directly */
+.u-legend {
+  font-family: var(--gg-font-mono);
+  font-size: 11px;
+  color: var(--gg-ink-soft);
+}
+```
+
+One honest limitation, stated so it does not surprise you: these demo
+plots are sized once at load and do not respond to window resizes. The
+package handles resizing in the htmlwidgets layer; the lab keeps the
+code minimal.
+
+> **Knobs to turn**
+>
+> Series `width: 1.5` matches `--gg-stroke-line` by convention — canvas
+> takes numbers, not CSS lengths, so keep them in agreement by hand (or
+> have `backend_uplot.R` parse the token, the better long-term answer).
+> Set `grid.stroke` to `--gg-ink-faint` for a more assertive grid, or
+> `"transparent"` for a bare sheet.
+
+## The payoff: drawn annotations over live axes
+
+Everything converges here: a themed uPlot, an SVG overlay, and marks
+that draw themselves *at data coordinates*. The overlay `<svg>` is
+appended into `plot.over` — uPlot’s own layer covering exactly the
+plotting area — so `valToPos()` pixel positions land with no offset
+math. A red ring circles the event, a blue leader sweeps in, a label
+fades up. This is `fx_highlight()` + `fx_arrow()` in miniature.
+
+annotation / data coordinates
+
+Replay
+
+``` css
+/*-- overlay + drawn marks --------------------------------*/
+.gg-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.gg-overlay .gg-mark-anno {
+  stroke: var(--gg-anno);
+  stroke-width: var(--gg-stroke-draw);
+  stroke-linecap: round;
+  fill: none;
+}
+.gg-overlay .gg-mark-event {
+  stroke: var(--gg-red);
+  stroke-width: var(--gg-stroke-draw);
+  fill: none;
+}
+.gg-overlay .gg-mark-label {
+  font-family: var(--gg-font-mono);
+  font-size: 11px;
+  fill: var(--gg-anno);
+}
+```
+
+``` js
+//-- drawn annotations over live axes ---------------------
+
+// second themed plot for the annotation demo
+const ggElB = document.getElementById("ggPlotB");
+const ggFakeB = ggFakeData(600);
+const ggPlotB = new uPlot(
+  ggPlotOpts(ggElB.clientWidth || 620), ggFakeB.data, ggElB);
+
+// svg overlay inside uplot's own cursor layer, so
+// valToPos coordinates land with no offset math
+const ggNS = "http://www.w3.org/2000/svg";
+const ggOverlay = document.createElementNS(ggNS, "svg");
+ggOverlay.setAttribute("class", "gg-overlay");
+ggPlotB.over.appendChild(ggOverlay);
+
+// namespaced svg element with attributes, in one call
+function ggSvgEl(tag, attrs) {
+  const el = document.createElementNS(ggNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+// place marks in data space, draw them in pixel space
+function playAnnotate() {
+  ggOverlay.replaceChildren();
+  const i = ggFakeB.eventIdx;
+  const x = ggPlotB.valToPos(ggFakeB.data[0][i], "x");
+  const y = ggPlotB.valToPos(ggFakeB.data[1][i], "y");
+
+  const leader = ggSvgEl("path", {
+    class: "gg-mark-anno gg-mark-draw",
+    d: "M " + (x - 78) + " " + (y + 52) +
+       " Q " + (x - 40) + " " + (y + 46) +
+       " " + (x - 7) + " " + (y + 14),
+  });
+  const ring = ggSvgEl("circle", {
+    class: "gg-mark-event gg-mark-draw",
+    cx: x, cy: y, r: 12,
+  });
+  const label = ggSvgEl("text", {
+    class: "gg-mark-label",
+    x: x - 148, y: y + 56, opacity: 0,
+  });
+  label.textContent = "detected event";
+  ggOverlay.append(leader, ring, label);
+
+  // vocabulary for the common case ...
+  ggDrawIn(".gg-overlay .gg-mark-draw",
+           { duration: 550, stagger: 160 });
+  // ... raw animate() when you need one-off control
+  animate(label, {
+    opacity:  [0, 1],
+    duration: ggDur(350),
+    delay:    ggDur(600),
+    ease:     ggMotion.easeFlow,
+  });
+}
+playAnnotate();
+```
+
+The pattern to internalize: **positions are computed from data values at
+draw time.** Zoom or resize the plot and these pixels go stale — which
+is precisely why the package routes every animation frame through one
+`onUpdate` repaint that calls `valToPos()` fresh. The lab redraws only
+on replay; the app redraws on every frame. Same idea, different clock.
+
+## Porting map
+
+When a chunk here looks right, this is where it goes:
+
+| chunk on this page | destination in gram |
+|----|----|
+| design tokens (CSS) | `inst/assets/gram-tokens.css`, listed in the widget’s YAML deps and the app skin |
+| sheet + chrome + buttons (CSS) | the Shiny `htmlTemplate()` skin — Shiny keeps the reactive server, loses the Bootstrap look |
+| motion vocabulary (JS) | `inst/htmlwidgets/lib/gram-motion.js`, loaded before `gram-anim.js`; `ggDrawIn()` and friends become the primitives directives call |
+| schematic timeline (JS) | the target shape that `fx_seq()` / `fx_par()` specs compile to inside `gram-anim.js` |
+| uPlot theming (JS) | default opts in `backend_uplot.R`, built with the same `cssToken()` bridge at widget init |
+| overlay annotation (JS) | already your `fx_*` overlay contract — here written inline, in the package owned by the dispatcher and repainted via `onUpdate` |
+
+Two habits carry over with the files. First, tokens are the only source
+of truth: any new color or duration gets a `--gg-*` name before it gets
+used. Second, the reduced-motion guard travels with the motion file —
+`ggDur()` wraps every duration in the package too.
+
+## Ideas to try next
+
+- **Scroll-triggered drawing.** anime.js v4 has an `onScroll` module;
+  the schematic could draw as it enters the viewport — a natural fit for
+  the pkgdown site’s front page.
+- **A page-load overture.** One short timeline when the app opens: sheet
+  frame, then panels, then the first sweep. The lab’s schematic is the
+  storyboard.
+- **The navigator strip.** A whole-study overview as a long thin sheet
+  with a drawn viewport bracket — sketch it here first, as one more
+  atomic example, before it becomes a module.
+- **Vendor the assets.** Once stable, swap the CDN `<script>` tags for
+  package-local copies via the widget’s YAML, and this page becomes
+  renderable offline.
