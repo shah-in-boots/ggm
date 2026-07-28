@@ -13,8 +13,8 @@
 ^\.claude$
 ^data-raw$
 ^vignettes/\.quarto$
-^vignettes/*_files$
+^vignettes/.*_files$
 ^branding$
 ^vignettes/articles/\.quarto$
-^vignettes/articles/*_files$
+^vignettes/articles/.*_files$
 ^vignettes/articles$
