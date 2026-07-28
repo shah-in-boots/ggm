@@ -52,7 +52,7 @@ view_uplot <- function(cache,
   )
   series <- lapply(channelNames, function(channel) list(label = channel))
 
-  ggm_plot(
+  gram_plot(
     columns = columns,
     scale = list(kind = "elapsed", unit = "s"),
     series = series,

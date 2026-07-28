@@ -1,0 +1,18 @@
+# load order matters:
+#   uplot         -> library itself
+#   gram-dispatch -> creates window.GRAM (registry + shiny router)
+#   adapter       -> registers itself into GRAM.adapters
+# gram_plot.js (the binding) is loaded automatically by name
+dependencies:
+  - name: uplot
+    version: 1.6.32
+    src: htmlwidgets/lib/uplot
+    script: uPlot.iife.min.js
+    stylesheet: uPlot.min.css
+  - name: gram-core
+    version: 0.1.0
+    src: htmlwidgets/lib/gram
+    stylesheet: gram-uplot.css
+    script:
+      - gram-dispatch.js
+      - gram-adapter-uplot.js

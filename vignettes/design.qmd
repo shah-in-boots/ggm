@@ -49,8 +49,8 @@ The stubs are aggregated in a Mermaid diagram to serve as a visual map of progre
 
 ## Goal
 
-`ggm` explores, annotates, and presents cardiac electrophysiology studies.
-`{EGM}` owns vendor import and WFDB-compatible signal/annotation I/O. `ggm`
+`gram` explores, annotates, and presents cardiac electrophysiology studies.
+`{EGM}` owns vendor import and WFDB-compatible signal/annotation I/O. `gram`
 starts after normalization to WFDB and does not duplicate the raw signal.
 
 ## Arms of the project
@@ -87,14 +87,14 @@ flowchart LR
 %%| label: data-backend-map
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GgmBackend["ggm data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
 
-    EGMIO --> GgmBackend
+    EGMIO --> GramBackend
 ```
 
 ## Study handle
 
-`ggm_study` contains paths, header metadata, record fingerprint, cache manifest,
+`gram_study` contains paths, header metadata, record fingerprint, cache manifest,
 and annotation-layer metadata. It contains **no full-study signal table**.
 
 ```{r}
@@ -310,7 +310,7 @@ latency; short selected segments can be rendered as SVG for precise print and
 cross-channel markup. Both consume the same samples, annotations, and bookmark
 state.
 
-`ggm_scene` is a declarative, serializable scene graph plus timeline. Marks bind
+`gram_scene` is a declarative, serializable scene graph plus timeline. Marks bind
 to data (`annotation id`, `sample`, `channel`), not pixels. R code is the authoring
 surface; the rendered image/animation is its preview.
 
@@ -328,7 +328,7 @@ surface; the rendered image/animation is its preview.
 
 Responsibility boundary:
 
-- `ggm_scene`: semantic objects, timing, and explicit final state.
+- `gram_scene`: semantic objects, timing, and explicit final state.
 - SVG compiler: traces, arrows, calipers, labels, and channel layout.
 - anime.js: interpolation and timeline playback only.
 - Exporter: SVG/PDF from the explicit final state; animated HTML from the same

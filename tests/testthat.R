@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(ggm)
+library(gram)
 
-test_check("ggm")
+test_check("gram")

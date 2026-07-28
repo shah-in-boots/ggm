@@ -4,12 +4,12 @@
 # thing the presentation renderer consumes.
 #
 # The grammar is R-shaped but it is not R: verbs are evaluated in the
-# sealed environment built by ggm_verbs() (see grammar.R), never in the
+# sealed environment built by gram_verbs() (see grammar.R), never in the
 # user's workspace.
 #
 # Geometry stays in R because R owns the samples. Timeline playback stays
 # in JavaScript because it owns the DOM. The spec passed between them
-# names no anime.js options; ggm-anim.js chooses those.
+# names no anime.js options; gram-anim.js chooses those.
 
 tracingSpecVersion <- 1L
 
@@ -165,7 +165,7 @@ decimation_index <- function(n, max_points) {
 #'
 #' @param sample Sample index.
 #' @param channel Channel label.
-#' @return A `ggm_at` reference.
+#' @return A `gram_at` reference.
 #' @family tracing
 #' @export
 at <- function(sample, channel) {
@@ -177,13 +177,13 @@ at <- function(sample, channel) {
   }
   structure(
     list(sample = as.double(sample), channel = channel),
-    class = "ggm_at"
+    class = "gram_at"
   )
 }
 
 # resolve a reference against a tracing, failing clearly when it cannot be
 resolve_at <- function(x, ref, arg) {
-  if (!inherits(ref, "ggm_at")) {
+  if (!inherits(ref, "gram_at")) {
     stop("`", arg, "` must be a point from at()", call. = FALSE)
   }
   if (!ref$channel %in% x@channels) {

@@ -1,6 +1,6 @@
 # Example data downloader.
 #
-# `ggm`'s realistic example is the `ort` study: ONE WFDB record made of two
+# `gram`'s realistic example is the `ort` study: ONE WFDB record made of two
 # files that belong together — `ort.hea` (the text header: channels, sampling
 # frequency, duration) and `ort.dat` (the ~516 MB binary signal). The pair is
 # far too large to bundle, so it lives as public assets on a GitHub Release and
@@ -15,7 +15,7 @@
 
 #' Download an example study to the local cache
 #'
-#' Fetch a `ggm` example WFDB record to a local directory, downloading it once
+#' Fetch a `gram` example WFDB record to a local directory, downloading it once
 #' and reusing the cached copy thereafter. A WFDB record is a pair of files that
 #' together form one dataset — a `.hea` text header and a `.dat` binary signal —
 #' and both are fetched. 
@@ -26,7 +26,7 @@
 #' @param dataset Example record name. Currently only `"ort"` (the default): a
 #'   27-channel intracardiac study, 977 Hz, ~2.7 hours (~516 MB).
 #' @param dir Directory to cache into. Defaults to the package's per-user cache
-#'   (`tools::R_user_dir("ggm", "cache")`), the CRAN-sanctioned location for
+#'   (`tools::R_user_dir("gram", "cache")`), the CRAN-sanctioned location for
 #'   downloaded data. Pass e.g. `"data-raw"` to download elsewhere.
 #' @param force Re-download even if the files are already cached (useful if a
 #'   cached copy is suspected truncated or stale).
@@ -45,7 +45,7 @@
 #'
 #' @export
 cache_study_data <- function(dataset = "ort",
-                               dir = tools::R_user_dir("ggm", "cache"),
+                               dir = tools::R_user_dir("gram", "cache"),
                                force = FALSE,
                                quiet = FALSE) {
   records <- "ort" # available example records (each is <name>.hea + <name>.dat)
@@ -74,7 +74,7 @@ cache_study_data <- function(dataset = "ort",
   piggyback::pb_download(
     file = files,
     dest = dir,
-    repo = "shah-in-boots/ggm",
+    repo = "shah-in-boots/gram",
     tag = "v0.0.0.9000-data",
     overwrite = TRUE,
     use_timestamps = !force, # force => re-fetch regardless of local timestamps

@@ -1,76 +1,76 @@
-/* ggm-tracing.css -- presentation renderer skin
+/* gram-tracing.css -- presentation renderer skin
    colors track inst/brand/_brand.yml; override these custom properties
    to reskin a tracing without touching the compiler. */
 
-.ggm-tracing-holder {
-  --ggm-paper: #f5f0e8;
-  --ggm-ink: #2a2520;
-  --ggm-rule: #d0c0a0;
-  --ggm-muted: #6b6660;
-  --ggm-arrow: #b03a2e;
-  --ggm-mark: #c97035;
+.gram-tracing-holder {
+  --gram-paper: #f5f0e8;
+  --gram-ink: #2a2520;
+  --gram-rule: #d0c0a0;
+  --gram-muted: #6b6660;
+  --gram-arrow: #b03a2e;
+  --gram-mark: #c97035;
 
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
   height: 100%;
-  background: var(--ggm-paper);
+  background: var(--gram-paper);
 }
 
-.ggm-tracing-stage {
+.gram-tracing-stage {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
 }
 
-.ggm-tracing {
+.gram-tracing {
   width: 100%;
   height: 100%;
 }
 
 /* --- marks ------------------------------------------------------- */
 
-.ggm-baseline {
-  stroke: var(--ggm-rule);
+.gram-baseline {
+  stroke: var(--gram-rule);
   stroke-width: 1;
 }
 
-.ggm-trace {
+.gram-trace {
   fill: none;
-  stroke: var(--ggm-ink);
+  stroke: var(--gram-ink);
   stroke-width: 1.6;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
-.ggm-arrow {
+.gram-arrow {
   fill: none;
-  stroke: var(--ggm-arrow);
+  stroke: var(--gram-arrow);
   stroke-width: 2.4;
   stroke-linecap: round;
 }
 
-.ggm-head {
-  fill: var(--ggm-arrow);
+.gram-head {
+  fill: var(--gram-arrow);
   stroke: none;
 }
 
-.ggm-emph {
+.gram-emph {
   fill: none;
-  stroke: var(--ggm-mark);
+  stroke: var(--gram-mark);
   stroke-width: 2.4;
 }
 
-.ggm-channel {
-  fill: var(--ggm-muted);
+.gram-channel {
+  fill: var(--gram-muted);
   font: 500 13px ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.06em;
 }
 
 /* labels are tweened in; keep them down until the timeline lifts them */
-.ggm-label {
-  fill: var(--ggm-ink);
+.gram-label {
+  fill: var(--gram-ink);
   font: 500 15px ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
   text-anchor: middle;
   opacity: 0;
@@ -78,7 +78,7 @@
 
 /* --- controls ---------------------------------------------------- */
 
-.ggm-tracing-controls {
+.gram-tracing-controls {
   flex: none;
   display: flex;
   flex-wrap: wrap;
@@ -86,22 +86,22 @@
   padding: 0 4px 4px;
 }
 
-.ggm-tracing-button {
+.gram-tracing-button {
   font: 500 12px ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.04em;
-  color: var(--ggm-ink);
+  color: var(--gram-ink);
   background: transparent;
-  border: 1px solid var(--ggm-rule);
+  border: 1px solid var(--gram-rule);
   border-radius: 3px;
   padding: 4px 10px;
   cursor: pointer;
 }
 
-.ggm-tracing-button:hover {
-  border-color: var(--ggm-muted);
+.gram-tracing-button:hover {
+  border-color: var(--gram-muted);
 }
 
-.ggm-tracing-button:focus-visible {
-  outline: 2px solid var(--ggm-arrow);
+.gram-tracing-button:focus-visible {
+  outline: 2px solid var(--gram-arrow);
   outline-offset: 2px;
 }

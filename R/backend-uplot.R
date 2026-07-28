@@ -1,12 +1,12 @@
 # backend_uplot.R -- uPlot implementation of the plotting contract
 #
 # only file (plus its JS adapter) that knows uPlot exists.
-# swapping backends = new backend_*.R + ggm-adapter-*.js,
+# swapping backends = new backend_*.R + gram-adapter-*.js,
 # zero changes to backend.R or shiny modules.
 
 #' Create a uPlot-backed electrogram widget
 #'
-#' `ggm_plot()` is the low-level plotting primitive. It renders one uPlot per
+#' `gram_plot()` is the low-level plotting primitive. It renders one uPlot per
 #' signal channel so each panel has an independent y-scale, while synchronizing
 #' the x-range and cursor across panels. Data must already be in uPlot's aligned
 #' column format: a list containing one shared x vector followed by one y vector
@@ -25,7 +25,7 @@
 #' @param elementId Optional HTML element id.
 #' @return An `htmlwidget`.
 #' @export
-ggm_plot <- function(
+gram_plot <- function(
   columns,
   scale = list(kind = "index", rate = 1),
   series = NULL,
@@ -67,7 +67,7 @@ ggm_plot <- function(
     stop("`panel_height` must be a single number of at least 80", call. = FALSE)
   }
 
-  # payload -> renderValue(x) in ggm_plot.js
+  # payload -> renderValue(x) in gram_plot.js
   # I() keeps length-1 vectors as JSON arrays
   x <- list(
     backend = "uplot",
@@ -80,11 +80,11 @@ ggm_plot <- function(
   )
 
   htmlwidgets::createWidget(
-    name = "ggm_plot",
+    name = "gram_plot",
     x,
     width = width,
     height = height,
-    package = "ggm",
+    package = "gram",
     elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
       browser.fill = TRUE, # fill viewer/browser
@@ -122,33 +122,33 @@ validate_uplot_columns <- function(columns) {
 
 # --- shiny bindings (boilerplate, required by htmlwidgets) ------
 
-#' Shiny output binding for a ggm plot
+#' Shiny output binding for a gram plot
 #'
 #' @param outputId Output variable to read from.
 #' @param width,height Valid CSS dimensions.
 #' @return A Shiny widget output element.
 #' @export
-ggm_plotOutput <- function(outputId, width = "100%",
+gram_plotOutput <- function(outputId, width = "100%",
                            height = "400px") {
   htmlwidgets::shinyWidgetOutput(
-    outputId, "ggm_plot", width, height, package = "ggm"
+    outputId, "gram_plot", width, height, package = "gram"
   )
 }
 
-#' Shiny render function for a ggm plot
+#' Shiny render function for a gram plot
 #'
-#' @param expr Expression that produces a [ggm_plot()] widget.
+#' @param expr Expression that produces a [gram_plot()] widget.
 #' @param env Environment in which to evaluate `expr`.
 #' @param quoted Whether `expr` is quoted.
 #' @return A Shiny render function.
 #' @export
-render_ggm_plot <- function(expr, env = parent.frame(), quoted = FALSE) {
+render_gram_plot <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) {
     expr <- substitute(expr)
   }
   htmlwidgets::shinyRenderWidget(
     expr,
-    ggm_plotOutput,
+    gram_plotOutput,
     env,
     quoted = TRUE
   )

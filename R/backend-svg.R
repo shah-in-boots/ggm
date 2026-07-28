@@ -20,7 +20,7 @@
 #' @return An `htmlwidget`.
 #' @family tracing
 #' @export
-ggm_tracing <- function(x,
+gram_tracing <- function(x,
                         autoplay = TRUE,
                         controls = TRUE,
                         width = NULL,
@@ -29,7 +29,7 @@ ggm_tracing <- function(x,
   spec <- tracing_spec(x)
 
   htmlwidgets::createWidget(
-    name = "ggm_tracing",
+    name = "gram_tracing",
     list(
       spec = spec,
       autoplay = isTRUE(autoplay),
@@ -37,7 +37,7 @@ ggm_tracing <- function(x,
     ),
     width = width,
     height = height,
-    package = "ggm",
+    package = "gram",
     elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
       browser.fill = TRUE,
@@ -52,26 +52,26 @@ ggm_tracing <- function(x,
 #' @param width,height Valid CSS dimensions.
 #' @return A Shiny widget output element.
 #' @export
-ggm_tracingOutput <- function(outputId, width = "100%", height = "400px") {
+gram_tracingOutput <- function(outputId, width = "100%", height = "400px") {
   htmlwidgets::shinyWidgetOutput(
-    outputId, "ggm_tracing", width, height, package = "ggm"
+    outputId, "gram_tracing", width, height, package = "gram"
   )
 }
 
 #' Shiny render function for a tracing
 #'
-#' @param expr Expression that produces a [ggm_tracing()] widget.
+#' @param expr Expression that produces a [gram_tracing()] widget.
 #' @param env Environment in which to evaluate `expr`.
 #' @param quoted Whether `expr` is quoted.
 #' @return A Shiny render function.
 #' @export
-render_ggm_tracing <- function(expr, env = parent.frame(), quoted = FALSE) {
+render_gram_tracing <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) {
     expr <- substitute(expr)
   }
   htmlwidgets::shinyRenderWidget(
     expr,
-    ggm_tracingOutput,
+    gram_tracingOutput,
     env,
     quoted = TRUE
   )

@@ -58,7 +58,7 @@ data-raw/ort.dat
 data-raw/ort.hea
 
 # Regenerable pyramid sidecars (built by build_pyramid())
-*.ggm-pyramid/
+*.gram-pyramid/
 inst/doc
 **/.quarto/
 

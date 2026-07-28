@@ -18,7 +18,7 @@ Compile a tracing to SVG and a timeline spec
 \seealso{
 Other tracing:
 \code{\link[=at]{at()}},
-\code{\link[=ggm_tracing]{ggm_tracing()}},
+\code{\link[=gram_tracing]{gram_tracing()}},
 \code{\link[=tracing]{tracing()}}
 }
 \concept{tracing}

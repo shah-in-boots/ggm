@@ -45,7 +45,7 @@ an empty script. Verbs append operations to it.
 \seealso{
 Other tracing:
 \code{\link[=at]{at()}},
-\code{\link[=ggm_tracing]{ggm_tracing()}},
+\code{\link[=gram_tracing]{gram_tracing()}},
 \code{\link[=tracing_spec]{tracing_spec()}}
 }
 \concept{tracing}

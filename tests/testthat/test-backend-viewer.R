@@ -1,5 +1,5 @@
 test_that("view_uplot adapts a raw window to uPlot columns", {
-  record <- file.path(system.file("extdata", package = "ggm"), "bard-egm.dat")
+  record <- file.path(system.file("extdata", package = "gram"), "bard-egm.dat")
   cache <- study_cache(record, cache_dir = tempdir())
   channels <- cache@channels[1:2]
 

@@ -1,5 +1,5 @@
 grammar_cache <- function() {
-  record <- file.path(system.file("extdata", package = "ggm"), "bard-egm.dat")
+  record <- file.path(system.file("extdata", package = "gram"), "bard-egm.dat")
   study_cache(record, cache_dir = tempdir())
 }
 
@@ -12,12 +12,12 @@ test_that("a script builds a tracing without naming the study", {
     grammar_cache()
   )
 
-  expect_true(S7::S7_inherits(x, ggm:::Tracing))
+  expect_true(S7::S7_inherits(x, gram:::Tracing))
   expect_equal(vapply(x@ops, `[[`, character(1), "type"), c("reveal", "arrow"))
 })
 
 test_that("the verb environment is sealed", {
-  env <- ggm_verbs(grammar_cache())
+  env <- gram_verbs(grammar_cache())
 
   expect_identical(parent.env(env), emptyenv())
   expect_setequal(

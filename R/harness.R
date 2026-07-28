@@ -30,7 +30,7 @@ harnessScript <- 'tracing(
 #'
 #' The panel accepts the tracing grammar only. Scripts are checked against
 #' the verb whitelist and evaluated in the sealed environment built by
-#' [ggm_verbs()], so a script cannot reach R outside the grammar.
+#' [gram_verbs()], so a script cannot reach R outside the grammar.
 #'
 #' @param cache A `StudyCache` from [study_cache()].
 #' @param begin,interval Window shown in the viewer panel.
@@ -41,20 +41,20 @@ harnessScript <- 'tracing(
 #' @return A Shiny app object.
 #' @family harness
 #' @export
-ggm_harness <- function(cache,
+gram_harness <- function(cache,
                         begin = "00:00:00",
                         interval = "1200 ms",
                         channels = NULL,
                         script = harnessScript,
                         ...) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
-    stop("ggm_harness() needs the shiny package", call. = FALSE)
+    stop("gram_harness() needs the shiny package", call. = FALSE)
   }
 
   viewChannels <- channels %||% utils::head(cache@channels, 6L)
-  template <- system.file("harness", "index.html", package = "ggm")
+  template <- system.file("harness", "index.html", package = "gram")
   if (!nzchar(template)) {
-    stop("harness template not found; is ggm installed correctly?", call. = FALSE)
+    stop("harness template not found; is gram installed correctly?", call. = FALSE)
   }
 
   ui <- shiny::htmlTemplate(
@@ -65,8 +65,8 @@ ggm_harness <- function(cache,
       length(cache@channels), " ch  ",
       format(cache@sample_rate), " Hz"
     ),
-    viewer = ggm_plotOutput("viewer", height = "260px"),
-    tracing = ggm_tracingOutput("tracing", height = "340px"),
+    viewer = gram_plotOutput("viewer", height = "260px"),
+    tracing = gram_tracingOutput("tracing", height = "340px"),
     script = shiny::textAreaInput("script", NULL, value = script),
     run = shiny::actionButton("run", "Run script"),
     status = shiny::uiOutput("status")
@@ -76,7 +76,7 @@ ggm_harness <- function(cache,
     current <- shiny::reactiveVal(NULL)
     failure <- shiny::reactiveVal(NULL)
 
-    output$viewer <- render_ggm_plot({
+    output$viewer <- render_gram_plot({
       view_uplot(
         cache,
         begin = begin,
@@ -107,7 +107,7 @@ ggm_harness <- function(cache,
 
     output$status <- shiny::renderUI({
       if (!is.null(failure())) {
-        return(shiny::tags$pre(class = "ggm-failed", failure()))
+        return(shiny::tags$pre(class = "gram-failed", failure()))
       }
       tracing <- current()
       shiny::req(tracing)
@@ -117,10 +117,10 @@ ggm_harness <- function(cache,
       ))
     })
 
-    output$tracing <- render_ggm_tracing({
+    output$tracing <- render_gram_tracing({
       tracing <- current()
       shiny::req(tracing)
-      ggm_tracing(tracing)
+      gram_tracing(tracing)
     })
   }
 

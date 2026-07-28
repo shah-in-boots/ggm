@@ -1,11 +1,11 @@
-// ggm_tracing.js -- htmlwidgets binding (thin)
+// gram_tracing.js -- htmlwidgets binding (thin)
 //
-// all real work delegated to GGMAnim (ggm-anim.js), which owns the
+// all real work delegated to GRAMAnim (gram-anim.js), which owns the
 // anime.js timeline. this file only forwards lifecycle events.
 
 HTMLWidgets.widget({
 
-  name: "ggm_tracing",
+  name: "gram_tracing",
   type: "output",
 
   factory: function (el, width, height) {
@@ -13,7 +13,7 @@ HTMLWidgets.widget({
     return {
 
       renderValue: function (x) {
-        GGMAnim.create(el, x);
+        GRAMAnim.create(el, x);
       },
 
       resize: function (w, h) {

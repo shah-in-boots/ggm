@@ -6,7 +6,7 @@
 \usage{
 cache_study_data(
   dataset = "ort",
-  dir = tools::R_user_dir("ggm", "cache"),
+  dir = tools::R_user_dir("gram", "cache"),
   force = FALSE,
   quiet = FALSE
 )
@@ -16,7 +16,7 @@ cache_study_data(
 27-channel intracardiac study, 977 Hz, ~2.7 hours (~516 MB).}
 
 \item{dir}{Directory to cache into. Defaults to the package's per-user cache
-(\code{tools::R_user_dir("ggm", "cache")}), the CRAN-sanctioned location for
+(\code{tools::R_user_dir("gram", "cache")}), the CRAN-sanctioned location for
 downloaded data. Pass e.g. \code{"data-raw"} to download elsewhere.}
 
 \item{force}{Re-download even if the files are already cached (useful if a
@@ -31,7 +31,7 @@ guaranteed present on return, so
 \code{open_study(dataset, cache_example_data(dataset))} always works.
 }
 \description{
-Fetch a \code{ggm} example WFDB record to a local directory, downloading it once
+Fetch a \code{gram} example WFDB record to a local directory, downloading it once
 and reusing the cached copy thereafter. A WFDB record is a pair of files that
 together form one dataset — a \code{.hea} text header and a \code{.dat} binary signal —
 and both are fetched.

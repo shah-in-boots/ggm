@@ -1,4 +1,4 @@
-// ggm-adapter-uplot.js -- uPlot implementation of adapter contract
+// gram-adapter-uplot.js -- uPlot implementation of adapter contract
 //
 // Each signal channel owns one uPlot instance. Panels keep independent
 // y-scales while sharing x-range and cursor state.
@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  var GGM = window.GGM;
+  var GRAM = window.GRAM;
   var syncSequence = 0;
 
   function getScaleKind(cfg) {
@@ -148,7 +148,7 @@
   function createPanel(state, channelIndex, showXAxis) {
     var holder = document.createElement("div");
     var series = state.cfg.series[channelIndex] || {};
-    holder.className = "ggm-uplot-panel";
+    holder.className = "gram-uplot-panel";
     holder.dataset.channel = series.label || ("ch" + (channelIndex + 1));
     state.panels.appendChild(holder);
 
@@ -171,7 +171,7 @@
     return [min, max];
   }
 
-  GGM.adapters.uplot = {
+  GRAM.adapters.uplot = {
 
     create: function (el, cfg) {
       var state = {
@@ -181,14 +181,14 @@
         holders: [],
         wheelHandlers: [],
         panels: document.createElement("div"),
-        syncKey: "ggm-uplot-" + (++syncSequence),
+        syncKey: "gram-uplot-" + (++syncSequence),
         syncingScale: false,
         ready: false
       };
 
       el.innerHTML = "";
-      el.classList.add("ggm-uplot-stack");
-      state.panels.className = "ggm-uplot-panels";
+      el.classList.add("gram-uplot-stack");
+      state.panels.className = "gram-uplot-panels";
       el.appendChild(state.panels);
 
       var channelCount = cfg.columns.length - 1;
@@ -214,7 +214,7 @@
       state.plots = [];
       state.holders = [];
       state.wheelHandlers = [];
-      state.el.classList.remove("ggm-uplot-stack");
+      state.el.classList.remove("gram-uplot-stack");
       state.el.innerHTML = "";
     },
 
@@ -225,7 +225,7 @@
     // Fan aligned columns out to one [x, y] data pair per channel panel.
     setData: function (state, columns) {
       if (columns.length - 1 !== state.plots.length) {
-        throw new Error("ggm: setData cannot change the channel count");
+        throw new Error("gram: setData cannot change the channel count");
       }
 
       var currentX = state.plots[0].scales.x;

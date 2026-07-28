@@ -1,5 +1,5 @@
 demo_cache <- function() {
-  record <- file.path(system.file("extdata", package = "ggm"), "bard-egm.dat")
+  record <- file.path(system.file("extdata", package = "gram"), "bard-egm.dat")
   study_cache(record, cache_dir = tempdir())
 }
 
@@ -79,9 +79,9 @@ test_that("tracing_spec compiles one lane per channel and one op per verb", {
 
   # one trace path per channel, one arrow, and the label the verb named
   expect_equal(lengths(regmatches(
-    spec$svg, gregexpr('class="ggm-trace"', spec$svg, fixed = TRUE)
+    spec$svg, gregexpr('class="gram-trace"', spec$svg, fixed = TRUE)
   ))[[1L]], 2L)
-  expect_match(spec$svg, 'id="ggm-arrow-1"', fixed = TRUE)
+  expect_match(spec$svg, 'id="gram-arrow-1"', fixed = TRUE)
   expect_match(spec$svg, ">VA</text>", fixed = TRUE)
   expect_match(spec$svg, "viewBox=\"0 0 1000 240\"", fixed = TRUE)
 })
@@ -101,13 +101,13 @@ test_that("channel labels are escaped into the markup", {
 
 test_that("an arrow crossing lanes lands on both baselines", {
   x <- demo_tracing()
-  geom <- ggm:::tracing_geometry(x)
+  geom <- gram:::tracing_geometry(x)
 
-  top <- ggm:::geom_baseline(x, "HIS D")
-  bottom <- ggm:::geom_baseline(x, "RV 1-2")
+  top <- gram:::geom_baseline(x, "HIS D")
+  bottom <- gram:::geom_baseline(x, "RV 1-2")
 
   expect_equal(top, 60)
   expect_equal(bottom, 180)
-  expect_equal(ggm:::geom_x(geom, x@samples[[1L]]), 0)
-  expect_equal(ggm:::geom_x(geom, x@samples[[length(x@samples)]]), 1000)
+  expect_equal(gram:::geom_x(geom, x@samples[[1L]]), 0)
+  expect_equal(gram:::geom_x(geom, x@samples[[length(x@samples)]]), 1000)
 })

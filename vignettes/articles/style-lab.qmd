@@ -1,5 +1,5 @@
 ---
-title: "The ggm style lab"
+title: "The gram style lab"
 subtitle: >
   A live, tweakable style tile for the drawn-on-paper look —
   every color, font, and motion on this page is defined on this page.
@@ -21,7 +21,7 @@ engine: knitr
 
 ## How to use this document
 
-This page is the atomic workspace for ggm's visual identity. It is a
+This page is the atomic workspace for gram's visual identity. It is a
 *style lab*: a set of small, self-contained examples that together show
 how the package should look and move. Nothing here touches Shiny, the
 package code, or real data — this is tier zero of the testing ladder.
@@ -29,7 +29,7 @@ package code, or real data — this is tier zero of the testing ladder.
 The workflow:
 
 1. Open this `.qmd` next to a terminal and run
-   `quarto preview ggm-style-lab.qmd`. The page re-renders on save.
+   `quarto preview gram-style-lab.qmd`. The page re-renders on save.
 2. Every visual element on this page traces back to a code chunk *on*
    this page. CSS chunks and JS chunks are live: Quarto injects them
    into the rendered HTML, so what you read is what runs.
@@ -42,9 +42,9 @@ Two practical notes. The rendered page loads anime.js, uPlot, and the
 IBM Plex fonts from CDNs, so it needs an internet connection to view
 (the package itself will vendor these through htmlwidgets, as uPlot
 already is). And this document is meant for the website, not the
-package build: place it at `vignettes/articles/ggm-style-lab.qmd`,
+package build: place it at `vignettes/articles/gram-style-lab.qmd`,
 which pkgdown renders but CRAN never sees
-(`usethis::use_article("ggm-style-lab")` sets up the folder and the
+(`usethis::use_article("gram-style-lab")` sets up the folder and the
 `.Rbuildignore` entry for you).
 
 ## A ninety-second orientation
@@ -98,15 +98,15 @@ including the uPlot canvas theming and the anime.js timings — reads
 from these tokens, which is what makes the page feel like one hand
 drew it.
 
-The palette follows a drafting-room convention that suits ggm's
+The palette follows a drafting-room convention that suits gram's
 subject: **graphite** ink for the signal itself, **drafting blue** for
 annotations and interactive elements, and **red pencil** reserved for
 the single thing that must be seen — a detected event, an unsaved
 mark. Color encodes role, not decoration.
 
 ```{css}
-/*-- ggm design tokens ------------------------------------*/
-/*-- destined for: inst/assets/ggm-tokens.css -------------*/
+/*-- gram design tokens -----------------------------------*/
+/*-- destined for: inst/assets/gram-tokens.css ------------*/
 
 :root {
   /* paper & ink */
@@ -249,8 +249,8 @@ most of the work for visual consistency:
   includes the people who opt out of it.
 
 ```{js}
-//-- ggm motion vocabulary --------------------------------
-//-- destined for: inst/htmlwidgets/lib/ggm-motion.js -----
+//-- gram motion vocabulary -------------------------------
+//-- destined for: inst/htmlwidgets/lib/gram-motion.js ----
 
 // pull the verbs out of the anime.js global once
 const { animate, createTimeline, stagger, svg } = anime;
@@ -356,7 +356,7 @@ it. Restraint is a choice you get to make knowingly.
 
 ## The signature: a schematic that draws itself
 
-This is the moment from the anime.js homepage, rebuilt with ggm's own
+This is the moment from the anime.js homepage, rebuilt with gram's own
 subject matter: a recording sheet with three channels, an event, and
 a checker's marks. The frame draws first, the traces sweep in like
 pen recorders, the blue annotation marks arrive, red circles the
@@ -389,7 +389,7 @@ real data. `createDrawable` does not care where a path came from.
     <text class="gg-label gg-label-anno" x="472" y="40"
           opacity="0">event 07</text>
     <text class="gg-label" x="624" y="284" text-anchor="end"
-          opacity="0">ggm — sheet 01 / 60 s @ 256 hz</text>
+          opacity="0">gram — sheet 01 / 60 s @ 256 hz</text>
   </svg>
 </div>
 <button class="gg-btn gg-replay" onclick="playSchematic()">Replay</button>
@@ -503,7 +503,7 @@ coordinates, not pixels.
 ## Interface chrome: panels that rise in
 
 Shiny does not have to look like Shiny — the "gallery look" is just
-Bootstrap defaults. These panels are three plain `div`s using ggm's
+Bootstrap defaults. These panels are three plain `div`s using gram's
 real nouns, entering with `ggRiseIn()`. In the app, this is how a
 sidebar, a settings drawer, or a scene's caption card should arrive.
 
@@ -850,12 +850,12 @@ different clock.
 
 When a chunk here looks right, this is where it goes:
 
-| chunk on this page | destination in ggm |
+| chunk on this page | destination in gram |
 |---|---|
-| design tokens (CSS) | `inst/assets/ggm-tokens.css`, listed in the widget's YAML deps and the app skin |
+| design tokens (CSS) | `inst/assets/gram-tokens.css`, listed in the widget's YAML deps and the app skin |
 | sheet + chrome + buttons (CSS) | the Shiny `htmlTemplate()` skin — Shiny keeps the reactive server, loses the Bootstrap look |
-| motion vocabulary (JS) | `inst/htmlwidgets/lib/ggm-motion.js`, loaded before `ggm-anim.js`; `ggDrawIn()` and friends become the primitives directives call |
-| schematic timeline (JS) | the target shape that `fx_seq()` / `fx_par()` specs compile to inside `ggm-anim.js` |
+| motion vocabulary (JS) | `inst/htmlwidgets/lib/gram-motion.js`, loaded before `gram-anim.js`; `ggDrawIn()` and friends become the primitives directives call |
+| schematic timeline (JS) | the target shape that `fx_seq()` / `fx_par()` specs compile to inside `gram-anim.js` |
 | uPlot theming (JS) | default opts in `backend_uplot.R`, built with the same `cssToken()` bridge at widget init |
 | overlay annotation (JS) | already your `fx_*` overlay contract — here written inline, in the package owned by the dispatcher and repainted via `onUpdate` |
 

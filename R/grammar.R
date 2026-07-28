@@ -10,7 +10,7 @@
 #
 # parse() does not evaluate, so a script cannot act before the walk runs.
 #
-# ggm_verbs() is the single source of truth for what a script may name:
+# gram_verbs() is the single source of truth for what a script may name:
 # the whitelist is read back off that environment, so adding a verb in
 # one place is enough.
 
@@ -25,7 +25,7 @@
 #' @return An environment.
 #' @family grammar
 #' @export
-ggm_verbs <- function(cache) {
+gram_verbs <- function(cache) {
   env <- new.env(parent = emptyenv())
 
   # tracing() reads from the harness's study, so the script never names it
@@ -45,7 +45,7 @@ ggm_verbs <- function(cache) {
 #' Evaluate a tracing script
 #'
 #' Parses `text`, rejects anything outside the grammar, and evaluates the
-#' result in the sealed environment from [ggm_verbs()].
+#' result in the sealed environment from [gram_verbs()].
 #'
 #' @param text A single string holding the script.
 #' @param cache A `StudyCache`.
@@ -67,7 +67,7 @@ eval_tracing <- function(text, cache) {
     stop("the script is empty", call. = FALSE)
   }
 
-  env <- ggm_verbs(cache)
+  env <- gram_verbs(cache)
   allowed <- ls(env, all.names = TRUE)
   for (expr in exprs) {
     check_grammar(expr, allowed)

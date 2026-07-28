@@ -6,7 +6,7 @@
 # whatever lanes they sit in.
 #
 # The spec names selectors, durations, and order. It never names an
-# anime.js option; ggm-anim.js owns those.
+# anime.js option; gram-anim.js owns those.
 
 svgWidth <- 1000     # user units across the window
 svgLane <- 120       # user units per channel lane
@@ -39,13 +39,13 @@ tracing_spec <- function(x) {
     if (op$type == "reveal") {
       ops <- c(ops, list(list(
         type = "reveal",
-        targets = ".ggm-trace",
+        targets = ".gram-trace",
         duration = op$duration,
         stagger = op$stagger
       )))
     } else if (op$type == "arrow") {
       arrows <- arrows + 1L
-      id <- paste0("ggm-arrow-", arrows)
+      id <- paste0("gram-arrow-", arrows)
       parts <- c(parts, svg_arrow(x, geom, op, id))
       ops <- c(ops, list(list(
         type = "arrow",
@@ -55,7 +55,7 @@ tracing_spec <- function(x) {
       )))
     } else if (op$type == "emphasize") {
       marks <- marks + 1L
-      id <- paste0("ggm-emph-", marks)
+      id <- paste0("gram-emph-", marks)
       parts <- c(parts, svg_emphasis(x, geom, op, id))
       ops <- c(ops, list(list(
         type = "emphasize",
@@ -71,7 +71,7 @@ tracing_spec <- function(x) {
     width = svgWidth,
     height = height,
     svg = paste0(
-      '<svg xmlns="http://www.w3.org/2000/svg" class="ggm-tracing" ',
+      '<svg xmlns="http://www.w3.org/2000/svg" class="gram-tracing" ',
       'viewBox="0 0 ', svgWidth, ' ', height, '" ',
       'preserveAspectRatio="xMidYMid meet">',
       paste(parts, collapse = ""),
@@ -135,9 +135,9 @@ point_at <- function(x, geom, ref) {
 
 svg_defs <- function() {
   paste0(
-    '<defs><marker id="ggm-head" viewBox="0 0 10 10" refX="9" refY="5" ',
+    '<defs><marker id="gram-head" viewBox="0 0 10 10" refX="9" refY="5" ',
     'markerWidth="5" markerHeight="5" orient="auto-start-reverse">',
-    '<path d="M 0 0 L 10 5 L 0 10 z" class="ggm-head"/>',
+    '<path d="M 0 0 L 10 5 L 0 10 z" class="gram-head"/>',
     "</marker></defs>"
   )
 }
@@ -146,14 +146,14 @@ svg_lanes <- function(x, geom) {
   lanes <- vapply(x@channels, function(channel) {
     y <- geom_baseline(x, channel)
     paste0(
-      '<line class="ggm-baseline" x1="0" y1="', num(y),
+      '<line class="gram-baseline" x1="0" y1="', num(y),
       '" x2="', svgWidth, '" y2="', num(y), '"/>',
-      '<text class="ggm-channel" x="8" y="', num(y - svgLane * 0.32), '">',
+      '<text class="gram-channel" x="8" y="', num(y - svgLane * 0.32), '">',
       escape_xml(channel), "</text>"
     )
   }, character(1))
 
-  paste0('<g class="ggm-lanes">', paste(lanes, collapse = ""), "</g>")
+  paste0('<g class="gram-lanes">', paste(lanes, collapse = ""), "</g>")
 }
 
 svg_traces <- function(x, geom) {
@@ -161,12 +161,12 @@ svg_traces <- function(x, geom) {
     xs <- geom_x(geom, x@samples)
     ys <- geom_y(x, geom, channel, x@values[[channel]])
     paste0(
-      '<path class="ggm-trace" data-channel="', escape_xml(channel), '" d="',
+      '<path class="gram-trace" data-channel="', escape_xml(channel), '" d="',
       path_data(xs, ys), '"/>'
     )
   }, character(1))
 
-  paste0('<g class="ggm-traces">', paste(paths, collapse = ""), "</g>")
+  paste0('<g class="gram-traces">', paste(paths, collapse = ""), "</g>")
 }
 
 svg_arrow <- function(x, geom, op, id) {
@@ -179,7 +179,7 @@ svg_arrow <- function(x, geom, op, id) {
   bow <- max(svgLane * 0.35, abs(to[[2L]] - from[[2L]]) * 0.22)
 
   markup <- paste0(
-    '<path class="ggm-arrow" id="', id, '" marker-end="url(#ggm-head)" ',
+    '<path class="gram-arrow" id="', id, '" marker-end="url(#gram-head)" ',
     'd="M ', num(from[[1L]]), " ", num(from[[2L]]),
     " Q ", num(mx), " ", num(my - bow),
     " ", num(to[[1L]]), " ", num(to[[2L]]), '"/>'
@@ -188,7 +188,7 @@ svg_arrow <- function(x, geom, op, id) {
   if (!is.null(op$label)) {
     markup <- paste0(
       markup,
-      '<text class="ggm-label" id="', id, '-label" ',
+      '<text class="gram-label" id="', id, '-label" ',
       'x="', num(mx), '" y="', num(my - bow - 8), '">',
       escape_xml(op$label), "</text>"
     )
@@ -199,14 +199,14 @@ svg_arrow <- function(x, geom, op, id) {
 svg_emphasis <- function(x, geom, op, id) {
   pt <- point_at(x, geom, op$target)
   markup <- paste0(
-    '<circle class="ggm-emph" id="', id, '" cx="', num(pt[[1L]]),
+    '<circle class="gram-emph" id="', id, '" cx="', num(pt[[1L]]),
     '" cy="', num(pt[[2L]]), '" r="', num(svgLane * 0.16), '"/>'
   )
 
   if (!is.null(op$label)) {
     markup <- paste0(
       markup,
-      '<text class="ggm-label" id="', id, '-label" ',
+      '<text class="gram-label" id="', id, '-label" ',
       'x="', num(pt[[1L]]), '" y="', num(pt[[2L]] - svgLane * 0.24), '">',
       escape_xml(op$label), "</text>"
     )

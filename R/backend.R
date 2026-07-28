@@ -1,7 +1,7 @@
 # backend.R -- plotting contract, backend-neutral
 #
-# all ggm code talks to plots through these verbs only.
-# each verb sends a "ggm:*" custom message; ggm-dispatch.js
+# all gram code talks to plots through these verbs only.
+# each verb sends a "gram:*" custom message; gram-dispatch.js
 # routes it to whichever adapter owns the instance.
 #
 # verbs: set_data, set_viewport, set_series
@@ -16,18 +16,18 @@
 # no-op outside shiny (standalone tier-1 tests use renderValue only)
 #
 # id: outputId of the widget
-ggm_proxy <- function(id, session = shiny::getDefaultReactiveDomain()) {
-  if (is.null(session)) stop("ggm_proxy requires a shiny session")
+gram_proxy <- function(id, session = shiny::getDefaultReactiveDomain()) {
+  if (is.null(session)) stop("gram_proxy requires a shiny session")
   structure(
     list(id = session$ns(id), session = session),
-    class = "ggm_proxy"
+    class = "gram_proxy"
   )
 }
 
-# internal: send one message on a ggm channel
+# internal: send one message on a gram channel
 # payload must be a named list; id injected here
-ggm_send <- function(proxy, channel, payload) {
-  stopifnot(inherits(proxy, "ggm_proxy"))
+gram_send <- function(proxy, channel, payload) {
+  stopifnot(inherits(proxy, "gram_proxy"))
   proxy$session$sendCustomMessage(
     channel,
     c(list(id = proxy$id), payload)
@@ -40,15 +40,15 @@ ggm_send <- function(proxy, channel, payload) {
 # replace plot data, no widget re-render
 # columns: list(x, ch1, ch2, ...) -- columnar, uPlot/Arrow shaped.
 # vectors must stay arrays in JSON even at length 1, so wrap with I()
-ggm_set_data <- function(proxy, columns) {
-  ggm_send(proxy, "ggm:set_data", list(columns = lapply(columns, I)))
+gram_set_data <- function(proxy, columns) {
+  gram_send(proxy, "gram:set_data", list(columns = lapply(columns, I)))
 }
 
 # set visible x (and optionally y) range in domain units
-ggm_set_viewport <- function(proxy, xmin, xmax, ymin = NULL, ymax = NULL) {
-  ggm_send(
+gram_set_viewport <- function(proxy, xmin, xmax, ymin = NULL, ymax = NULL) {
+  gram_send(
     proxy,
-    "ggm:set_viewport",
+    "gram:set_viewport",
     list(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax)
   )
 }
@@ -56,16 +56,16 @@ ggm_set_viewport <- function(proxy, xmin, xmax, ymin = NULL, ymax = NULL) {
 # per-channel display config
 # series_idx: 1-based channel index (x excluded), matches R habits;
 # a faceted adapter maps it to the corresponding panel
-ggm_set_series <- function(
+gram_set_series <- function(
   proxy,
   series_idx,
   visible = NULL,
   color = NULL,
   label = NULL
 ) {
-  ggm_send(
+  gram_send(
     proxy,
-    "ggm:set_series",
+    "gram:set_series",
     list(series = series_idx, visible = visible, color = color, label = label)
   )
 }

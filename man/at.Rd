@@ -12,7 +12,7 @@ at(sample, channel)
 \item{channel}{Channel label.}
 }
 \value{
-A \code{ggm_at} reference.
+A \code{gram_at} reference.
 }
 \description{
 \code{at()} names a sample on a channel so a verb can resolve it to a
@@ -22,7 +22,7 @@ given directly.
 }
 \seealso{
 Other tracing:
-\code{\link[=ggm_tracing]{ggm_tracing()}},
+\code{\link[=gram_tracing]{gram_tracing()}},
 \code{\link[=tracing]{tracing()}},
 \code{\link[=tracing_spec]{tracing_spec()}}
 }

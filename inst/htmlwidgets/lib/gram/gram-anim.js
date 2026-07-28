@@ -1,4 +1,4 @@
-// ggm-anim.js -- compiles a tracing spec into an anime.js timeline
+// gram-anim.js -- compiles a tracing spec into an anime.js timeline
 //
 // the spec from R names selectors, durations, and order. every anime.js
 // option -- easing, draw values, timeline offsets -- is chosen here, so
@@ -10,8 +10,8 @@
 (function () {
   "use strict";
 
-  var GGMAnim = (window.GGMAnim = window.GGMAnim || {});
-  GGMAnim.instances = GGMAnim.instances || {};
+  var GRAMAnim = (window.GRAMAnim = window.GRAMAnim || {});
+  GRAMAnim.instances = GRAMAnim.instances || {};
 
   // the os-level preference collapses every duration to zero
   var reduceMotion =
@@ -30,7 +30,7 @@
   function verbs() {
     var A = window.anime;
     if (!A || !A.createTimeline) {
-      throw new Error("ggm: anime.js v4 not loaded");
+      throw new Error("gram: anime.js v4 not loaded");
     }
     return {
       animate: A.animate,
@@ -44,7 +44,7 @@
 
   function buildControls(el, getTimeline) {
     var bar = document.createElement("div");
-    bar.className = "ggm-tracing-controls";
+    bar.className = "gram-tracing-controls";
 
     [
       ["play", "Play", function (tl) { tl.play(); }],
@@ -54,7 +54,7 @@
     ].forEach(function (spec) {
       var button = document.createElement("button");
       button.type = "button";
-      button.className = "ggm-tracing-button";
+      button.className = "gram-tracing-button";
       button.setAttribute("data-action", spec[0]);
       button.textContent = spec[1];
       button.addEventListener("click", function () {
@@ -71,7 +71,7 @@
 
   // hold every drawable at zero so nothing flashes before playback
   function prime(el, v) {
-    var drawn = find(el, ".ggm-trace, .ggm-arrow, .ggm-emph");
+    var drawn = find(el, ".gram-trace, .gram-arrow, .gram-emph");
     if (drawn.length) {
       v.animate(v.svg.createDrawable(drawn), {
         draw: "0 0",
@@ -124,14 +124,14 @@
 
   // --- lifecycle -------------------------------------------------
 
-  GGMAnim.create = function (el, cfg) {
-    GGMAnim.destroy(el.id);
+  GRAMAnim.create = function (el, cfg) {
+    GRAMAnim.destroy(el.id);
 
     el.innerHTML = "";
-    el.classList.add("ggm-tracing-holder");
+    el.classList.add("gram-tracing-holder");
 
     var stage = document.createElement("div");
-    stage.className = "ggm-tracing-stage";
+    stage.className = "gram-tracing-stage";
     stage.innerHTML = cfg.spec.svg;
     el.appendChild(stage);
 
@@ -143,12 +143,12 @@
     }
 
     instance.timeline = buildTimeline(el, cfg.spec, cfg.autoplay);
-    GGMAnim.instances[el.id] = instance;
+    GRAMAnim.instances[el.id] = instance;
     return instance;
   };
 
-  GGMAnim.destroy = function (id) {
-    var instance = GGMAnim.instances[id];
+  GRAMAnim.destroy = function (id) {
+    var instance = GRAMAnim.instances[id];
     if (!instance) return;
     if (instance.timeline) {
       if (typeof instance.timeline.revert === "function") {
@@ -157,6 +157,6 @@
         instance.timeline.pause();
       }
     }
-    delete GGMAnim.instances[id];
+    delete GRAMAnim.instances[id];
   };
 })();

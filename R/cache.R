@@ -5,7 +5,7 @@
 #   <stem>.dat              canonical signal bytes
 #   <stem>.hea              WFDB header
 #   <stem>.<annotator>      optional WFDB annotation files
-#   <stem>.cache.parquet    derived signal overview built by ggm
+#   <stem>.cache.parquet    derived signal overview built by gram
 #   <stem>.cache.json       manifest for the derived cache
 #
 # The raw signal is never converted to Parquet. Raw viewport reads go through
@@ -238,7 +238,7 @@ choose_cache_dir <- function(record_dir, stem, fingerprint, cache_dir = NULL) {
     cache_dir <- record_dir
   } else {
     id <- substr(gsub("[^A-Za-z0-9]", "", fingerprint), 1L, 24L)
-    cache_dir <- file.path(tools::R_user_dir("ggm", "cache"), paste0(stem, "-", id))
+    cache_dir <- file.path(tools::R_user_dir("gram", "cache"), paste0(stem, "-", id))
   }
 
   dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)

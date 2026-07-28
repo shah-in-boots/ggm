@@ -1,5 +1,5 @@
 test_that("study_cache opens a WFDB record group", {
-  record <- system.file("extdata", "bard-egm.hea", package = "ggm")
+  record <- system.file("extdata", "bard-egm.hea", package = "gram")
   skip_if(record == "", "bundled WFDB example not installed")
 
   cache <- study_cache(record, cache_dir = tempdir())
@@ -15,10 +15,10 @@ test_that("study_cache opens a WFDB record group", {
 })
 
 test_that("build_study_cache writes bucket extrema from WFDB reads", {
-  record <- system.file("extdata", "bard-egm.hea", package = "ggm")
+  record <- system.file("extdata", "bard-egm.hea", package = "gram")
   skip_if(record == "", "bundled WFDB example not installed")
 
-  cache_dir <- tempfile("ggm-cache-")
+  cache_dir <- tempfile("gram-cache-")
   dir.create(cache_dir)
   cache <- study_cache(record, cache_dir = cache_dir)
 
@@ -77,7 +77,7 @@ test_that("build_study_cache writes bucket extrema from WFDB reads", {
 })
 
 test_that("study reads use EGM time-window conventions", {
-  record <- system.file("extdata", "bard-egm.hea", package = "ggm")
+  record <- system.file("extdata", "bard-egm.hea", package = "gram")
   cache <- study_cache(record, cache_dir = tempdir())
 
   byClock <- read_study_signal(

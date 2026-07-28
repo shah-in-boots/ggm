@@ -2,11 +2,11 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "ggm-harness",
+      "name": "gram-harness",
       "runtimeExecutable": "Rscript",
       "runtimeArgs": [
         "-e",
-        "pkgload::load_all('.', quiet = TRUE); cache <- study_cache(file.path('inst', 'extdata', 'bard-egm.dat'), cache_dir = tempdir()); shiny::runApp(ggm_harness(cache), port = 7788, host = '127.0.0.1', launch.browser = FALSE)"
+        "pkgload::load_all('.', quiet = TRUE); cache <- study_cache(file.path('inst', 'extdata', 'bard-egm.dat'), cache_dir = tempdir()); shiny::runApp(gram_harness(cache), port = 7788, host = '127.0.0.1', launch.browser = FALSE)"
       ],
       "port": 7788
     }

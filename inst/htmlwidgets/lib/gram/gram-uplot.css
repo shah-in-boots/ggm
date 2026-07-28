@@ -1,4 +1,4 @@
-.ggm-uplot-stack {
+.gram-uplot-stack {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -7,24 +7,24 @@
   background: #fff;
 }
 
-.ggm-uplot-panels {
+.gram-uplot-panels {
   width: 100%;
 }
 
-.ggm-uplot-panel {
+.gram-uplot-panel {
   width: 100%;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.ggm-uplot-panel:last-child {
+.gram-uplot-panel:last-child {
   border-bottom: 0;
 }
 
-.ggm-uplot-panel .uplot {
+.gram-uplot-panel .uplot {
   margin: 0 auto;
 }
 
-.ggm-uplot-panel .u-legend {
+.gram-uplot-panel .u-legend {
   padding-left: 8px;
   text-align: left;
 }

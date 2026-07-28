@@ -16,10 +16,10 @@ The \code{Tracing} the script produced.
 }
 \description{
 Parses \code{text}, rejects anything outside the grammar, and evaluates the
-result in the sealed environment from \code{\link[=ggm_verbs]{ggm_verbs()}}.
+result in the sealed environment from \code{\link[=gram_verbs]{gram_verbs()}}.
 }
 \seealso{
 Other grammar:
-\code{\link[=ggm_verbs]{ggm_verbs()}}
+\code{\link[=gram_verbs]{gram_verbs()}}
 }
 \concept{grammar}
