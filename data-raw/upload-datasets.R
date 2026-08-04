@@ -3,7 +3,9 @@
 
 # The release/tag must exist before uploading. Run once:
 #   piggyback::pb_release_create(repo = "shah-in-boots/gram", tag = "v0.0.0.9000-data")
-# Tag must match the one tests download from (tests/testthat/helper-gram.R).
+# Tag must match the one cache_study_data() pulls from, in R/datasets.R.
+# The test suite does not download it -- it runs on the bundled bard-egm
+# record instead, so no test needs the network.
 
 piggyback::pb_upload(
   c("data-raw/ort.dat", "data-raw/ort.hea"),

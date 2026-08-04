@@ -34,7 +34,7 @@ gram_plot <- function(
   height = NULL,
   elementId = NULL
 ) {
-  columns <- validate_uplot_columns(columns)
+  columns <- gm_validate_uplot_columns(columns)
 
   if (
     !is.list(scale) ||
@@ -93,7 +93,7 @@ gram_plot <- function(
   )
 }
 
-validate_uplot_columns <- function(columns) {
+gm_validate_uplot_columns <- function(columns) {
   if (!is.list(columns) || length(columns) < 2L) {
     stop("`columns` must be a list containing x and at least one signal", call. = FALSE)
   }

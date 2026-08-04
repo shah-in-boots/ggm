@@ -50,5 +50,15 @@ from \code{begin}. Drag horizontally to zoom into that loaded range, scroll
 horizontally (or use Shift+wheel) to pan, and double-click to reset the
 range. A future interactive study controller can manage dynamic viewport
 reads while reusing the same uPlot backend.
+
+The channel set is fixed at read time: whatever \code{channels} names is what the
+widget draws, and it carries no controls of its own. Choosing channels
+interactively is the controller's job -- a Shiny app drives the same widget
+through the plotting verbs, as \code{\link[=gram_harness]{gram_harness()}} does -- which keeps this
+function a plain, non-interactive way to exercise the uPlot backend.
+}
+\seealso{
+Other backend viewers:
+\code{\link[=normalize_selection]{normalize_selection()}}
 }
 \concept{backend viewers}

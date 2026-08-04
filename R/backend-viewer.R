@@ -12,6 +12,12 @@
 #' range. A future interactive study controller can manage dynamic viewport
 #' reads while reusing the same uPlot backend.
 #'
+#' The channel set is fixed at read time: whatever `channels` names is what the
+#' widget draws, and it carries no controls of its own. Choosing channels
+#' interactively is the controller's job -- a Shiny app drives the same widget
+#' through the plotting verbs, as [gram_harness()] does -- which keeps this
+#' function a plain, non-interactive way to exercise the uPlot backend.
+#'
 #' @param cache A `StudyCache` created by [study_cache()].
 #' @inheritParams read_study_signal
 #' @param channels Channel labels or indices. Defaults to all channels.

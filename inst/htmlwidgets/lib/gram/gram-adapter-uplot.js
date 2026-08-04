@@ -36,13 +36,25 @@
     });
   }
 
+  function channelLabel(cfg, channelIndex) {
+    var series = cfg.series[channelIndex] || {};
+    return series.label || ("ch" + (channelIndex + 1));
+  }
+
   function channelSeries(cfg, channelIndex) {
     var series = cfg.series[channelIndex] || {};
     return {
-      label: series.label || ("ch" + (channelIndex + 1)),
+      label: channelLabel(cfg, channelIndex),
       stroke: series.color || "#111",
       points: { show: false }
     };
+  }
+
+  // state.visible holds original channel indices, ascending. Panels are the
+  // visible subset, so a panel's position is not its channel number.
+  function plotForChannel(state, channelIndex) {
+    var at = state.visible.indexOf(channelIndex);
+    return at === -1 ? null : state.plots[at];
   }
 
   function scalesDiffer(scale, min, max) {
@@ -111,6 +123,20 @@
     state.wheelHandlers.push({ element: overlay, handler: onWheel });
   }
 
+  // uPlot fires setSelect when a drag finishes, with state.select in CSS
+  // pixels over the plotting area. The conversion to domain units happens
+  // here because only the backend knows its own coordinate system; dispatch
+  // forwards whatever it is handed.
+  function emitSelection(state, plot) {
+    var width = plot.select.width;
+    if (!(width > 0)) return; // a plain click is not a selection
+
+    GRAM.emit(state.el, "selection", {
+      xmin: plot.posToVal(plot.select.left, "x"),
+      xmax: plot.posToVal(plot.select.left + width, "x")
+    });
+  }
+
   function buildOpts(state, channelIndex, showXAxis) {
     var cfg = state.cfg;
     return {
@@ -140,6 +166,9 @@
       hooks: {
         setScale: [function (plot, scaleKey) {
           syncScaleFrom(state, plot, scaleKey);
+        }],
+        setSelect: [function (plot) {
+          emitSelection(state, plot);
         }]
       }
     };
@@ -159,6 +188,56 @@
     addHorizontalPan(state, holder, plot);
   }
 
+  // --- panel set -------------------------------------------------
+  //
+  // Which channels are on screen is view state, so a controller decides it
+  // and sends setVisible; this file only renders the answer. Dropping a
+  // channel rebuilds the panels rather than hiding a series inside one: an
+  // emptied panel would still hold its lane, and the x-axis belongs to the
+  // last visible panel, so it has to move when the bottom channel goes away.
+  // Rebuilding a handful of uPlots over a viewport-sized window is cheap, and
+  // it keeps one code path for both first render and every later change.
+
+  function teardownPanels(state) {
+    state.ready = false;
+    state.wheelHandlers.forEach(function (entry) {
+      entry.element.removeEventListener("wheel", entry.handler);
+    });
+    state.plots.forEach(function (plot) {
+      plot.destroy();
+    });
+    state.plots = [];
+    state.holders = [];
+    state.wheelHandlers = [];
+    state.panels.innerHTML = "";
+  }
+
+  function buildPanels(state) {
+    teardownPanels(state);
+    state.visible.forEach(function (channelIndex, position) {
+      createPanel(state, channelIndex, position === state.visible.length - 1);
+    });
+    state.ready = true;
+    // adding panels can introduce a vertical scrollbar; re-measure once the
+    // DOM is complete so every plotting area stays aligned
+    resizePanels(state);
+  }
+
+  // Rebuild for a new visible set, leaving the reader where they were rather
+  // than snapping back to the full record.
+  function setVisibleChannels(state, visible) {
+    var held = state.plots.length
+      ? [state.plots[0].scales.x.min, state.plots[0].scales.x.max]
+      : null;
+
+    state.visible = visible;
+    buildPanels(state);
+
+    if (held && state.plots.length) {
+      setSharedXRange(state, held[0], held[1], null);
+    }
+  }
+
   function clampRangeToData(x, min, max) {
     var dataMin = x[0];
     var dataMax = x[x.length - 1];
@@ -174,6 +253,7 @@
   GRAM.adapters.uplot = {
 
     create: function (el, cfg) {
+      var channelCount = cfg.columns.length - 1;
       var state = {
         el: el,
         cfg: cfg,
@@ -181,6 +261,10 @@
         holders: [],
         wheelHandlers: [],
         panels: document.createElement("div"),
+        // every channel is on screen until a controller says otherwise
+        visible: Array.apply(null, { length: channelCount }).map(
+          function (_, i) { return i; }
+        ),
         syncKey: "gram-uplot-" + (++syncSequence),
         syncingScale: false,
         ready: false
@@ -191,29 +275,12 @@
       state.panels.className = "gram-uplot-panels";
       el.appendChild(state.panels);
 
-      var channelCount = cfg.columns.length - 1;
-      for (var i = 0; i < channelCount; i++) {
-        createPanel(state, i, i === channelCount - 1);
-      }
-      state.ready = true;
-      // Adding enough panels can introduce a vertical scrollbar. Re-measure
-      // once after the DOM is complete so every plotting area stays aligned.
-      resizePanels(state);
-
+      buildPanels(state);
       return state;
     },
 
     destroy: function (state) {
-      state.ready = false;
-      state.wheelHandlers.forEach(function (entry) {
-        entry.element.removeEventListener("wheel", entry.handler);
-      });
-      state.plots.forEach(function (plot) {
-        plot.destroy();
-      });
-      state.plots = [];
-      state.holders = [];
-      state.wheelHandlers = [];
+      teardownPanels(state);
       state.el.classList.remove("gram-uplot-stack");
       state.el.innerHTML = "";
     },
@@ -222,22 +289,40 @@
       resizePanels(state);
     },
 
-    // Fan aligned columns out to one [x, y] data pair per channel panel.
+    // Fan aligned columns out to one [x, y] data pair per visible panel. The
+    // count checked is the channel total, not the panel count -- panels are
+    // only the channels currently switched on.
     setData: function (state, columns) {
-      if (columns.length - 1 !== state.plots.length) {
+      if (columns.length !== state.cfg.columns.length) {
         throw new Error("gram: setData cannot change the channel count");
+      }
+      // every channel can be switched off at once, leaving nothing to scale
+      // the new data against
+      if (!state.plots.length) {
+        state.cfg.columns = columns;
+        return;
       }
 
       var currentX = state.plots[0].scales.x;
       var range = clampRangeToData(columns[0], currentX.min, currentX.max);
 
+      state.cfg.columns = columns;
       state.syncingScale = true;
-      state.plots.forEach(function (plot, i) {
-        plot.setData([columns[0], columns[i + 1]], false);
+      state.plots.forEach(function (plot, position) {
+        var channelIndex = state.visible[position];
+        plot.setData([columns[0], columns[channelIndex + 1]], false);
         plot.setScale("x", { min: range[0], max: range[1] });
       });
       state.syncingScale = false;
-      state.cfg.columns = columns;
+    },
+
+    // visible: 1-based channel indices, matching setSeries and R habits.
+    // state.visible is 0-based, so convert on the way in.
+    setVisible: function (state, visible) {
+      setVisibleChannels(
+        state,
+        visible.map(function (i) { return i - 1; })
+      );
     },
 
     setViewport: function (state, viewport) {
@@ -249,8 +334,13 @@
       }
     },
 
+    // NB series.visible is uPlot's per-line toggle *within* a panel, which is
+    // not the same thing as setVisible above -- that one adds and removes the
+    // panel itself. Use setVisible to put a channel on or off screen.
     setSeries: function (state, series) {
-      var plot = state.plots[series.series - 1];
+      // series.series is a 1-based channel index, so it has to be mapped
+      // through the visible set rather than used as a panel position
+      var plot = plotForChannel(state, series.series - 1);
       if (!plot) return;
 
       var opts = {};

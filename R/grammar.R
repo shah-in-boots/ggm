@@ -70,7 +70,7 @@ eval_tracing <- function(text, cache) {
   env <- gram_verbs(cache)
   allowed <- ls(env, all.names = TRUE)
   for (expr in exprs) {
-    check_grammar(expr, allowed)
+    gm_check_grammar(expr, allowed)
   }
 
   result <- NULL
@@ -90,7 +90,7 @@ eval_tracing <- function(text, cache) {
 
 # Walk one expression, rejecting anything the grammar does not define.
 # Runs before evaluation, so a rejected script never executes.
-check_grammar <- function(expr, allowed) {
+gm_check_grammar <- function(expr, allowed) {
   if (is.call(expr)) {
     fn <- expr[[1L]]
     if (!is.symbol(fn)) {
@@ -116,7 +116,7 @@ check_grammar <- function(expr, allowed) {
       )
     }
     for (arg in as.list(expr)[-1L]) {
-      check_grammar(arg, allowed)
+      gm_check_grammar(arg, allowed)
     }
   } else if (is.symbol(expr)) {
     name <- as.character(expr)

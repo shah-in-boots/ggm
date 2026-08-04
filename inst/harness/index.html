@@ -77,6 +77,44 @@
       color: var(--muted);
     }
 
+    /* --- signal pane --------------------------------------------- */
+
+    /* The channel selector is the controller's, not the plot's: the viewer
+       renders whichever channels it is told to and carries no chrome of its
+       own, so these rules live with the harness skin. */
+    .signal {
+      display: flex;
+      gap: 12px;
+      min-width: 0;
+    }
+    .signal > :first-child { flex: 1 1 auto; min-width: 0; }
+
+    /* No overflow clipping here. Shiny's checkboxGroupInput lays its first
+       row out ~10px above this box whatever margins are zeroed on it, so a
+       scroll container ate the first channel; letting the list size to its
+       content sidesteps that. A record with many more channels will make
+       this pane tall rather than scroll it. */
+    .channels {
+      flex: 0 0 auto;
+      align-self: flex-start;
+      width: 116px;
+      padding-left: 10px;
+      border-left: 1px solid var(--rule);
+    }
+    .channels .shiny-input-container { width: 100%; margin: 0; }
+    .channels .control-label { display: none; }
+    .channels .checkbox { margin: 0; }
+    .channels label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 1px 0;
+      cursor: pointer;
+      white-space: nowrap;
+      font: 400 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .channels input { margin: 0; flex: 0 0 auto; }
+
     /* --- console ------------------------------------------------- */
 
     .console .shiny-input-container { width: 100%; margin: 0; }
@@ -147,7 +185,10 @@
     <div class="pane stacked">
       <div class="pane">
         <h2>Signal</h2>
-        {{ viewer }}
+        <div class="signal">
+          {{ viewer }}
+          <div class="channels">{{ channels }}</div>
+        </div>
       </div>
       <div class="pane">
         <h2>Tracing</h2>

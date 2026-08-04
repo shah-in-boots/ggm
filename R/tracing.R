@@ -122,7 +122,7 @@ tracing <- function(cache,
     stop("the window did not contain any signal channels", call. = FALSE)
   }
 
-  keep <- decimation_index(nrow(signal), max_points)
+  keep <- gm_decimation_index(nrow(signal), max_points)
   if (length(keep) < nrow(signal)) {
     warning(
       "window decimated from ", nrow(signal), " to ", length(keep),
@@ -143,7 +143,7 @@ tracing <- function(cache,
 }
 
 # even stride that always keeps the first and last point
-decimation_index <- function(n, max_points) {
+gm_decimation_index <- function(n, max_points) {
   if (!is.finite(max_points) || max_points < 2) {
     stop("`max_points` must be at least 2", call. = FALSE)
   }
@@ -182,7 +182,7 @@ at <- function(sample, channel) {
 }
 
 # resolve a reference against a tracing, failing clearly when it cannot be
-resolve_at <- function(x, ref, arg) {
+gm_resolve_at <- function(x, ref, arg) {
   if (!inherits(ref, "gram_at")) {
     stop("`", arg, "` must be a point from at()", call. = FALSE)
   }
@@ -208,7 +208,7 @@ resolve_at <- function(x, ref, arg) {
 
 # verbs -----------------------------------------------------------------
 
-append_op <- function(x, op) {
+gm_append_op <- function(x, op) {
   x@ops <- c(x@ops, list(op))
   x
 }
@@ -223,7 +223,7 @@ append_op <- function(x, op) {
 #' @export
 reveal <- function(x, duration = 1200, stagger = 180) {
   stopifnot(S7::S7_inherits(x, Tracing))
-  append_op(x, list(
+  gm_append_op(x, list(
     type = "reveal",
     duration = as.double(duration),
     stagger = as.double(stagger)
@@ -244,10 +244,10 @@ reveal <- function(x, duration = 1200, stagger = 180) {
 #' @export
 add_arrow <- function(x, from, to, label = NULL, duration = 600) {
   stopifnot(S7::S7_inherits(x, Tracing))
-  append_op(x, list(
+  gm_append_op(x, list(
     type = "arrow",
-    from = resolve_at(x, from, "from"),
-    to = resolve_at(x, to, "to"),
+    from = gm_resolve_at(x, from, "from"),
+    to = gm_resolve_at(x, to, "to"),
     label = label,
     duration = as.double(duration)
   ))
@@ -264,9 +264,9 @@ add_arrow <- function(x, from, to, label = NULL, duration = 600) {
 #' @export
 emphasize <- function(x, target, label = NULL, duration = 450) {
   stopifnot(S7::S7_inherits(x, Tracing))
-  append_op(x, list(
+  gm_append_op(x, list(
     type = "emphasize",
-    target = resolve_at(x, target, "target"),
+    target = gm_resolve_at(x, target, "target"),
     label = label,
     duration = as.double(duration)
   ))

@@ -138,7 +138,7 @@ study_cache <- function(
   raw_ext = "dat",
   header_ext = "hea"
 ) {
-  record <- parse_record_path(path)
+  record <- gm_parse_record_path(path)
   dir <- normalizePath(record$dir, winslash = "/", mustWork = FALSE)
   stem <- record$stem
 
@@ -154,11 +154,11 @@ study_cache <- function(
     )
   }
 
-  hdr <- read_record_header(stem, dir)
-  fingerprint <- record_fingerprint(rawPath, headerPath)
-  cacheDir <- choose_cache_dir(dir, stem, fingerprint, cache_dir)
+  hdr <- gm_read_record_header(stem, dir)
+  fingerprint <- gm_record_fingerprint(rawPath, headerPath)
+  cacheDir <- gm_choose_cache_dir(dir, stem, fingerprint, cache_dir)
 
-  annotationPaths <- find_annotation_paths(
+  annotationPaths <- gm_find_annotation_paths(
     dir = dir,
     stem = stem,
     annotators = annotators,
@@ -187,12 +187,12 @@ study_cache <- function(
   )
 
   if (file.exists(cache@manifest_path)) {
-    cache <- attach_manifest(cache)
+    cache <- gm_attach_manifest(cache)
   }
   cache
 }
 
-read_record_header <- function(stem, dir) {
+gm_read_record_header <- function(stem, dir) {
   header <- EGM::read_header(record = stem, record_dir = dir)
   recordLine <- attr(header, "record_line")
 
@@ -218,7 +218,7 @@ read_record_header <- function(stem, dir) {
 
 # path helpers ----------------------------------------------------------
 
-parse_record_path <- function(path) {
+gm_parse_record_path <- function(path) {
   if (!is.character(path) || length(path) != 1L || !nzchar(path)) {
     stop("`path` must be a single non-empty path", call. = FALSE)
   }
@@ -231,7 +231,7 @@ parse_record_path <- function(path) {
   list(dir = dir, stem = stem)
 }
 
-choose_cache_dir <- function(record_dir, stem, fingerprint, cache_dir = NULL) {
+gm_choose_cache_dir <- function(record_dir, stem, fingerprint, cache_dir = NULL) {
   if (!is.null(cache_dir)) {
     cache_dir <- normalizePath(cache_dir, winslash = "/", mustWork = FALSE)
   } else if (dir.exists(record_dir) && file.access(record_dir, mode = 2L) == 0L) {
@@ -245,7 +245,7 @@ choose_cache_dir <- function(record_dir, stem, fingerprint, cache_dir = NULL) {
   normalizePath(cache_dir, winslash = "/", mustWork = FALSE)
 }
 
-find_annotation_paths <- function(dir, stem, annotators = NULL,
+gm_find_annotation_paths <- function(dir, stem, annotators = NULL,
                                   raw_ext = "dat", header_ext = "hea") {
   if (!is.null(annotators)) {
     annotators <- as.character(annotators)
@@ -265,7 +265,7 @@ find_annotation_paths <- function(dir, stem, annotators = NULL,
 
   files <- list.files(
     dir,
-    pattern = paste0("^", regex_escape(stem), "\\."),
+    pattern = paste0("^", gm_regex_escape(stem), "\\."),
     full.names = TRUE,
     no.. = TRUE
   )
@@ -273,7 +273,7 @@ find_annotation_paths <- function(dir, stem, annotators = NULL,
     return(stats::setNames(character(), character()))
   }
 
-  ext <- sub(paste0("^", regex_escape(stem), "\\."), "", basename(files))
+  ext <- sub(paste0("^", gm_regex_escape(stem), "\\."), "", basename(files))
   excluded <- c(raw_ext, header_ext, "cache.parquet", "cache.json", "parquet", "txt")
   keep <- !(tolower(ext) %in% tolower(excluded)) & !dir.exists(files)
   paths <- files[keep]
@@ -281,11 +281,11 @@ find_annotation_paths <- function(dir, stem, annotators = NULL,
   paths
 }
 
-regex_escape <- function(x) {
+gm_regex_escape <- function(x) {
   gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", x)
 }
 
-record_fingerprint <- function(raw_path, header_path) {
+gm_record_fingerprint <- function(raw_path, header_path) {
   rawInfo <- file.info(raw_path)
   headerInfo <- file.info(header_path)
 
@@ -346,7 +346,7 @@ cache_is_built <- function(cache) {
 
 # manifest --------------------------------------------------------------
 
-attach_manifest <- function(cache) {
+gm_attach_manifest <- function(cache) {
   manifest <- jsonlite::read_json(cache@manifest_path, simplifyVector = TRUE)
 
   if (!identical(as.integer(manifest$version), cacheManifestVersion)) {
@@ -439,7 +439,7 @@ build_study_cache <- function(cache,
   }
   if (!overwrite && file.exists(cache@manifest_path)) {
     message("cache already on disk, attaching it")
-    return(attach_manifest(cache))
+    return(gm_attach_manifest(cache))
   }
 
   bucket_samples <- as.integer(bucket_samples)
@@ -468,7 +468,7 @@ build_study_cache <- function(cache,
     stop("WFDB header does not contain a valid sample count", call. = FALSE)
   }
 
-  levelPlan <- plan_cache_levels(
+  levelPlan <- gm_plan_cache_levels(
     n_samples = nSamples,
     sample_rate = sampleRate,
     bucket_samples = bucket_samples,
@@ -490,13 +490,13 @@ build_study_cache <- function(cache,
       record = cache@stem,
       record_dir = cache@dir,
       header = cache@header,
-      begin = study_elapsed_time(cache, startSample / sampleRate),
-      end = study_elapsed_time(cache, endSample / sampleRate),
+      begin = gm_study_elapsed_time(cache, startSample / sampleRate),
+      end = gm_study_elapsed_time(cache, endSample / sampleRate),
       units = units,
       channels = cache@channels
     )
 
-    baseChunks[[i]] <- summarize_signal_chunk(
+    baseChunks[[i]] <- gm_summarize_signal_chunk(
       signal = as.data.frame(signal),
       channels = cache@channels,
       level = 1L,
@@ -512,7 +512,7 @@ build_study_cache <- function(cache,
   if (nrow(levelPlan) > 2L) {
     for (level in levelPlan$level[levelPlan$level > 1L]) {
       message("building level ", level, " from level ", level - 1L, " ...")
-      levelTables[[as.character(level)]] <- aggregate_cache_level(
+      levelTables[[as.character(level)]] <- gm_aggregate_cache_level(
         x = levelTables[[as.character(level - 1L)]],
         channels = cache@channels,
         level = level,
@@ -585,10 +585,10 @@ build_study_cache <- function(cache,
     stop("failed to publish cache manifest: ", cache@manifest_path, call. = FALSE)
   }
 
-  attach_manifest(cache)
+  gm_attach_manifest(cache)
 }
 
-plan_cache_levels <- function(n_samples, sample_rate, bucket_samples,
+gm_plan_cache_levels <- function(n_samples, sample_rate, bucket_samples,
                               level_factor, target_top_rows, max_levels) {
   levels <- data.frame(
     level = 0L,
@@ -624,7 +624,7 @@ plan_cache_levels <- function(n_samples, sample_rate, bucket_samples,
   levels
 }
 
-summarize_signal_chunk <- function(signal, channels, level,
+gm_summarize_signal_chunk <- function(signal, channels, level,
                                    bucket_samples, sample_rate) {
   samples <- as.double(signal$sample)
   bucketStart <- floor(samples / bucket_samples) * bucket_samples
@@ -643,21 +643,21 @@ summarize_signal_chunk <- function(signal, channels, level,
 
   for (ch in channels) {
     values <- signal[[ch]]
-    stats <- summarize_channel_groups(values, samples, groups)
-    out[[cache_col(ch, "first")]] <- stats$first
-    out[[cache_col(ch, "first_sample")]] <- stats$first_sample
-    out[[cache_col(ch, "min")]] <- stats$min
-    out[[cache_col(ch, "min_sample")]] <- stats$min_sample
-    out[[cache_col(ch, "max")]] <- stats$max
-    out[[cache_col(ch, "max_sample")]] <- stats$max_sample
-    out[[cache_col(ch, "last")]] <- stats$last
-    out[[cache_col(ch, "last_sample")]] <- stats$last_sample
+    stats <- gm_summarize_channel_groups(values, samples, groups)
+    out[[gm_cache_col(ch, "first")]] <- stats$first
+    out[[gm_cache_col(ch, "first_sample")]] <- stats$first_sample
+    out[[gm_cache_col(ch, "min")]] <- stats$min
+    out[[gm_cache_col(ch, "min_sample")]] <- stats$min_sample
+    out[[gm_cache_col(ch, "max")]] <- stats$max
+    out[[gm_cache_col(ch, "max_sample")]] <- stats$max_sample
+    out[[gm_cache_col(ch, "last")]] <- stats$last
+    out[[gm_cache_col(ch, "last_sample")]] <- stats$last_sample
   }
 
   out
 }
 
-summarize_channel_groups <- function(values, samples, groups) {
+gm_summarize_channel_groups <- function(values, samples, groups) {
   n <- length(groups)
   first <- minVal <- maxVal <- last <- numeric(n)
   firstSample <- minSample <- maxSample <- lastSample <- numeric(n)
@@ -691,7 +691,7 @@ summarize_channel_groups <- function(values, samples, groups) {
   )
 }
 
-aggregate_cache_level <- function(x, channels, level, bucket_samples, sample_rate) {
+gm_aggregate_cache_level <- function(x, channels, level, bucket_samples, sample_rate) {
   bucketStart <- floor(x$start_sample / bucket_samples) * bucket_samples
   groups <- split(seq_len(nrow(x)), bucketStart)
   starts <- as.double(names(groups))
@@ -706,14 +706,14 @@ aggregate_cache_level <- function(x, channels, level, bucket_samples, sample_rat
   )
 
   for (ch in channels) {
-    firstCol <- cache_col(ch, "first")
-    firstSampleCol <- cache_col(ch, "first_sample")
-    minCol <- cache_col(ch, "min")
-    minSampleCol <- cache_col(ch, "min_sample")
-    maxCol <- cache_col(ch, "max")
-    maxSampleCol <- cache_col(ch, "max_sample")
-    lastCol <- cache_col(ch, "last")
-    lastSampleCol <- cache_col(ch, "last_sample")
+    firstCol <- gm_cache_col(ch, "first")
+    firstSampleCol <- gm_cache_col(ch, "first_sample")
+    minCol <- gm_cache_col(ch, "min")
+    minSampleCol <- gm_cache_col(ch, "min_sample")
+    maxCol <- gm_cache_col(ch, "max")
+    maxSampleCol <- gm_cache_col(ch, "max_sample")
+    lastCol <- gm_cache_col(ch, "last")
+    lastSampleCol <- gm_cache_col(ch, "last_sample")
 
     out[[firstCol]] <- vapply(groups, function(idx) x[[firstCol]][idx[[1L]]], numeric(1))
     out[[firstSampleCol]] <- vapply(groups, function(idx) {
@@ -740,7 +740,7 @@ aggregate_cache_level <- function(x, channels, level, bucket_samples, sample_rat
   out
 }
 
-cache_col <- function(channel, statistic) {
+gm_cache_col <- function(channel, statistic) {
   paste0(channel, "__", statistic)
 }
 
@@ -772,7 +772,7 @@ read_study_signal <- function(cache,
                               channels = NULL,
                               units = c("physical", "digital")) {
   units <- match.arg(units)
-  channels <- resolve_cache_channels(cache, channels)
+  channels <- gm_resolve_cache_channels(cache, channels)
 
   EGM::read_signal(
     record = cache@stem,
@@ -786,7 +786,7 @@ read_study_signal <- function(cache,
   )
 }
 
-study_start_time <- function(cache) {
+gm_study_start_time <- function(cache) {
   startTime <- attr(cache@header, "record_line")$start_time
   if (!inherits(startTime, "POSIXt") || length(startTime) != 1L) {
     return(as.POSIXct(NA))
@@ -794,15 +794,15 @@ study_start_time <- function(cache) {
   startTime
 }
 
-study_elapsed_time <- function(cache, seconds) {
-  startTime <- study_start_time(cache)
+gm_study_elapsed_time <- function(cache, seconds) {
+  startTime <- gm_study_start_time(cache)
   if (!is.na(startTime)) {
     return(startTime + seconds)
   }
   as.difftime(seconds, units = "secs")
 }
 
-normalize_study_window <- function(cache,
+gm_normalize_study_window <- function(cache,
                                    begin = NULL,
                                    end = NULL,
                                    interval = NULL) {
@@ -810,12 +810,12 @@ normalize_study_window <- function(cache,
     begin = begin,
     end = end,
     interval = interval,
-    start_time = study_start_time(cache),
+    start_time = gm_study_start_time(cache),
     study_duration = cache@n_samples / cache@sample_rate
   )
 }
 
-study_seconds_to_sample <- function(seconds, sample_rate) {
+gm_study_seconds_to_sample <- function(seconds, sample_rate) {
   rawSample <- seconds * sample_rate
   tolerance <- .Machine$double.eps * max(1, abs(rawSample)) * 8
   ceiling(rawSample - tolerance)
@@ -888,14 +888,14 @@ read_cache_overview <- function(cache,
   if (!requireNamespace("nanoparquet", quietly = TRUE)) {
     stop("Reading the overview cache needs the 'nanoparquet' package.", call. = FALSE)
   }
-  window <- normalize_study_window(cache, begin, end, interval)
+  window <- gm_normalize_study_window(cache, begin, end, interval)
   beginSeconds <- window$begin
   endSeconds <- window$end
 
-  channels <- resolve_cache_channels(cache, channels)
+  channels <- gm_resolve_cache_channels(cache, channels)
 
   if (endSeconds <= beginSeconds) {
-    return(cache_points_from_rows(data.frame(), channels, cache@sample_rate))
+    return(gm_cache_points_from_rows(data.frame(), channels, cache@sample_rate))
   }
 
   if (is.null(level)) {
@@ -914,7 +914,7 @@ read_cache_overview <- function(cache,
   required <- c(
     "level", "start_sample", "end_sample",
     unlist(lapply(channels, function(ch) {
-      cache_col(ch, c(
+      gm_cache_col(ch, c(
         "first", "first_sample",
         "min", "min_sample",
         "max", "max_sample",
@@ -926,8 +926,8 @@ read_cache_overview <- function(cache,
   overview <- nanoparquet::read_parquet(cache@cache_path, col_select = required)
   overview <- as.data.frame(overview)
 
-  beginSample <- study_seconds_to_sample(beginSeconds, cache@sample_rate)
-  endSample <- study_seconds_to_sample(endSeconds, cache@sample_rate)
+  beginSample <- gm_study_seconds_to_sample(beginSeconds, cache@sample_rate)
+  endSample <- gm_study_seconds_to_sample(endSeconds, cache@sample_rate)
   overview <- overview[
     overview$level == level &
       overview$start_sample < endSample &
@@ -936,10 +936,10 @@ read_cache_overview <- function(cache,
     drop = FALSE
   ]
 
-  cache_points_from_rows(overview, channels, sample_rate = cache@sample_rate)
+  gm_cache_points_from_rows(overview, channels, sample_rate = cache@sample_rate)
 }
 
-cache_points_from_rows <- function(rows, channels, sample_rate) {
+gm_cache_points_from_rows <- function(rows, channels, sample_rate) {
   if (nrow(rows) == 0L || length(channels) == 0L) {
     return(data.frame(
       sample = numeric(),
@@ -959,16 +959,16 @@ cache_points_from_rows <- function(rows, channels, sample_rate) {
 
     for (j in seq_len(nrow(rows))) {
       samples <- c(
-        rows[[cache_col(ch, "first_sample")]][[j]],
-        rows[[cache_col(ch, "min_sample")]][[j]],
-        rows[[cache_col(ch, "max_sample")]][[j]],
-        rows[[cache_col(ch, "last_sample")]][[j]]
+        rows[[gm_cache_col(ch, "first_sample")]][[j]],
+        rows[[gm_cache_col(ch, "min_sample")]][[j]],
+        rows[[gm_cache_col(ch, "max_sample")]][[j]],
+        rows[[gm_cache_col(ch, "last_sample")]][[j]]
       )
       values <- c(
-        rows[[cache_col(ch, "first")]][[j]],
-        rows[[cache_col(ch, "min")]][[j]],
-        rows[[cache_col(ch, "max")]][[j]],
-        rows[[cache_col(ch, "last")]][[j]]
+        rows[[gm_cache_col(ch, "first")]][[j]],
+        rows[[gm_cache_col(ch, "min")]][[j]],
+        rows[[gm_cache_col(ch, "max")]][[j]],
+        rows[[gm_cache_col(ch, "last")]][[j]]
       )
       statistic <- c("first", "min", "max", "last")
 
@@ -993,7 +993,7 @@ cache_points_from_rows <- function(rows, channels, sample_rate) {
   out[order(match(out$channel, channels), out$sample), , drop = FALSE]
 }
 
-resolve_cache_channels <- function(cache, channels = NULL) {
+gm_resolve_cache_channels <- function(cache, channels = NULL) {
   if (is.null(channels) || length(channels) == 0L) {
     return(cache@channels)
   }
@@ -1044,7 +1044,7 @@ read_study_viewport <- function(cache,
                                 units = c("physical", "digital")) {
   resolution <- match.arg(resolution)
   units <- match.arg(units)
-  window <- normalize_study_window(cache, begin, end, interval)
+  window <- gm_normalize_study_window(cache, begin, end, interval)
   windowSeconds <- window$end - window$begin
 
   if (resolution == "overview" && !cache_is_built(cache)) {

@@ -18,8 +18,10 @@ gram_harness(
 
 \item{begin, interval}{Window shown in the viewer panel.}
 
-\item{channels}{Channels shown in the viewer panel. Defaults to the
-first six in the header.}
+\item{channels}{Channels loaded into the viewer panel. Defaults to every
+channel in the header. The \link{gram_channels} module beside the viewer
+switches these on and off; because the widget already holds them all,
+that costs no further read of the record.}
 
 \item{script}{Initial contents of the scripting panel.}
 
@@ -38,5 +40,9 @@ opens with a working tracing rather than an empty stage.
 The panel accepts the tracing grammar only. Scripts are checked against
 the verb whitelist and evaluated in the sealed environment built by
 \code{\link[=gram_verbs]{gram_verbs()}}, so a script cannot reach R outside the grammar.
+
+Dragging across the viewer reports the selected sample range above the
+script state, through \code{\link[=normalize_selection]{normalize_selection()}}. Nothing consumes that range
+yet -- the readout exists to confirm the browser can reach R at all.
 }
 \concept{harness}

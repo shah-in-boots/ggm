@@ -23,12 +23,12 @@ tracing_spec <- function(x) {
   stopifnot(S7::S7_inherits(x, Tracing))
 
   height <- svgLane * length(x@channels)
-  geom <- tracing_geometry(x)
+  geom <- gm_tracing_geometry(x)
 
   parts <- c(
-    svg_defs(),
-    svg_lanes(x, geom),
-    svg_traces(x, geom)
+    gm_svg_defs(),
+    gm_svg_lanes(x, geom),
+    gm_svg_traces(x, geom)
   )
 
   ops <- list()
@@ -46,7 +46,7 @@ tracing_spec <- function(x) {
     } else if (op$type == "arrow") {
       arrows <- arrows + 1L
       id <- paste0("gram-arrow-", arrows)
-      parts <- c(parts, svg_arrow(x, geom, op, id))
+      parts <- c(parts, gm_svg_arrow(x, geom, op, id))
       ops <- c(ops, list(list(
         type = "arrow",
         targets = paste0("#", id),
@@ -56,7 +56,7 @@ tracing_spec <- function(x) {
     } else if (op$type == "emphasize") {
       marks <- marks + 1L
       id <- paste0("gram-emph-", marks)
-      parts <- c(parts, svg_emphasis(x, geom, op, id))
+      parts <- c(parts, gm_svg_emphasis(x, geom, op, id))
       ops <- c(ops, list(list(
         type = "emphasize",
         targets = paste0("#", id),
@@ -85,7 +85,7 @@ tracing_spec <- function(x) {
 # geometry --------------------------------------------------------------
 
 # per-channel scaling and the sample -> x mapping, computed once
-tracing_geometry <- function(x) {
+gm_tracing_geometry <- function(x) {
   span <- range(x@samples)
   width <- span[[2L]] - span[[1L]]
   if (width <= 0) width <- 1
@@ -102,38 +102,38 @@ tracing_geometry <- function(x) {
   list(sample0 = span[[1L]], width = width, scales = scales)
 }
 
-geom_x <- function(geom, sample) {
+gm_geom_x <- function(geom, sample) {
   (sample - geom$sample0) / geom$width * svgWidth
 }
 
-geom_baseline <- function(x, channel) {
+gm_geom_baseline <- function(x, channel) {
   which(x@channels == channel)[[1L]] * svgLane - svgLane / 2
 }
 
-geom_y <- function(x, geom, channel, value) {
+gm_geom_y <- function(x, geom, channel, value) {
   scale <- geom$scales[[channel]]
-  geom_baseline(x, channel) -
+  gm_geom_baseline(x, channel) -
     (value - scale$centre) / scale$reach * (svgLane * svgAmplitude)
 }
 
 # value on a channel at the sample nearest the reference
-value_at <- function(x, ref) {
+gm_value_at <- function(x, ref) {
   i <- which.min(abs(x@samples - ref$sample))
   x@values[[ref$channel]][[i]]
 }
 
 # point (x, y) for a resolved reference
-point_at <- function(x, geom, ref) {
+gm_point_at <- function(x, geom, ref) {
   c(
-    geom_x(geom, ref$sample),
-    geom_y(x, geom, ref$channel, value_at(x, ref))
+    gm_geom_x(geom, ref$sample),
+    gm_geom_y(x, geom, ref$channel, gm_value_at(x, ref))
   )
 }
 
 
 # markup ----------------------------------------------------------------
 
-svg_defs <- function() {
+gm_svg_defs <- function() {
   paste0(
     '<defs><marker id="gram-head" viewBox="0 0 10 10" refX="9" refY="5" ',
     'markerWidth="5" markerHeight="5" orient="auto-start-reverse">',
@@ -142,36 +142,36 @@ svg_defs <- function() {
   )
 }
 
-svg_lanes <- function(x, geom) {
+gm_svg_lanes <- function(x, geom) {
   lanes <- vapply(x@channels, function(channel) {
-    y <- geom_baseline(x, channel)
+    y <- gm_geom_baseline(x, channel)
     paste0(
-      '<line class="gram-baseline" x1="0" y1="', num(y),
-      '" x2="', svgWidth, '" y2="', num(y), '"/>',
-      '<text class="gram-channel" x="8" y="', num(y - svgLane * 0.32), '">',
-      escape_xml(channel), "</text>"
+      '<line class="gram-baseline" x1="0" y1="', gm_num(y),
+      '" x2="', svgWidth, '" y2="', gm_num(y), '"/>',
+      '<text class="gram-channel" x="8" y="', gm_num(y - svgLane * 0.32), '">',
+      gm_escape_xml(channel), "</text>"
     )
   }, character(1))
 
   paste0('<g class="gram-lanes">', paste(lanes, collapse = ""), "</g>")
 }
 
-svg_traces <- function(x, geom) {
+gm_svg_traces <- function(x, geom) {
   paths <- vapply(x@channels, function(channel) {
-    xs <- geom_x(geom, x@samples)
-    ys <- geom_y(x, geom, channel, x@values[[channel]])
+    xs <- gm_geom_x(geom, x@samples)
+    ys <- gm_geom_y(x, geom, channel, x@values[[channel]])
     paste0(
-      '<path class="gram-trace" data-channel="', escape_xml(channel), '" d="',
-      path_data(xs, ys), '"/>'
+      '<path class="gram-trace" data-channel="', gm_escape_xml(channel), '" d="',
+      gm_path_data(xs, ys), '"/>'
     )
   }, character(1))
 
   paste0('<g class="gram-traces">', paste(paths, collapse = ""), "</g>")
 }
 
-svg_arrow <- function(x, geom, op, id) {
-  from <- point_at(x, geom, op$from)
-  to <- point_at(x, geom, op$to)
+gm_svg_arrow <- function(x, geom, op, id) {
+  from <- gm_point_at(x, geom, op$from)
+  to <- gm_point_at(x, geom, op$to)
 
   # bow the path away from the lanes it spans so it stays readable
   mx <- (from[[1L]] + to[[1L]]) / 2
@@ -180,35 +180,35 @@ svg_arrow <- function(x, geom, op, id) {
 
   markup <- paste0(
     '<path class="gram-arrow" id="', id, '" marker-end="url(#gram-head)" ',
-    'd="M ', num(from[[1L]]), " ", num(from[[2L]]),
-    " Q ", num(mx), " ", num(my - bow),
-    " ", num(to[[1L]]), " ", num(to[[2L]]), '"/>'
+    'd="M ', gm_num(from[[1L]]), " ", gm_num(from[[2L]]),
+    " Q ", gm_num(mx), " ", gm_num(my - bow),
+    " ", gm_num(to[[1L]]), " ", gm_num(to[[2L]]), '"/>'
   )
 
   if (!is.null(op$label)) {
     markup <- paste0(
       markup,
       '<text class="gram-label" id="', id, '-label" ',
-      'x="', num(mx), '" y="', num(my - bow - 8), '">',
-      escape_xml(op$label), "</text>"
+      'x="', gm_num(mx), '" y="', gm_num(my - bow - 8), '">',
+      gm_escape_xml(op$label), "</text>"
     )
   }
   markup
 }
 
-svg_emphasis <- function(x, geom, op, id) {
-  pt <- point_at(x, geom, op$target)
+gm_svg_emphasis <- function(x, geom, op, id) {
+  pt <- gm_point_at(x, geom, op$target)
   markup <- paste0(
-    '<circle class="gram-emph" id="', id, '" cx="', num(pt[[1L]]),
-    '" cy="', num(pt[[2L]]), '" r="', num(svgLane * 0.16), '"/>'
+    '<circle class="gram-emph" id="', id, '" cx="', gm_num(pt[[1L]]),
+    '" cy="', gm_num(pt[[2L]]), '" r="', gm_num(svgLane * 0.16), '"/>'
   )
 
   if (!is.null(op$label)) {
     markup <- paste0(
       markup,
       '<text class="gram-label" id="', id, '-label" ',
-      'x="', num(pt[[1L]]), '" y="', num(pt[[2L]] - svgLane * 0.24), '">',
-      escape_xml(op$label), "</text>"
+      'x="', gm_num(pt[[1L]]), '" y="', gm_num(pt[[2L]] - svgLane * 0.24), '">',
+      gm_escape_xml(op$label), "</text>"
     )
   }
   markup
@@ -219,15 +219,15 @@ svg_emphasis <- function(x, geom, op, id) {
 
 # two decimals is below one screen pixel at any sane render size and
 # keeps the path payload small
-num <- function(v) {
+gm_num <- function(v) {
   formatC(v, format = "f", digits = 2, drop0trailing = TRUE)
 }
 
-path_data <- function(xs, ys) {
-  paste0("M ", paste0(num(xs), " ", num(ys), collapse = " L "))
+gm_path_data <- function(xs, ys) {
+  paste0("M ", paste0(gm_num(xs), " ", gm_num(ys), collapse = " L "))
 }
 
-escape_xml <- function(text) {
+gm_escape_xml <- function(text) {
   text <- gsub("&", "&amp;", text, fixed = TRUE)
   text <- gsub("<", "&lt;", text, fixed = TRUE)
   text <- gsub(">", "&gt;", text, fixed = TRUE)

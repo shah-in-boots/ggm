@@ -9,8 +9,11 @@ dependencies:
     src: htmlwidgets/lib/uplot
     script: uPlot.iife.min.js
     stylesheet: uPlot.min.css
+  # Pre-release, so this version is not tracked against the package. It is the
+  # only varying part of the asset URL, so if a browser serves stale css or js
+  # during development, hard-reload rather than bumping it.
   - name: gram-core
-    version: 0.1.0
+    version: 0.3.0
     src: htmlwidgets/lib/gram
     stylesheet: gram-uplot.css
     script:

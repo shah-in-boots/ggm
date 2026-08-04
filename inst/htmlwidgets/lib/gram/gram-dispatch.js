@@ -3,7 +3,7 @@
 // owns:
 //   GRAM.instances : elId -> {adapter, state}
 //   GRAM.adapters  : name -> adapter object (verb impls)
-//   shiny "gram:*" message routing
+//   shiny "gram:*" message routing, both directions
 //
 // knows nothing about uPlot. animation layer + shiny talk
 // only to this file.
@@ -22,6 +22,9 @@
   //   setData(state, columns)
   //   setViewport(state, v)    v = {xmin,xmax,ymin,ymax}
   //   setSeries(state, s)      s = {series,visible,color,label}
+  //   setVisible(state, ch)    ch = 1-based channel indices to show;
+  //                            channel visibility is view state, so the
+  //                            backend owns it and no R read is involved
   //   valToPos(state, val, axis) -> px   (for animation layer)
   //   posToVal(state, px, axis)  -> val
 
@@ -63,7 +66,20 @@
     );
   };
 
-  // --- shiny routing --------------------------------------------
+  // --- shiny routing, outbound ----------------------------------
+
+  // The one path from a backend back to R. Adapters call this instead of
+  // touching Shiny, so a second backend inherits the wire unchanged.
+  //
+  // priority "event" is required, not decoration: without it Shiny drops a
+  // value identical to the last one, so selecting the same range twice
+  // would go unreported.
+  GRAM.emit = function (el, event, value) {
+    if (!window.Shiny || !el || !el.id) return;
+    Shiny.setInputValue(el.id + "_" + event, value, { priority: "event" });
+  };
+
+  // --- shiny routing, inbound -----------------------------------
 
   // msg always carries msg.id (set by gram_send in backend.R)
   if (window.Shiny) {
@@ -75,6 +91,9 @@
     });
     Shiny.addCustomMessageHandler("gram:set_series", function (msg) {
       GRAM.call(msg.id, "setSeries", msg);
+    });
+    Shiny.addCustomMessageHandler("gram:set_visible", function (msg) {
+      GRAM.call(msg.id, "setVisible", msg.channels);
     });
   }
 })();

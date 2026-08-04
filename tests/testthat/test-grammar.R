@@ -1,7 +1,4 @@
-grammar_cache <- function() {
-  record <- file.path(system.file("extdata", package = "gram"), "bard-egm.dat")
-  study_cache(record, cache_dir = tempdir())
-}
+# demo_cache() comes from helper-gram.R
 
 test_that("a script builds a tracing without naming the study", {
   x <- eval_tracing(
@@ -9,7 +6,7 @@ test_that("a script builds a tracing without naming the study", {
              channels = c("HIS D", "RV 1-2")) |>
        reveal() |>
        add_arrow(from = at(50, "RV 1-2"), to = at(120, "HIS D"), label = "VA")',
-    grammar_cache()
+    demo_cache()
   )
 
   expect_true(S7::S7_inherits(x, gram:::Tracing))
@@ -17,7 +14,7 @@ test_that("a script builds a tracing without naming the study", {
 })
 
 test_that("the verb environment is sealed", {
-  env <- gram_verbs(grammar_cache())
+  env <- gram_verbs(demo_cache())
 
   expect_identical(parent.env(env), emptyenv())
   expect_setequal(
@@ -27,7 +24,7 @@ test_that("the verb environment is sealed", {
 })
 
 test_that("calls outside the grammar are refused before evaluation", {
-  cache <- grammar_cache()
+  cache <- demo_cache()
   sentinel <- tempfile()
   writeLines("intact", sentinel)
 
@@ -45,14 +42,14 @@ test_that("calls outside the grammar are refused before evaluation", {
 })
 
 test_that("undefined names are refused", {
-  cache <- grammar_cache()
+  cache <- demo_cache()
 
   expect_error(eval_tracing("everything", cache), "not defined in the")
   expect_error(eval_tracing("wiggle()", cache), "not part of the")
 })
 
 test_that("a script must end in a tracing", {
-  cache <- grammar_cache()
+  cache <- demo_cache()
 
   expect_error(eval_tracing('at(1, "HIS D")', cache), "must end in a tracing")
   expect_error(eval_tracing("", cache), "empty")
@@ -65,7 +62,7 @@ test_that("errors from the verbs reach the caller intact", {
     eval_tracing(
       'tracing(begin = "00:00:00", interval = "300 ms", channels = "HIS D") |>
          emphasize(at(50, "CS 1-2"))',
-      grammar_cache()
+      demo_cache()
     ),
     "not in this tracing"
   )
