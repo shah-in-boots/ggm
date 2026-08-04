@@ -67,3 +67,16 @@ ten seconds from `begin`. Drag horizontally to zoom into that loaded
 range, scroll horizontally (or use Shift+wheel) to pan, and double-click
 to reset the range. A future interactive study controller can manage
 dynamic viewport reads while reusing the same uPlot backend.
+
+The channel set is fixed at read time: whatever `channels` names is what
+the widget draws, and it carries no controls of its own. Choosing
+channels interactively is the controller's job – a Shiny app drives the
+same widget through the plotting verbs, as
+[`gram_harness()`](https://shah-in-boots.github.io/gram/reference/gram_harness.md)
+does – which keeps this function a plain, non-interactive way to
+exercise the uPlot backend.
+
+## See also
+
+Other backend viewers:
+[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)

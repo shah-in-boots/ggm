@@ -110,6 +110,16 @@ from <code>begin</code>. Drag horizontally to zoom into that loaded range, scrol
 horizontally (or use Shift+wheel) to pan, and double-click to reset the
 range. A future interactive study controller can manage dynamic viewport
 reads while reusing the same uPlot backend.</p>
+<p>The channel set is fixed at read time: whatever <code>channels</code> names is what the
+widget draws, and it carries no controls of its own. Choosing channels
+interactively is the controller's job – a Shiny app drives the same widget
+through the plotting verbs, as <code><a href="gram_harness.html">gram_harness()</a></code> does – which keeps this
+function a plain, non-interactive way to exercise the uPlot backend.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p>Other backend viewers:
+<code><a href="normalize_selection.html">normalize_selection()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

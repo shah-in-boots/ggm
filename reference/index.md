@@ -20,6 +20,9 @@
   : Mark a point for emphasis
 - [`eval_tracing()`](https://shah-in-boots.github.io/gram/reference/eval_tracing.md)
   : Evaluate a tracing script
+- [`gram_channelsUI()`](https://shah-in-boots.github.io/gram/reference/gram_channels.md)
+  [`gram_channelsServer()`](https://shah-in-boots.github.io/gram/reference/gram_channels.md)
+  : Choose which channels are on screen
 - [`gram_harness()`](https://shah-in-boots.github.io/gram/reference/gram_harness.md)
   : Launch the development harness
 - [`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md)
@@ -32,6 +35,8 @@
   : Shiny output binding for a tracing
 - [`gram_verbs()`](https://shah-in-boots.github.io/gram/reference/gram_verbs.md)
   : Build the sealed environment a tracing script runs in
+- [`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)
+  : Canonicalise a viewer selection to a sample range
 - [`read_cache_overview()`](https://shah-in-boots.github.io/gram/reference/read_cache_overview.md)
   : Read an overview cache window
 - [`read_study_signal()`](https://shah-in-boots.github.io/gram/reference/read_study_signal.md)

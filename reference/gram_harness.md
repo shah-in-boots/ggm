@@ -31,8 +31,11 @@ gram_harness(
 
 - channels:
 
-  Channels shown in the viewer panel. Defaults to the first six in the
-  header.
+  Channels loaded into the viewer panel. Defaults to every channel in
+  the header. The
+  [gram_channels](https://shah-in-boots.github.io/gram/reference/gram_channels.md)
+  module beside the viewer switches these on and off; because the widget
+  already holds them all, that costs no further read of the record.
 
 - script:
 
@@ -53,3 +56,9 @@ The panel accepts the tracing grammar only. Scripts are checked against
 the verb whitelist and evaluated in the sealed environment built by
 [`gram_verbs()`](https://shah-in-boots.github.io/gram/reference/gram_verbs.md),
 so a script cannot reach R outside the grammar.
+
+Dragging across the viewer reports the selected sample range above the
+script state, through
+[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md).
+Nothing consumes that range yet – the readout exists to confirm the
+browser can reach R at all.

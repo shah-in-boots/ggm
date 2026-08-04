@@ -75,8 +75,10 @@ opens with a working tracing rather than an empty stage.</p>
 
 
 <dt id="arg-channels">channels<a class="anchor" aria-label="anchor" href="#arg-channels"></a></dt>
-<dd><p>Channels shown in the viewer panel. Defaults to the
-first six in the header.</p></dd>
+<dd><p>Channels loaded into the viewer panel. Defaults to every
+channel in the header. The <a href="gram_channels.html">gram_channels</a> module beside the viewer
+switches these on and off; because the widget already holds them all,
+that costs no further read of the record.</p></dd>
 
 
 <dt id="arg-script">script<a class="anchor" aria-label="anchor" href="#arg-script"></a></dt>
@@ -96,6 +98,9 @@ first six in the header.</p></dd>
     <p>The panel accepts the tracing grammar only. Scripts are checked against
 the verb whitelist and evaluated in the sealed environment built by
 <code><a href="gram_verbs.html">gram_verbs()</a></code>, so a script cannot reach R outside the grammar.</p>
+<p>Dragging across the viewer reports the selected sample range above the
+script state, through <code><a href="normalize_selection.html">normalize_selection()</a></code>. Nothing consumes that range
+yet – the readout exists to confirm the browser can reach R at all.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
