@@ -1,6 +1,6 @@
-[submodule "branding"]
-	path = branding
-	url = https://github.com/shah-in-boots/branding
+[submodule "mark"]
+	path = mark
+	url = https://github.com/shah-in-boots/mark.git
 	branch = main
 	update = rebase
 	fetchRecurseSubmodules = true

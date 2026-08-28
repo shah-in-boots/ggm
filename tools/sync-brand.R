@@ -1,20 +1,20 @@
 #!/usr/bin/env Rscript
 
-# Sync selected branding assets from ./branding into ./inst/brand
+# Sync selected branding assets from ./mark into ./inst/brand
 project_root <- normalizePath('.', winslash = '/', mustWork = TRUE)
 
-source_dir <- file.path(project_root, 'branding')
+source_dir <- file.path(project_root, 'mark')
 target_dir <- file.path(project_root, 'inst', 'brand')
 
 if (!dir.exists(source_dir)) {
-  stop('Could not find ./branding. Make sure the submodule is initialized.', call. = FALSE)
+  stop('Could not find ./mark. Make sure the submodule is initialized.', call. = FALSE)
 }
 
 if (!dir.exists(target_dir)) {
   dir.create(target_dir, recursive = TRUE)
 }
 
-# Default files to copy from branding (no arguments taken)
+# Default files to copy from mark (no arguments taken)
 files_to_copy <- c(
   '_brand.yml',
   'colors.scss',
@@ -25,7 +25,7 @@ missing_files <- files_to_copy[!file.exists(file.path(source_dir, files_to_copy)
 if (length(missing_files) > 0) {
   warning(
     paste0(
-      'These files were not found in ./branding and were skipped: ',
+      'These files were not found in ./mark and were skipped: ',
       paste(missing_files, collapse = ', ')
     ),
     call. = FALSE
@@ -39,7 +39,7 @@ if (length(existing_targets) > 0) {
 
 copy_candidates <- files_to_copy[file.exists(file.path(source_dir, files_to_copy))]
 if (length(copy_candidates) == 0) {
-  stop('No requested branding files exist in ./branding; nothing to copy.', call. = FALSE)
+  stop('No requested branding files exist in ./mark; nothing to copy.', call. = FALSE)
 }
 
 copied <- file.copy(

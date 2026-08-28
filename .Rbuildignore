@@ -14,7 +14,7 @@
 ^data-raw$
 ^vignettes/\.quarto$
 ^vignettes/.*_files$
-^branding$
+^mark$
 ^vignettes/articles/\.quarto$
 ^vignettes/articles/.*_files$
 ^vignettes/articles$
