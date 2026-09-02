@@ -43,7 +43,7 @@ flowchart LR
     Viz["Visualization Engine<br/>uPlot explorer"]:::planned
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
-    Presentation["Mark-up and Presentation<br/>scene grammar; anime.js; export"]:::planned
+    Presentation["Mark-up and Presentation<br/>tracing grammar; anime.js; export"]:::planned
 
     EGM --> Backend
     Backend --> Viz
@@ -59,7 +59,7 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::planned
 
     EGMIO --> GramBackend
 ```
@@ -73,7 +73,7 @@ signal table**.
 ``` r
 
 # Read header and locate sidecars; do not read the signal.
-open_study <- function(record, record_dir = ".", cache_dir = NULL) {
+study_cache <- function(record, record_dir = ".", cache_dir = NULL) {
   # TODO
 }
 
@@ -83,8 +83,13 @@ build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
 }
 
 # Return only the samples needed for a viewport.
-read_viewport <- function(study, window, channels, width_px,
-                          resolution = c("auto", "raw", "overview")) {
+read_viewport <- function(
+  study,
+  window,
+  channels,
+  width_px,
+  resolution = c("auto", "raw", "overview")
+) {
   # TODO
 }
 ```
@@ -279,7 +284,8 @@ archetypes are supplied.
 A bookmark is a **saved view**, not copied signal data: record
 fingerprint, sample range, channel order, gains, visible annotation
 layers, label, notes, and tags. It appears in navigation like an event
-and is the input to `scene()`.
+and is the input to
+[`tracing()`](https://shah-in-boots.github.io/gram/reference/tracing.md).
 
 ``` r
 
@@ -296,12 +302,12 @@ list_bookmarks <- function(study, filter = NULL) {
 
 ``` mermaid
 flowchart LR
-    SceneGrammar["R scene grammar<br/>scene(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
+    TracingGrammar["R tracing grammar<br/>tracing(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
     SvgCompiler["SVG compiler<br/>one coordinate space<br/>explicit final state"]:::planned
     AnimeJs["anime.js v4<br/>timeline<br/>interpolation; playback"]:::planned
     Exports["Exports<br/>SVG; PDF<br/>HTML; later GIF/video"]:::planned
 
-    SceneGrammar --> SvgCompiler
+    TracingGrammar --> SvgCompiler
     SvgCompiler --> AnimeJs
     SvgCompiler --> Exports
     AnimeJs --> Exports
@@ -344,7 +350,7 @@ This boundary keeps the R grammar stable if the JavaScript runtime
 changes. It also ensures a print still does not depend on replaying an
 animation to discover where its elements finish.
 
-| Scene operation    | anime.js compilation                  |
+| Tracing operation  | anime.js compilation                  |
 |--------------------|---------------------------------------|
 | reveal trace/arrow | SVG drawable from `0` to `1`          |
 | emphasize          | opacity, color, or stroke-width tween |
@@ -359,8 +365,8 @@ compiler rather than in the public R object.
 
 ``` r
 
-scene <- function(x, ...) {
-  # TODO: create from a bookmark or explicit study window
+tracing <- function(x, ...) {
+  # TODO: create from a bookmark or explicit study window; returns a tracing object
 }
 
 add_caliper <- function(x, from, to, label = NULL, ...) {
@@ -379,11 +385,11 @@ reveal <- function(x, target, at = NULL, duration = NULL, ...) {
   # TODO: append a timeline operation
 }
 
-render_scene <- function(x, format = c("svg", "pdf"), ...) {
+render_tracing <- function(x, format = c("svg", "pdf"), ...) {
   # TODO
 }
 
-animate_scene <- function(x, autoplay = TRUE, controls = TRUE, ...) {
+animate_tracing <- function(x, autoplay = TRUE, controls = TRUE, ...) {
   # TODO: compile the scene timeline to an anime.js-backed htmlwidget
 }
 ```
@@ -495,7 +501,7 @@ flowchart LR
     Viz["Visualization Engine<br/>uPlot explorer"]:::planned
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
-    Presentation["Mark-up and Presentation<br/>scene grammar; anime.js; export"]:::planned
+    Presentation["Mark-up and Presentation<br/>tracing grammar; anime.js; export"]:::planned
 
     EGM --> Backend
     Backend --> Viz
@@ -511,7 +517,7 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::planned
 
     EGMIO --> GramBackend
 ```
@@ -525,7 +531,7 @@ signal table**.
 ``` r
 
 # Read header and locate sidecars; do not read the signal.
-open_study <- function(record, record_dir = ".", cache_dir = NULL) {
+study_cache <- function(record, record_dir = ".", cache_dir = NULL) {
   # TODO
 }
 
@@ -535,8 +541,13 @@ build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
 }
 
 # Return only the samples needed for a viewport.
-read_viewport <- function(study, window, channels, width_px,
-                          resolution = c("auto", "raw", "overview")) {
+read_viewport <- function(
+  study,
+  window,
+  channels,
+  width_px,
+  resolution = c("auto", "raw", "overview")
+) {
   # TODO
 }
 ```
@@ -731,7 +742,8 @@ archetypes are supplied.
 A bookmark is a **saved view**, not copied signal data: record
 fingerprint, sample range, channel order, gains, visible annotation
 layers, label, notes, and tags. It appears in navigation like an event
-and is the input to `scene()`.
+and is the input to
+[`tracing()`](https://shah-in-boots.github.io/gram/reference/tracing.md).
 
 ``` r
 
@@ -748,12 +760,12 @@ list_bookmarks <- function(study, filter = NULL) {
 
 ``` mermaid
 flowchart LR
-    SceneGrammar["R scene grammar<br/>scene(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
+    TracingGrammar["R tracing grammar<br/>tracing(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
     SvgCompiler["SVG compiler<br/>one coordinate space<br/>explicit final state"]:::planned
     AnimeJs["anime.js v4<br/>timeline<br/>interpolation; playback"]:::planned
     Exports["Exports<br/>SVG; PDF<br/>HTML; later GIF/video"]:::planned
 
-    SceneGrammar --> SvgCompiler
+    TracingGrammar --> SvgCompiler
     SvgCompiler --> AnimeJs
     SvgCompiler --> Exports
     AnimeJs --> Exports
@@ -796,7 +808,7 @@ This boundary keeps the R grammar stable if the JavaScript runtime
 changes. It also ensures a print still does not depend on replaying an
 animation to discover where its elements finish.
 
-| Scene operation    | anime.js compilation                  |
+| Tracing operation  | anime.js compilation                  |
 |--------------------|---------------------------------------|
 | reveal trace/arrow | SVG drawable from `0` to `1`          |
 | emphasize          | opacity, color, or stroke-width tween |
@@ -811,8 +823,8 @@ compiler rather than in the public R object.
 
 ``` r
 
-scene <- function(x, ...) {
-  # TODO: create from a bookmark or explicit study window
+tracing <- function(x, ...) {
+  # TODO: create from a bookmark or explicit study window; returns a tracing object
 }
 
 add_caliper <- function(x, from, to, label = NULL, ...) {
@@ -831,11 +843,11 @@ reveal <- function(x, target, at = NULL, duration = NULL, ...) {
   # TODO: append a timeline operation
 }
 
-render_scene <- function(x, format = c("svg", "pdf"), ...) {
+render_tracing <- function(x, format = c("svg", "pdf"), ...) {
   # TODO
 }
 
-animate_scene <- function(x, autoplay = TRUE, controls = TRUE, ...) {
+animate_tracing <- function(x, autoplay = TRUE, controls = TRUE, ...) {
   # TODO: compile the scene timeline to an anime.js-backed htmlwidget
 }
 ```
@@ -947,7 +959,7 @@ flowchart LR
     Viz["Visualization Engine<br/>uPlot explorer"]:::planned
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
-    Presentation["Mark-up and Presentation<br/>scene grammar; anime.js; export"]:::planned
+    Presentation["Mark-up and Presentation<br/>tracing grammar; anime.js; export"]:::planned
 
     EGM --> Backend
     Backend --> Viz
@@ -963,7 +975,7 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GramBackend["gram data backend<br/>open_study()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["gram data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::planned
 
     EGMIO --> GramBackend
 ```
@@ -977,7 +989,7 @@ signal table**.
 ``` r
 
 # Read header and locate sidecars; do not read the signal.
-open_study <- function(record, record_dir = ".", cache_dir = NULL) {
+study_cache <- function(record, record_dir = ".", cache_dir = NULL) {
   # TODO
 }
 
@@ -987,8 +999,13 @@ build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
 }
 
 # Return only the samples needed for a viewport.
-read_viewport <- function(study, window, channels, width_px,
-                          resolution = c("auto", "raw", "overview")) {
+read_viewport <- function(
+  study,
+  window,
+  channels,
+  width_px,
+  resolution = c("auto", "raw", "overview")
+) {
   # TODO
 }
 ```
@@ -1183,7 +1200,8 @@ archetypes are supplied.
 A bookmark is a **saved view**, not copied signal data: record
 fingerprint, sample range, channel order, gains, visible annotation
 layers, label, notes, and tags. It appears in navigation like an event
-and is the input to `scene()`.
+and is the input to
+[`tracing()`](https://shah-in-boots.github.io/gram/reference/tracing.md).
 
 ``` r
 
@@ -1200,12 +1218,12 @@ list_bookmarks <- function(study, filter = NULL) {
 
 ``` mermaid
 flowchart LR
-    SceneGrammar["R scene grammar<br/>scene(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
+    TracingGrammar["R tracing grammar<br/>tracing(); caliper()<br/>arrow(); emphasize(); reveal()"]:::planned
     SvgCompiler["SVG compiler<br/>one coordinate space<br/>explicit final state"]:::planned
     AnimeJs["anime.js v4<br/>timeline<br/>interpolation; playback"]:::planned
     Exports["Exports<br/>SVG; PDF<br/>HTML; later GIF/video"]:::planned
 
-    SceneGrammar --> SvgCompiler
+    TracingGrammar --> SvgCompiler
     SvgCompiler --> AnimeJs
     SvgCompiler --> Exports
     AnimeJs --> Exports
@@ -1248,7 +1266,7 @@ This boundary keeps the R grammar stable if the JavaScript runtime
 changes. It also ensures a print still does not depend on replaying an
 animation to discover where its elements finish.
 
-| Scene operation    | anime.js compilation                  |
+| Tracing operation  | anime.js compilation                  |
 |--------------------|---------------------------------------|
 | reveal trace/arrow | SVG drawable from `0` to `1`          |
 | emphasize          | opacity, color, or stroke-width tween |
@@ -1263,8 +1281,8 @@ compiler rather than in the public R object.
 
 ``` r
 
-scene <- function(x, ...) {
-  # TODO: create from a bookmark or explicit study window
+tracing <- function(x, ...) {
+  # TODO: create from a bookmark or explicit study window; returns a tracing object
 }
 
 add_caliper <- function(x, from, to, label = NULL, ...) {
@@ -1283,11 +1301,11 @@ reveal <- function(x, target, at = NULL, duration = NULL, ...) {
   # TODO: append a timeline operation
 }
 
-render_scene <- function(x, format = c("svg", "pdf"), ...) {
+render_tracing <- function(x, format = c("svg", "pdf"), ...) {
   # TODO
 }
 
-animate_scene <- function(x, autoplay = TRUE, controls = TRUE, ...) {
+animate_tracing <- function(x, autoplay = TRUE, controls = TRUE, ...) {
   # TODO: compile the scene timeline to an anime.js-backed htmlwidget
 }
 ```

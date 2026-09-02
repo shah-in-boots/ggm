@@ -42,7 +42,6 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/design.html">Design Documentation</a></li>
     <li><a class="dropdown-item" href="../articles/style-lab.html">The gram style lab</a></li>
-    <li><a class="dropdown-item" href="../articles/ui-lab.html">UI Visualization Lab</a></li>
   </ul>
 </li>
       </ul>
@@ -113,7 +112,7 @@ flowchart LR
     Viz["Visualization Engine&lt;br/&gt;uPlot explorer"]:::planned
     Annot["Annotation Interaction&lt;br/&gt;schema; query; edit"]:::planned
     Bookmarks["Bookmarks&lt;br/&gt;saved view state"]:::planned
-    Presentation["Mark-up and Presentation&lt;br/&gt;scene grammar; anime.js; export"]:::planned
+    Presentation["Mark-up and Presentation&lt;br/&gt;tracing grammar; anime.js; export"]:::planned
 
     EGM --&gt; Backend
     Backend --&gt; Viz
@@ -135,7 +134,7 @@ flowchart LR
 <div>
 <pre class="mermaid mermaid-js" data-label="data-backend-map">flowchart LR
     EGMIO["EGM I/O&lt;br/&gt;read_signal()&lt;br/&gt;read_annotation()&lt;br/&gt;write_annotation()"]:::implemented
-    GramBackend["gram data backend&lt;br/&gt;open_study()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::planned
+    GramBackend["gram data backend&lt;br/&gt;study_cache()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::planned
 
     EGMIO --&gt; GramBackend
 </pre>
@@ -149,7 +148,7 @@ flowchart LR
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Read header and locate sidecars; do not read the signal.</span></span>
-<span><span class="va">open_study</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span> <span class="op">=</span> <span class="st">"."</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">study_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span> <span class="op">=</span> <span class="st">"."</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -159,8 +158,13 @@ flowchart LR
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Return only the samples needed for a viewport.</span></span>
-<span><span class="va">read_viewport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">window</span>, <span class="va">channels</span>, <span class="va">width_px</span>,</span>
-<span>                          <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">read_viewport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">study</span>,</span>
+<span>  <span class="va">window</span>,</span>
+<span>  <span class="va">channels</span>,</span>
+<span>  <span class="va">width_px</span>,</span>
+<span>  <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
@@ -335,7 +339,7 @@ flowchart LR
 <p>WFDB remains the interoperable exchange layer. If stable ids, spans, relations, or audit metadata cannot round-trip through WFDB fields, store them in a versioned companion sidecar rather than silently packing semantics into <code>aux</code>. Finalize that mapping only after the intracardiac archetypes are supplied.</p>
 </section><section class="level2"><h3 data-anchor-id="bookmarks" id="bookmarks">Bookmarks<a class="anchor" aria-label="anchor" href="#bookmarks"></a>
 </h3>
-<p>A bookmark is a <strong>saved view</strong>, not copied signal data: record fingerprint, sample range, channel order, gains, visible annotation layers, label, notes, and tags. It appears in navigation like an event and is the input to <code>scene()</code>.</p>
+<p>A bookmark is a <strong>saved view</strong>, not copied signal data: record fingerprint, sample range, channel order, gains, visible annotation layers, label, notes, and tags. It appears in navigation like an event and is the input to <code><a href="../reference/tracing.html">tracing()</a></code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bookmark_view</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">window</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">state</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -353,12 +357,12 @@ flowchart LR
 <div id="presentation-map">
 <div>
 <pre class="mermaid mermaid-js" data-label="presentation-map">flowchart LR
-    SceneGrammar["R scene grammar&lt;br/&gt;scene(); caliper()&lt;br/&gt;arrow(); emphasize(); reveal()"]:::planned
+    TracingGrammar["R tracing grammar&lt;br/&gt;tracing(); caliper()&lt;br/&gt;arrow(); emphasize(); reveal()"]:::planned
     SvgCompiler["SVG compiler&lt;br/&gt;one coordinate space&lt;br/&gt;explicit final state"]:::planned
     AnimeJs["anime.js v4&lt;br/&gt;timeline&lt;br/&gt;interpolation; playback"]:::planned
     Exports["Exports&lt;br/&gt;SVG; PDF&lt;br/&gt;HTML; later GIF/video"]:::planned
 
-    SceneGrammar --&gt; SvgCompiler
+    TracingGrammar --&gt; SvgCompiler
     SvgCompiler --&gt; AnimeJs
     SvgCompiler --&gt; Exports
     AnimeJs --&gt; Exports
@@ -392,7 +396,7 @@ flowchart LR
 <p>This boundary keeps the R grammar stable if the JavaScript runtime changes. It also ensures a print still does not depend on replaying an animation to discover where its elements finish.</p>
 <table class="table caption-top table">
 <thead><tr class="header">
-<th>Scene operation</th>
+<th>Tracing operation</th>
 <th>anime.js compilation</th>
 </tr></thead>
 <tbody>
@@ -426,8 +430,8 @@ flowchart LR
 <p>Vendor one pinned anime.js v4 build under <code>inst/htmlwidgets/lib/</code>. Keep selectors, timeline positions, and anime.js option names inside the compiler rather than in the public R object.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scene</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO: create from a bookmark or explicit study window</span></span>
+<code class="sourceCode R"><span><span class="va">tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># TODO: create from a bookmark or explicit study window; returns a tracing object</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">add_caliper</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -446,11 +450,11 @@ flowchart LR
 <span>  <span class="co"># TODO: append a timeline operation</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">render_scene</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"svg"</span>, <span class="st">"pdf"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">render_tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"svg"</span>, <span class="st">"pdf"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">animate_scene</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">autoplay</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">controls</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">animate_tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">autoplay</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">controls</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: compile the scene timeline to an anime.js-backed htmlwidget</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
@@ -627,7 +631,7 @@ flowchart LR
     Viz["Visualization Engine&lt;br/&gt;uPlot explorer"]:::planned
     Annot["Annotation Interaction&lt;br/&gt;schema; query; edit"]:::planned
     Bookmarks["Bookmarks&lt;br/&gt;saved view state"]:::planned
-    Presentation["Mark-up and Presentation&lt;br/&gt;scene grammar; anime.js; export"]:::planned
+    Presentation["Mark-up and Presentation&lt;br/&gt;tracing grammar; anime.js; export"]:::planned
 
     EGM --&gt; Backend
     Backend --&gt; Viz
@@ -649,7 +653,7 @@ flowchart LR
 <div>
 <pre class="mermaid mermaid-js" data-label="data-backend-map">flowchart LR
     EGMIO["EGM I/O&lt;br/&gt;read_signal()&lt;br/&gt;read_annotation()&lt;br/&gt;write_annotation()"]:::implemented
-    GramBackend["gram data backend&lt;br/&gt;open_study()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::planned
+    GramBackend["gram data backend&lt;br/&gt;study_cache()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::planned
 
     EGMIO --&gt; GramBackend
 </pre>
@@ -663,7 +667,7 @@ flowchart LR
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Read header and locate sidecars; do not read the signal.</span></span>
-<span><span class="va">open_study</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span> <span class="op">=</span> <span class="st">"."</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">study_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span> <span class="op">=</span> <span class="st">"."</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -673,8 +677,13 @@ flowchart LR
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Return only the samples needed for a viewport.</span></span>
-<span><span class="va">read_viewport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">window</span>, <span class="va">channels</span>, <span class="va">width_px</span>,</span>
-<span>                          <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">read_viewport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">study</span>,</span>
+<span>  <span class="va">window</span>,</span>
+<span>  <span class="va">channels</span>,</span>
+<span>  <span class="va">width_px</span>,</span>
+<span>  <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
@@ -849,7 +858,7 @@ flowchart LR
 <p>WFDB remains the interoperable exchange layer. If stable ids, spans, relations, or audit metadata cannot round-trip through WFDB fields, store them in a versioned companion sidecar rather than silently packing semantics into <code>aux</code>. Finalize that mapping only after the intracardiac archetypes are supplied.</p>
 </section><section class="level2"><h3 data-anchor-id="bookmarks" id="bookmarks-1">Bookmarks<a class="anchor" aria-label="anchor" href="#bookmarks-1"></a>
 </h3>
-<p>A bookmark is a <strong>saved view</strong>, not copied signal data: record fingerprint, sample range, channel order, gains, visible annotation layers, label, notes, and tags. It appears in navigation like an event and is the input to <code>scene()</code>.</p>
+<p>A bookmark is a <strong>saved view</strong>, not copied signal data: record fingerprint, sample range, channel order, gains, visible annotation layers, label, notes, and tags. It appears in navigation like an event and is the input to <code><a href="../reference/tracing.html">tracing()</a></code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bookmark_view</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">window</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">state</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -867,12 +876,12 @@ flowchart LR
 <div id="presentation-map">
 <div>
 <pre class="mermaid mermaid-js" data-label="presentation-map">flowchart LR
-    SceneGrammar["R scene grammar&lt;br/&gt;scene(); caliper()&lt;br/&gt;arrow(); emphasize(); reveal()"]:::planned
+    TracingGrammar["R tracing grammar&lt;br/&gt;tracing(); caliper()&lt;br/&gt;arrow(); emphasize(); reveal()"]:::planned
     SvgCompiler["SVG compiler&lt;br/&gt;one coordinate space&lt;br/&gt;explicit final state"]:::planned
     AnimeJs["anime.js v4&lt;br/&gt;timeline&lt;br/&gt;interpolation; playback"]:::planned
     Exports["Exports&lt;br/&gt;SVG; PDF&lt;br/&gt;HTML; later GIF/video"]:::planned
 
-    SceneGrammar --&gt; SvgCompiler
+    TracingGrammar --&gt; SvgCompiler
     SvgCompiler --&gt; AnimeJs
     SvgCompiler --&gt; Exports
     AnimeJs --&gt; Exports
@@ -906,7 +915,7 @@ flowchart LR
 <p>This boundary keeps the R grammar stable if the JavaScript runtime changes. It also ensures a print still does not depend on replaying an animation to discover where its elements finish.</p>
 <table class="table caption-top table">
 <thead><tr class="header">
-<th>Scene operation</th>
+<th>Tracing operation</th>
 <th>anime.js compilation</th>
 </tr></thead>
 <tbody>
@@ -940,8 +949,8 @@ flowchart LR
 <p>Vendor one pinned anime.js v4 build under <code>inst/htmlwidgets/lib/</code>. Keep selectors, timeline positions, and anime.js option names inside the compiler rather than in the public R object.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scene</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO: create from a bookmark or explicit study window</span></span>
+<code class="sourceCode R"><span><span class="va">tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># TODO: create from a bookmark or explicit study window; returns a tracing object</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">add_caliper</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -960,11 +969,11 @@ flowchart LR
 <span>  <span class="co"># TODO: append a timeline operation</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">render_scene</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"svg"</span>, <span class="st">"pdf"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">render_tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"svg"</span>, <span class="st">"pdf"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">animate_scene</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">autoplay</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">controls</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">animate_tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">autoplay</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">controls</span> <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: compile the scene timeline to an anime.js-backed htmlwidget</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>

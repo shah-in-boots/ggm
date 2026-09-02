@@ -16,4 +16,4 @@ cache_paths(cache)
 
 ## Value
 
-Named character vector of canonical and cache paths.
+Named character vector of record paths.

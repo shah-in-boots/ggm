@@ -26,10 +26,10 @@ read_study_signal(
 - begin, end:
 
   Times delimiting a half-open range. These follow
-  `EGM::validate_time_parameters()`: time-only character values are
-  elapsed from the record start, dated character values and `POSIXt`
-  objects are absolute, and `difftime` values are elapsed durations.
-  Numeric values are not accepted.
+  [`EGM::validate_time_parameters()`](https://shah-in-boots.github.io/EGM/reference/validate_time_parameters.html):
+  time-only character values are elapsed from the record start, dated
+  character values and `POSIXt` objects are absolute, and `difftime`
+  values are elapsed durations. Numeric values are not accepted.
 
 - interval:
 

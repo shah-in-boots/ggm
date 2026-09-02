@@ -1,7 +1,6 @@
 # Draw an arrow between two points
 
-The endpoints may sit on different channels; the tracing is laid out in
-one coordinate space so a cross-channel arrow is a single path.
+Draw an arrow between two points
 
 ## Usage
 
