@@ -1,8 +1,5 @@
-// gram_plot.js -- htmlwidgets binding (thin)
-//
-// htmlwidgets calls renderValue(x) with the payload built by
-// gram_plot() in R. all real work delegated to GRAM (dispatch).
-// resize is wired by htmlwidgets automatically.
+// htmlwidgets calls renderValue(x) with the payload built by gram_plot() in R.
+// All real work is delegated to GRAM (gram-adapter-uplot.js).
 
 HTMLWidgets.widget({
 

@@ -2,15 +2,11 @@ skip_if_not_installed("shiny")
 
 leads <- c("HIS D", "CS 1-2", "RV 1-2")
 
-# the rendered control, as one string, which is where the labels and the
-# namespaced input id have to show up
-markup <- function(tag) paste(as.character(tag), collapse = "")
-
 
 # ui --------------------------------------------------------------------
 
 test_that("the control lists every channel and namespaces its input", {
-  ui <- markup(gram_channelsUI("picker", leads))
+  ui <- paste(as.character(gram_channelsUI("picker", leads)), collapse = "")
 
   for (lead in leads) {
     expect_match(ui, lead, fixed = TRUE)
@@ -19,8 +15,8 @@ test_that("the control lists every channel and namespaces its input", {
 })
 
 test_that("the control reads its channels off a StudyCache header", {
-  cache <- demo_cache()
-  ui <- markup(gram_channelsUI("picker", cache))
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
+  ui <- paste(as.character(gram_channelsUI("picker", cache)), collapse = "")
 
   # every channel the WFDB header names, and no more
   for (channel in cache@channels) {
@@ -33,9 +29,14 @@ test_that("the control reads its channels off a StudyCache header", {
 })
 
 test_that("the shape of the control is a display choice, not a different module", {
-  # a checkbox column and a dropdown offer the same channels
-  boxes <- markup(gram_channelsUI("picker", leads, variant = "checkbox"))
-  menu <- markup(gram_channelsUI("picker", leads, variant = "dropdown"))
+  boxes <- paste(
+    as.character(gram_channelsUI("picker", leads, variant = "checkbox")),
+    collapse = ""
+  )
+  menu <- paste(
+    as.character(gram_channelsUI("picker", leads, variant = "dropdown")),
+    collapse = ""
+  )
 
   expect_match(boxes, "type=\"checkbox\"", fixed = TRUE)
   expect_match(menu, "<select", fixed = TRUE)
@@ -49,19 +50,31 @@ test_that("the shape of the control is a display choice, not a different module"
 })
 
 test_that("everything is selected unless a starting set is named", {
+  all <- paste(as.character(gram_channelsUI("picker", leads)), collapse = "")
+  by_label <- paste(
+    as.character(gram_channelsUI("picker", leads, selected = "CS 1-2")),
+    collapse = ""
+  )
+  by_index <- paste(
+    as.character(gram_channelsUI("picker", leads, selected = 2)),
+    collapse = ""
+  )
+
   # the attribute, not the bare word: shiny writes checked="checked", so
   # counting "checked" counts every box twice
-  ticked <- function(ui) {
-    lengths(regmatches(ui, gregexpr("checked=\"checked\"", ui, fixed = TRUE)))[[1L]]
-  }
-
-  expect_equal(ticked(markup(gram_channelsUI("picker", leads))), length(leads))
+  expect_equal(
+    lengths(regmatches(all, gregexpr("checked=\"checked\"", all, fixed = TRUE)))[[1L]],
+    length(leads)
+  )
 
   # by label or by index, and both land on the same channel
-  by_label <- markup(gram_channelsUI("picker", leads, selected = "CS 1-2"))
-  by_index <- markup(gram_channelsUI("picker", leads, selected = 2))
   expect_equal(by_label, by_index)
-  expect_equal(ticked(by_label), 1L)
+  expect_equal(
+    lengths(regmatches(
+      by_label, gregexpr("checked=\"checked\"", by_label, fixed = TRUE)
+    ))[[1L]],
+    1L
+  )
 })
 
 test_that("a starting set that names no channel is refused", {
@@ -81,7 +94,6 @@ test_that("a starting set that names no channel is refused", {
 
 test_that("the module reports the selection as ascending channel indices", {
   shiny::testServer(gram_channelsServer, args = list(id = "picker"), {
-    # the control reports character values, whatever its shape
     session$setInputs(channels = c("3", "1"))
     expect_identical(session$returned(), c(1L, 3L))
 
@@ -91,9 +103,7 @@ test_that("the module reports the selection as ascending channel indices", {
 })
 
 test_that("an empty selection is an empty selection, not a missing one", {
-  # clearing every channel is a thing a reader can do; it must reach the
-  # caller as a real empty set rather than NULL, which would read as "not
-  # ready yet" and leave the viewer showing a stale set
+  # a real empty set, not NULL, which would read as "not ready yet"
   shiny::testServer(gram_channelsServer, args = list(id = "picker"), {
     session$setInputs(channels = character())
     expect_identical(session$returned(), integer())

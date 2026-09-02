@@ -14,16 +14,11 @@ normalize_selection(cache, selection)
 }
 \value{
 A list with \code{begin} and \code{end} sample indices delimiting a half-open
-range, clamped to the record. \code{NULL} both when nothing is selected yet and
-when the selection collapses to no samples, so a stray click leaves the
-caller's current window standing rather than blanking it.
+range, clamped to the record. \code{NULL} when nothing is selected and when the
+selection holds no samples.
 }
 \description{
-A \code{\link[=gram_plot]{gram_plot()}} widget reports a completed drag as an
-\verb{<outputId>_selection} Shiny input carrying \code{xmin} and \code{xmax} in the
-widget's display units -- elapsed seconds, for the x-scale \code{\link[=view_uplot]{view_uplot()}}
-builds. Sample index is the canonical key, so the conversion happens here
-once rather than in every caller.
+Canonicalise a viewer selection to a sample range
 }
 \seealso{
 Other backend viewers:

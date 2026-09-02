@@ -19,9 +19,7 @@ gram_harness(
 \item{begin, interval}{Window shown in the viewer panel.}
 
 \item{channels}{Channels loaded into the viewer panel. Defaults to every
-channel in the header. The \link{gram_channels} module beside the viewer
-switches these on and off; because the widget already holds them all,
-that costs no further read of the record.}
+channel in the header.}
 
 \item{script}{Initial contents of the scripting panel.}
 
@@ -31,18 +29,8 @@ that costs no further read of the record.}
 A Shiny app object.
 }
 \description{
-Opens a page with three panels: the uPlot viewer over a fixed window,
-a scripting panel for the tracing grammar, and the compiled tracing
-with playback controls. The script panel runs on load, so the harness
-opens with a working tracing rather than an empty stage.
-}
-\details{
-The panel accepts the tracing grammar only. Scripts are checked against
-the verb whitelist and evaluated in the sealed environment built by
-\code{\link[=gram_verbs]{gram_verbs()}}, so a script cannot reach R outside the grammar.
-
-Dragging across the viewer reports the selected sample range above the
-script state, through \code{\link[=normalize_selection]{normalize_selection()}}. Nothing consumes that range
-yet -- the readout exists to confirm the browser can reach R at all.
+Opens a page with three panels: the uPlot viewer over a fixed window, a
+scripting panel for the tracing grammar, and the compiled tracing. Scripts
+are evaluated by \code{\link[=eval_tracing]{eval_tracing()}}, not by R.
 }
 \concept{harness}

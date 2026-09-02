@@ -23,14 +23,12 @@ gram_channelsServer(id)
 character vector of channel labels.}
 
 \item{variant}{Shape of the control. \code{"checkbox"} gives a column, one row
-per channel; \code{"dropdown"} gives a multi-select. Both choose the same
-thing, so this is a display decision only.}
+per channel; \code{"dropdown"} gives a multi-select.}
 
 \item{selected}{Channels selected at startup, as labels or as 1-based
 indices. Defaults to all of them.}
 
-\item{label}{Control label. \code{NULL} draws none, which suits a control that
-already sits under a heading.}
+\item{label}{Control label. \code{NULL} draws none.}
 }
 \value{
 \code{gram_channelsUI()} returns a Shiny input control.
@@ -40,32 +38,6 @@ nothing is selected. Labels are \code{channels[chosen()]}.
 }
 \description{
 A Shiny module that lists the channels a record carries and reports which
-are selected. It is a plain add-on: the server half returns a reactive and
-does not touch any plot, so one line at the call site connects it to
-whatever should respond.
-}
-\details{
-The module reports a selection and stops there; one line connects it to
-whatever should respond. \code{\link[=gram_harness]{gram_harness()}} wires it to a \code{\link[=gram_plot]{gram_plot()}}
-viewer through the plotting verbs:
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{# ui
-gram_channelsUI("channels", cache)
-
-# server
-chosen <- gram_channelsServer("channels")
-shiny::observe(\{
-  gm_set_visible(gm_proxy("viewer"), chosen())
-\})
-}\if{html}{\out{</div>}}
-
-Because the widget already holds every channel it was built with, that
-costs no further read of the record -- it only moves lanes on and off
-screen. Those two verbs are package-internal for now, so outside \pkg{gram}
-drive your own output from \code{chosen()} instead.
-
-The list is fixed when the UI is built. Pass the channels the viewer
-actually loaded, which is what can be switched back on -- for a study
-opened whole, that is every channel in the header.
+are selected. The server half returns a reactive and touches no plot.
 }
 \concept{shiny modules}

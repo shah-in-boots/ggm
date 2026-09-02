@@ -1,48 +1,16 @@
-# Example data downloader.
-#
-# `gram`'s realistic example is the `ort` study: ONE WFDB record made of two
-# files that belong together — `ort.hea` (the text header: channels, sampling
-# frequency, duration) and `ort.dat` (the ~516 MB binary signal). The pair is
-# far too large to bundle, so it lives as public assets on a GitHub Release and
-# is pulled to the per-user cache on first use.
-#
-# Download uses `piggyback` — the same tool `data-raw/upload-ort.R` uses to push
-# the assets, so upload and download share one mechanism. piggyback is a
-# *Suggests*, not an Imports: this function checks for it at call time, so users
-# who never pull the demo don't carry its dependency tree. The cheap
-# "already cached?" check runs before any piggyback / GitHub-API call, so
-# re-opening an already-downloaded study costs nothing.
-
 #' Download an example study to the local cache
 #'
-#' Fetch a `gram` example WFDB record to a local directory, downloading it once
-#' and reusing the cached copy thereafter. A WFDB record is a pair of files that
-#' together form one dataset — a `.hea` text header and a `.dat` binary signal —
-#' and both are fetched. 
-#'
-#' Downloads use the \pkg{piggyback} package (the same tool that publishes the
-#' assets). Install it with `install.packages("piggyback")` if prompted.
+#' Fetch a `gram` example WFDB record — the `.hea` header and the `.dat` signal
+#' — to a local directory, downloading it once and reusing the cached copy
+#' thereafter. Downloads use the \pkg{piggyback} package.
 #'
 #' @param dataset Example record name. Currently only `"ort"` (the default): a
 #'   27-channel intracardiac study, 977 Hz, ~2.7 hours (~516 MB).
 #' @param dir Directory to cache into. Defaults to the package's per-user cache
-#'   (`tools::R_user_dir("gram", "cache")`), the CRAN-sanctioned location for
-#'   downloaded data. Pass e.g. `"data-raw"` to download elsewhere.
-#' @param force Re-download even if the files are already cached (useful if a
-#'   cached copy is suspected truncated or stale).
+#'   (`tools::R_user_dir("gram", "cache")`).
+#' @param force Re-download even if the files are already cached.
 #' @param quiet Suppress piggyback's download progress bar.
-#'
-#' @return The path to `dir` (invisibly when a download happened, so a fresh
-#'   pull does not dump a path mid-pipeline). The record's `.hea`/`.dat` are
-#'   guaranteed present on return, so
-#'   `open_study(dataset, cache_example_data(dataset))` always works.
-#'
-#' @details
-#' If the record's files are already present in `dir`, this returns immediately
-#' without contacting GitHub. Otherwise it delegates to
-#' [piggyback::pb_download()], which fetches only the missing files (or, with
-#' `force`, re-fetches them regardless of timestamps).
-#'
+#' @return The path to `dir`, invisibly when a download happened.
 #' @export
 cache_study_data <- function(dataset = "ort",
                                dir = tools::R_user_dir("gram", "cache"),

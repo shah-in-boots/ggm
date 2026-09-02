@@ -1,9 +1,3 @@
-# backend_uplot.R -- uPlot implementation of the plotting contract
-#
-# only file (plus its JS adapter) that knows uPlot exists.
-# swapping backends = new backend_*.R + gram-adapter-*.js,
-# zero changes to backend.R or shiny modules.
-
 #' Create a uPlot-backed electrogram widget
 #'
 #' `gram_plot()` is the low-level plotting primitive. It renders one uPlot per

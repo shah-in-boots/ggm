@@ -1,12 +1,10 @@
-# demo_cache() comes from helper-gram.R
-
 test_that("a script builds a tracing without naming the study", {
   x <- eval_tracing(
     'tracing(begin = "00:00:00", interval = "300 ms",
              channels = c("HIS D", "RV 1-2")) |>
        reveal() |>
        add_arrow(from = at(50, "RV 1-2"), to = at(120, "HIS D"), label = "VA")',
-    demo_cache()
+    study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
   )
 
   expect_true(S7::S7_inherits(x, gram:::Tracing))
@@ -14,7 +12,9 @@ test_that("a script builds a tracing without naming the study", {
 })
 
 test_that("the verb environment is sealed", {
-  env <- gram_verbs(demo_cache())
+  env <- gram_verbs(
+    study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
+  )
 
   expect_identical(parent.env(env), emptyenv())
   expect_setequal(
@@ -24,11 +24,10 @@ test_that("the verb environment is sealed", {
 })
 
 test_that("calls outside the grammar are refused before evaluation", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
   sentinel <- tempfile()
   writeLines("intact", sentinel)
 
-  # each of these must fail at the whitelist walk, not at evaluation
   expect_error(eval_tracing('system("echo no")', cache), "not part of the")
   expect_error(eval_tracing('library(utils)', cache), "not part of the")
   expect_error(eval_tracing(sprintf('file.remove("%s")', sentinel), cache),
@@ -42,14 +41,14 @@ test_that("calls outside the grammar are refused before evaluation", {
 })
 
 test_that("undefined names are refused", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
 
   expect_error(eval_tracing("everything", cache), "not defined in the")
   expect_error(eval_tracing("wiggle()", cache), "not part of the")
 })
 
 test_that("a script must end in a tracing", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
 
   expect_error(eval_tracing('at(1, "HIS D")', cache), "must end in a tracing")
   expect_error(eval_tracing("", cache), "empty")
@@ -62,7 +61,7 @@ test_that("errors from the verbs reach the caller intact", {
     eval_tracing(
       'tracing(begin = "00:00:00", interval = "300 ms", channels = "HIS D") |>
          emphasize(at(50, "CS 1-2"))',
-      demo_cache()
+      study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
     ),
     "not in this tracing"
   )

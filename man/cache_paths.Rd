@@ -10,7 +10,7 @@ cache_paths(cache)
 \item{cache}{A \code{StudyCache}.}
 }
 \value{
-Named character vector of canonical and cache paths.
+Named character vector of record paths.
 }
 \description{
 All paths in a study group

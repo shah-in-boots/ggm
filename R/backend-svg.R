@@ -1,16 +1,7 @@
-# backend-svg.R -------------------------------------------------------
-# The presentation renderer: an SVG widget driven by anime.js.
-#
-# Separate from the uPlot backend on purpose. Exploration optimises for
-# latency over a long record; presentation optimises for precision over a
-# short window, and the two renderers share only the samples and the
-# annotations underneath them.
-
 #' Render a tracing as an animated SVG widget
 #'
 #' Compiles the tracing with [tracing_spec()] and hands the markup and the
-#' timeline to the browser. The animation's last frame is the composition
-#' at rest, so the same widget paused at the end is the print still.
+#' timeline to the browser.
 #'
 #' @param x A `Tracing`.
 #' @param autoplay Whether the timeline runs on load.

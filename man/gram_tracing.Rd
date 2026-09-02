@@ -29,8 +29,7 @@ An \code{htmlwidget}.
 }
 \description{
 Compiles the tracing with \code{\link[=tracing_spec]{tracing_spec()}} and hands the markup and the
-timeline to the browser. The animation's last frame is the composition
-at rest, so the same widget paused at the end is the print still.
+timeline to the browser.
 }
 \seealso{
 Other tracing:

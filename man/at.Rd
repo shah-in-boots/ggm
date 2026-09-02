@@ -15,10 +15,7 @@ at(sample, channel)
 A \code{gram_at} reference.
 }
 \description{
-\code{at()} names a sample on a channel so a verb can resolve it to a
-position. Annotation-resolved endpoints (\code{A[1]}, \code{V_stim[last]}) will
-replace this once the annotation reader lands; until then the sample is
-given directly.
+\code{at()} names a sample on a channel so a verb can resolve it to a position.
 }
 \seealso{
 Other tracing:

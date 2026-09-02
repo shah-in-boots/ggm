@@ -38,24 +38,9 @@ accepted.}
 An \code{htmlwidget}.
 }
 \description{
-\code{view_uplot()} is a backend-specific development viewer. It reads a fixed
-interval from the canonical WFDB signal, adapts the result to uPlot's aligned
-column format, and returns the standalone uPlot widget. It is useful for
-exercising and testing the uPlot backend without a Shiny controller.
-}
-\details{
-The widget contains only the requested \code{begin} to \code{end} or \code{interval} range.
-When neither \code{end} nor \code{interval} is supplied, the viewer reads ten seconds
-from \code{begin}. Drag horizontally to zoom into that loaded range, scroll
-horizontally (or use Shift+wheel) to pan, and double-click to reset the
-range. A future interactive study controller can manage dynamic viewport
-reads while reusing the same uPlot backend.
-
-The channel set is fixed at read time: whatever \code{channels} names is what the
-widget draws, and it carries no controls of its own. Choosing channels
-interactively is the controller's job -- a Shiny app drives the same widget
-through the plotting verbs, as \code{\link[=gram_harness]{gram_harness()}} does -- which keeps this
-function a plain, non-interactive way to exercise the uPlot backend.
+Reads one window from the canonical WFDB signal, adapts it to uPlot's
+aligned column format, and returns the standalone widget. When neither \code{end}
+nor \code{interval} is supplied it reads ten seconds from \code{begin}.
 }
 \seealso{
 Other backend viewers:

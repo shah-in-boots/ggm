@@ -4,19 +4,10 @@
 \alias{study_cache}
 \title{Open a WFDB record as a StudyCache handle}
 \usage{
-study_cache(
-  path,
-  cache_dir = NULL,
-  annotators = NULL,
-  raw_ext = "dat",
-  header_ext = "hea"
-)
+study_cache(path, annotators = NULL, raw_ext = "dat", header_ext = "hea")
 }
 \arguments{
 \item{path}{Any file in the record group, or a bare stem.}
-
-\item{cache_dir}{Directory for \verb{*.cache.parquet} and \verb{*.cache.json}. Defaults
-to the record directory when writable, otherwise a per-user cache directory.}
 
 \item{annotators}{Optional WFDB annotator extensions to require, such as
 \code{"qrs"} or \code{"ann"}. \code{NULL} discovers existing sidecars.}
@@ -29,8 +20,5 @@ to the record directory when writable, otherwise a per-user cache directory.}
 A \code{StudyCache}.
 }
 \description{
-Accepts a bare record path or any sibling file from the group, derives the
-required \code{.dat} and \code{.hea} paths, reads the WFDB header with
-\code{\link[EGM:read_header]{EGM::read_header()}}, discovers optional annotation sidecars, and attaches an
-existing cache manifest when present.
+Open a WFDB record as a StudyCache handle
 }

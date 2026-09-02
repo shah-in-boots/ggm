@@ -1,16 +1,3 @@
-# tracing.R -----------------------------------------------------------
-# A tracing is one signal window plus the animation specification drawn
-# over it. It is the object the scripting grammar builds, and the only
-# thing the presentation renderer consumes.
-#
-# The grammar is R-shaped but it is not R: verbs are evaluated in the
-# sealed environment built by gram_verbs() (see grammar.R), never in the
-# user's workspace.
-#
-# Geometry stays in R because R owns the samples. Timeline playback stays
-# in JavaScript because it owns the DOM. The spec passed between them
-# names no anime.js options; gram-anim.js chooses those.
-
 tracingSpecVersion <- 1L
 
 # supported operation types, in the order the compiler emits them
@@ -158,10 +145,7 @@ gm_decimation_index <- function(n, max_points) {
 
 #' Refer to a point on a channel
 #'
-#' `at()` names a sample on a channel so a verb can resolve it to a
-#' position. Annotation-resolved endpoints (`A[1]`, `V_stim[last]`) will
-#' replace this once the annotation reader lands; until then the sample is
-#' given directly.
+#' `at()` names a sample on a channel so a verb can resolve it to a position.
 #'
 #' @param sample Sample index.
 #' @param channel Channel label.
@@ -231,9 +215,6 @@ reveal <- function(x, duration = 1200, stagger = 180) {
 }
 
 #' Draw an arrow between two points
-#'
-#' The endpoints may sit on different channels; the tracing is laid out in
-#' one coordinate space so a cross-channel arrow is a single path.
 #'
 #' @param x A `Tracing`.
 #' @param from,to Points from [at()].

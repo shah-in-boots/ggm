@@ -1,12 +1,11 @@
-// gram-adapter-uplot.js -- uPlot implementation of adapter contract
-//
 // Each signal channel owns one uPlot instance. Panels keep independent
 // y-scales while sharing x-range and cursor state.
 
 (function () {
   "use strict";
 
-  var GRAM = window.GRAM;
+  var GRAM = (window.GRAM = window.GRAM || {});
+  GRAM.instances = GRAM.instances || {};
   var syncSequence = 0;
 
   function getScaleKind(cfg) {
@@ -52,11 +51,6 @@
 
   // state.visible holds original channel indices, ascending. Panels are the
   // visible subset, so a panel's position is not its channel number.
-  function plotForChannel(state, channelIndex) {
-    var at = state.visible.indexOf(channelIndex);
-    return at === -1 ? null : state.plots[at];
-  }
-
   function scalesDiffer(scale, min, max) {
     return scale.min !== min || scale.max !== max;
   }
@@ -250,7 +244,7 @@
     return [min, max];
   }
 
-  GRAM.adapters.uplot = {
+  var adapter = {
 
     create: function (el, cfg) {
       var channelCount = cfg.columns.length - 1;
@@ -289,79 +283,51 @@
       resizePanels(state);
     },
 
-    // Fan aligned columns out to one [x, y] data pair per visible panel. The
-    // count checked is the channel total, not the panel count -- panels are
-    // only the channels currently switched on.
-    setData: function (state, columns) {
-      if (columns.length !== state.cfg.columns.length) {
-        throw new Error("gram: setData cannot change the channel count");
-      }
-      // every channel can be switched off at once, leaving nothing to scale
-      // the new data against
-      if (!state.plots.length) {
-        state.cfg.columns = columns;
-        return;
-      }
-
-      var currentX = state.plots[0].scales.x;
-      var range = clampRangeToData(columns[0], currentX.min, currentX.max);
-
-      state.cfg.columns = columns;
-      state.syncingScale = true;
-      state.plots.forEach(function (plot, position) {
-        var channelIndex = state.visible[position];
-        plot.setData([columns[0], columns[channelIndex + 1]], false);
-        plot.setScale("x", { min: range[0], max: range[1] });
-      });
-      state.syncingScale = false;
-    },
-
-    // visible: 1-based channel indices, matching setSeries and R habits.
-    // state.visible is 0-based, so convert on the way in.
+    // visible: 1-based channel indices, matching R habits. state.visible is
+    // 0-based, so convert on the way in.
     setVisible: function (state, visible) {
       setVisibleChannels(
         state,
         visible.map(function (i) { return i - 1; })
       );
-    },
-
-    setViewport: function (state, viewport) {
-      setSharedXRange(state, viewport.xmin, viewport.xmax, null);
-      if (viewport.ymin != null && viewport.ymax != null) {
-        state.plots.forEach(function (plot) {
-          plot.setScale("y", { min: viewport.ymin, max: viewport.ymax });
-        });
-      }
-    },
-
-    // NB series.visible is uPlot's per-line toggle *within* a panel, which is
-    // not the same thing as setVisible above -- that one adds and removes the
-    // panel itself. Use setVisible to put a channel on or off screen.
-    setSeries: function (state, series) {
-      // series.series is a 1-based channel index, so it has to be mapped
-      // through the visible set rather than used as a panel position
-      var plot = plotForChannel(state, series.series - 1);
-      if (!plot) return;
-
-      var opts = {};
-      if (series.visible != null) opts.show = series.visible;
-      if (series.label != null) opts.label = series.label;
-      plot.setSeries(1, opts);
-
-      if (series.color != null) {
-        plot.series[1].stroke = function () {
-          return series.color;
-        };
-        plot.redraw();
-      }
-    },
-
-    valToPos: function (state, val, axis) {
-      return state.plots[0].valToPos(val, axis || "x");
-    },
-
-    posToVal: function (state, px, axis) {
-      return state.plots[0].posToVal(px, axis || "x");
     }
   };
+
+
+  // --- lifecycle, called by the widget binding --------------------
+
+  GRAM.create = function (el, cfg) {
+    GRAM.destroy(el.id); // re-render safety
+    GRAM.instances[el.id] = adapter.create(el, cfg);
+    return GRAM.instances[el.id];
+  };
+
+  GRAM.destroy = function (id) {
+    var state = GRAM.instances[id];
+    if (!state) return;
+    adapter.destroy(state);
+    delete GRAM.instances[id];
+  };
+
+  GRAM.resize = function (id) {
+    var state = GRAM.instances[id];
+    if (state) adapter.resize(state);
+  };
+
+
+  // --- shiny ------------------------------------------------------
+
+  // priority "event" is required: without it Shiny drops a value identical to
+  // the last one, so selecting the same range twice would go unreported
+  GRAM.emit = function (el, event, value) {
+    if (!window.Shiny || !el || !el.id) return;
+    Shiny.setInputValue(el.id + "_" + event, value, { priority: "event" });
+  };
+
+  if (window.Shiny) {
+    Shiny.addCustomMessageHandler("gram:set_visible", function (msg) {
+      var state = GRAM.instances[msg.id];
+      if (state) adapter.setVisible(state, msg.channels);
+    });
+  }
 })();

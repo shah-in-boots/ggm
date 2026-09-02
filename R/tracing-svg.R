@@ -1,13 +1,3 @@
-# tracing-svg.R -------------------------------------------------------
-# Compiles a Tracing into SVG markup plus an ordered timeline spec.
-#
-# One coordinate space: channels are lanes stacked by vertical offset, so
-# an arrow between any two points is a single path with two endpoints
-# whatever lanes they sit in.
-#
-# The spec names selectors, durations, and order. It never names an
-# anime.js option; gram-anim.js owns those.
-
 svgWidth <- 1000     # user units across the window
 svgLane <- 120       # user units per channel lane
 svgAmplitude <- 0.38 # share of a lane the trace may use, each direction

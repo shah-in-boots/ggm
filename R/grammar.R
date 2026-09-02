@@ -1,20 +1,3 @@
-# grammar.R -----------------------------------------------------------
-# The scripting grammar is R-shaped but it is not R.
-#
-# R's parser supplies the syntax -- nesting, named arguments, and the
-# native pipe, which is rewritten at parse time so `x |> f()` reaches us
-# as `f(x)` with nothing to support at runtime. Everything past parsing is
-# sealed: the expression is walked against a whitelist before evaluation,
-# and evaluation happens in an environment whose parent is emptyenv(), so
-# no name resolves unless it was put there deliberately.
-#
-# parse() does not evaluate, so a script cannot act before the walk runs.
-#
-# gram_verbs() is the single source of truth for what a script may name:
-# the whitelist is read back off that environment, so adding a verb in
-# one place is enough.
-
-
 #' Build the sealed environment a tracing script runs in
 #'
 #' The returned environment holds the tracing verbs and nothing else. Its
@@ -28,7 +11,7 @@
 gram_verbs <- function(cache) {
   env <- new.env(parent = emptyenv())
 
-  # tracing() reads from the harness's study, so the script never names it
+  # the study is bound here, so a script never names it
   env$tracing <- function(...) tracing(cache = cache, ...)
 
   env$at <- at
@@ -94,8 +77,6 @@ gm_check_grammar <- function(expr, allowed) {
   if (is.call(expr)) {
     fn <- expr[[1L]]
     if (!is.symbol(fn)) {
-      # the common case is a namespaced call; say so rather than
-      # reporting the shape of the expression
       if (is.call(fn) && as.character(fn[[1L]]) %in% c("::", ":::")) {
         stop(
           "the grammar has no packages to reach into; call a verb by name",

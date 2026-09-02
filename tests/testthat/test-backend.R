@@ -32,7 +32,8 @@ test_that("gram_plot rejects data that uPlot cannot align", {
 # selection ------------------------------------------------------------
 
 test_that("a viewer selection becomes a canonical sample range", {
-  cache <- demo_cache() # 1000 Hz, 3522 samples
+  # 1000 Hz, 3522 samples
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
 
   expect_equal(
     normalize_selection(cache, list(xmin = 0.1, xmax = 0.2)),
@@ -54,7 +55,7 @@ test_that("a viewer selection becomes a canonical sample range", {
 })
 
 test_that("a selection that holds no samples is not a selection", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
 
   # nothing selected yet, and a plain click that the browser let through:
   # both leave the caller's current window standing
@@ -64,7 +65,7 @@ test_that("a selection that holds no samples is not a selection", {
 })
 
 test_that("a malformed selection is refused rather than guessed at", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
 
   expect_error(normalize_selection(cache, list(xmin = 0.1)), "`xmin` and `xmax`")
   expect_error(normalize_selection(cache, 0.1), "`xmin` and `xmax`")

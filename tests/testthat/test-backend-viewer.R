@@ -1,5 +1,5 @@
 test_that("view_uplot loads every channel unless told otherwise", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
 
   # the viewer's own channel list switches channels off client-side, so the
   # payload has to carry all of them or they cannot be switched back on
@@ -13,7 +13,7 @@ test_that("view_uplot loads every channel unless told otherwise", {
 })
 
 test_that("view_uplot adapts a raw window to uPlot columns", {
-  cache <- demo_cache()
+  cache <- study_cache(system.file("extdata", "bard-egm.hea", package = "gram"))
   channels <- cache@channels[1:2]
 
   widget <- view_uplot(

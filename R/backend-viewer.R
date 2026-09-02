@@ -1,22 +1,8 @@
 #' View a study window with the uPlot backend
 #'
-#' `view_uplot()` is a backend-specific development viewer. It reads a fixed
-#' interval from the canonical WFDB signal, adapts the result to uPlot's aligned
-#' column format, and returns the standalone uPlot widget. It is useful for
-#' exercising and testing the uPlot backend without a Shiny controller.
-#'
-#' The widget contains only the requested `begin` to `end` or `interval` range.
-#' When neither `end` nor `interval` is supplied, the viewer reads ten seconds
-#' from `begin`. Drag horizontally to zoom into that loaded range, scroll
-#' horizontally (or use Shift+wheel) to pan, and double-click to reset the
-#' range. A future interactive study controller can manage dynamic viewport
-#' reads while reusing the same uPlot backend.
-#'
-#' The channel set is fixed at read time: whatever `channels` names is what the
-#' widget draws, and it carries no controls of its own. Choosing channels
-#' interactively is the controller's job -- a Shiny app drives the same widget
-#' through the plotting verbs, as [gram_harness()] does -- which keeps this
-#' function a plain, non-interactive way to exercise the uPlot backend.
+#' Reads one window from the canonical WFDB signal, adapts it to uPlot's
+#' aligned column format, and returns the standalone widget. When neither `end`
+#' nor `interval` is supplied it reads ten seconds from `begin`.
 #'
 #' @param cache A `StudyCache` created by [study_cache()].
 #' @inheritParams read_study_signal
