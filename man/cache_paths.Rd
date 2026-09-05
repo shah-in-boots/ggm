@@ -10,7 +10,9 @@ cache_paths(cache)
 \item{cache}{A \code{StudyCache}.}
 }
 \value{
-Named character vector of record paths.
+Named character vector of record paths: \code{data}, \code{header},
+\code{manifest}, one \verb{annotation_<ext>} per sidecar, and \code{cache} when an
+overview has been built.
 }
 \description{
 All paths in a study group

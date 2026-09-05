@@ -4,15 +4,26 @@
 \alias{study_cache}
 \title{Open a WFDB record as a StudyCache handle}
 \usage{
-study_cache(path, annotators = NULL, raw_ext = "dat", header_ext = "hea")
+study_cache(
+  path,
+  cache_dir = NULL,
+  annotators = NULL,
+  data_ext = "dat",
+  header_ext = "hea"
+)
 }
 \arguments{
 \item{path}{Any file in the record group, or a bare stem.}
 
+\item{cache_dir}{Directory holding \verb{<stem>.gram.json} and the overview
+table. Defaults to the record directory. Point it elsewhere when the
+study folder is read-only; the same \code{cache_dir} must then be given every
+time the study is opened, since that is where the handle looks.}
+
 \item{annotators}{Optional WFDB annotator extensions to require, such as
 \code{"qrs"} or \code{"ann"}. \code{NULL} discovers existing sidecars.}
 
-\item{raw_ext}{Signal extension, without the dot.}
+\item{data_ext}{Signal extension, without the dot.}
 
 \item{header_ext}{Header extension, without the dot.}
 }
@@ -20,5 +31,10 @@ study_cache(path, annotators = NULL, raw_ext = "dat", header_ext = "hea")
 A \code{StudyCache}.
 }
 \description{
-Open a WFDB record as a StudyCache handle
+Validates the record group, reads the header with \code{\link[EGM:read_header]{EGM::read_header()}},
+discovers annotation sidecars, and remembers where gram's own files for
+this record live. Nothing is read from the signal and nothing is written.
+}
+\seealso{
+\code{\link[=build_overview]{build_overview()}}, \code{\link[=read_viewport]{read_viewport()}}, \code{\link[=read_study_signal]{read_study_signal()}}
 }
