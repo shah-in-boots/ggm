@@ -13,9 +13,9 @@
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="design_files/libs/quarto-html/quarto.js" type="module"></script><script src="design_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script><script src="design_files/libs/quarto-html/popper.min.js"></script><script src="design_files/libs/quarto-html/tippy.umd.min.js"></script><link href="design_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="design_files/libs/quarto-html/tippy.css" rel="stylesheet" class="quarto-color-scheme-extra">
 <script src="design_files/libs/bootstrap/bootstrap.min.js"></script><link href="design_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="design_files/libs/bootstrap/bootstrap-b5f156a955f1cc463056bea587fe3979.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="design_files/libs/bootstrap/bootstrap-dark-9cef4023658d34110996a3861271e2a0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="design_files/libs/bootstrap/bootstrap-b5f156a955f1cc463056bea587fe3979.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="design_files/libs/bootstrap/bootstrap-43c3bcbf8b46f498a175c5acbbe58aeb.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="design_files/libs/bootstrap/bootstrap-dark-9f23ffc78fb316e85c3561881a729ac1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="design_files/libs/bootstrap/bootstrap-43c3bcbf8b46f498a175c5acbbe58aeb.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script src="design_files/libs/quarto-diagram/mermaid.min.js"></script><script src="design_files/libs/quarto-diagram/mermaid-init.js"></script><link href="design_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Design Documentation">
 </head>
@@ -92,7 +92,7 @@
 <p>The stubs are aggregated in a Mermaid diagram to serve as a visual map of progress. If the content is <span class="blue">blue</span>, it currently is implemented, and if it is <span class="orange">orange</span>, it is planned but not yet implemented.</p>
 <section class="level2"><h3 data-anchor-id="goal" id="goal">Goal<a class="anchor" aria-label="anchor" href="#goal"></a>
 </h3>
-<p><code>gram</code> explores, annotates, and presents cardiac electrophysiology studies. <a href="https://shah-in-boots.github.io/EGM/" class="external-link">EGM</a> owns vendor import and WFDB-compatible signal/annotation I/O. <code>gram</code> starts after normalization to WFDB and does not duplicate the raw signal.</p>
+<p><a href="https://shah-in-boots.github.io/gram/">gram</a> explores, annotates, and presents cardiac electrophysiology studies. <a href="https://shah-in-boots.github.io/EGM/" class="external-link">EGM</a> owns vendor import and WFDB-compatible signal/annotation I/O. <a href="https://shah-in-boots.github.io/gram/">gram</a> starts after normalization to WFDB and does not duplicate the raw signal.</p>
 </section><section class="level2"><h3 data-anchor-id="arms-of-the-project" id="arms-of-the-project">Arms of the project<a class="anchor" aria-label="anchor" href="#arms-of-the-project"></a>
 </h3>
 <ol type="1">
@@ -108,7 +108,7 @@
 <pre class="mermaid mermaid-js" data-label="project-arms">%%| uses mermaid.scss preferences for the boxes so the colors can be branded
 flowchart LR
     EGM["EGM + WFDB&lt;br/&gt;vendor import&lt;br/&gt;range I/O"]:::implemented
-    Backend["Data Backend&lt;br/&gt;study handle&lt;br/&gt;overview cache"]:::planned
+    Backend["Data Backend&lt;br/&gt;study handle&lt;br/&gt;overview cache"]:::implemented
     Viz["Visualization Engine&lt;br/&gt;uPlot explorer"]:::planned
     Annot["Annotation Interaction&lt;br/&gt;schema; query; edit"]:::planned
     Bookmarks["Bookmarks&lt;br/&gt;saved view state"]:::planned
@@ -134,7 +134,7 @@ flowchart LR
 <div>
 <pre class="mermaid mermaid-js" data-label="data-backend-map">flowchart LR
     EGMIO["EGM I/O&lt;br/&gt;read_signal()&lt;br/&gt;read_annotation()&lt;br/&gt;write_annotation()"]:::implemented
-    GramBackend["gram data backend&lt;br/&gt;study_cache()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::planned
+    GramBackend["{gram} data backend&lt;br/&gt;study_cache()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::implemented
 
     EGMIO --&gt; GramBackend
 </pre>
@@ -144,30 +144,36 @@ flowchart LR
 </div>
 <section class="level2"><h3 data-anchor-id="study-handle" id="study-handle">Study handle<a class="anchor" aria-label="anchor" href="#study-handle"></a>
 </h3>
-<p><code>gram_study</code> contains paths, header metadata, record fingerprint, cache manifest, and annotation-layer metadata. It contains <strong>no full-study signal table</strong>.</p>
+<p>The study cache or handle contains paths, header metadata, record fingerprint, cache manifest, and annotation-layer metadata. It is referential only, and introduces an <code>S7</code> class called <code>StudyCache</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Read header and locate sidecars; do not read the signal.</span></span>
-<span><span class="va">study_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span> <span class="op">=</span> <span class="st">"."</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span><span class="va">study_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">annotators</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/cache.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Stream the WFDB record in fixed-size chunks and build derived tiers.</span></span>
-<span><span class="va">build_overview</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">chunk_seconds</span> <span class="op">=</span> <span class="fl">60</span>, <span class="va">rebuild</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span><span class="va">build_overview</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">cache</span>,</span>
+<span>  <span class="va">chunk_seconds</span> <span class="op">=</span> <span class="fl">60</span>,</span>
+<span>  <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parquet"</span>, <span class="st">"rds"</span><span class="op">)</span>,</span>
+<span>  <span class="va">rebuild</span> <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/overview.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># Return only the samples needed for a viewport.</span></span>
+<span><span class="co"># Return only the samples needed for a viewport; `window` is in samples.</span></span>
 <span><span class="va">read_viewport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
-<span>  <span class="va">study</span>,</span>
+<span>  <span class="va">cache</span>,</span>
 <span>  <span class="va">window</span>,</span>
-<span>  <span class="va">channels</span>,</span>
-<span>  <span class="va">width_px</span>,</span>
+<span>  <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">width_px</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span>  <span class="co"># implemented in R/overview.R</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
+<p>Files gram writes beside a record are named <code>&lt;stem&gt;.gram.*</code>, so one rule keeps them out of annotator discovery and the package name says where they came from. <code>&lt;stem&gt;.gram.json</code> is a manifest shared by every part of gram: each writer reads it, replaces only its own section, and writes the whole file back atomically. The cache owns the <code>cache</code> section; bookmarks and the annotation sidecar will own sections of their own, and a rebuild can never clobber them.</p>
 <p>Requirements:</p>
 <ul>
 <li>Raw <code>.dat</code>/<code>.hea</code> files remain canonical and unmodified.</li>
@@ -183,16 +189,18 @@ flowchart LR
 <li>Geometric bucket sizes, e.g. <code>64, 256, 1024, ...</code> samples.</li>
 <li>Choose the finest tier that returns at most about 2–4 points/pixel/channel.</li>
 <li>Use raw signal once the visible range is already near screen resolution.</li>
-<li>Prototype with a compact indexed binary cache by channel and tier plus <code>manifest.json</code>; keep this format internal until Parquet benchmarks pass.</li>
-<li>Manifest: cache version, algorithm, record fingerprint, sampling frequency, sample count, channels, units, bucket sizes, and completion state.</li>
+<li>One table, all tiers stacked, in <code>&lt;stem&gt;.gram.parquet</code> (rds on request): <code>level</code>, <code>start</code>, then <code>ch&lt;i&gt;.min</code>, <code>ch&lt;i&gt;.min_at</code>, <code>ch&lt;i&gt;.max</code>, <code>ch&lt;i&gt;.max_at</code> per channel position. Parquet reads a subset of channels without touching the rest; rds cannot.</li>
+<li>The <code>cache</code> section of the manifest: version, algorithm, record fingerprint, table file and format, units, sampling frequency, sample count, channels, bucket sizes, and build time. Its presence is the completion marker, and a fingerprint that no longer matches the record reads as not built.</li>
 <li>Never silently use an overview tier for measurement or annotation snapping.</li>
 </ul>
 <p><code>LTTB</code> remains a benchmark alternative, not the first implementation. Clinical acceptance tests should compare reductions on narrow His/stim artifacts and noisy intracardiac channels.</p>
 </section><section class="level2"><h3 data-anchor-id="viewport-return-contract" id="viewport-return-contract">Viewport return contract<a class="anchor" aria-label="anchor" href="#viewport-return-contract"></a>
 </h3>
 <ul>
-<li>Raw: one shared <code>sample</code>/<code>time</code> array plus aligned channel arrays.</li>
-<li>Overview: one <code>sample</code>/<code>time</code>/<code>value</code> triplet per channel; extrema differ by channel. Collapse a min/max pair when both refer to the same sample.</li>
+<li>Raw: one shared <code>sample</code> array plus aligned channel arrays.</li>
+<li>Overview: one <code>sample</code>/<code>value</code> pair per channel; extrema differ by channel. Collapse a min/max pair when both refer to the same sample.</li>
+<li>
+<code>time</code> is never stored or returned; it is <code>sample / sample_rate</code>.</li>
 <li>Sample representation must remain exact for the supported maximum study size.</li>
 <li>
 <code>resolution</code>: <code>"raw"</code> or the cache bucket size.</li>
@@ -372,8 +380,17 @@ flowchart LR
 </div>
 </div>
 <p>Exploration and presentation use different renderers. uPlot/canvas prioritizes latency; short selected segments can be rendered as SVG for precise print and cross-channel markup. Both consume the same samples, annotations, and bookmark state.</p>
-<p><code>gram_scene</code> is a declarative, serializable scene graph plus timeline. Marks bind to data (<code>annotation id</code>, <code>sample</code>, <code>channel</code>), not pixels. R code is the authoring surface; the rendered image/animation is its preview.</p>
-<section class="level2"><h3 data-anchor-id="animation-engine-anime.js" id="animation-engine-anime-js">Animation engine: anime.js<a class="anchor" aria-label="anchor" href="#animation-engine-anime-js"></a>
+<section class="level2"><h3 data-anchor-id="grammar" id="grammar">Grammar<a class="anchor" aria-label="anchor" href="#grammar"></a>
+</h3>
+<p>Workspace for what to design for grammar. Series of examples to organize.</p>
+<ul>
+<li>Add H to mark His</li>
+<li>Add point on specific channel (snap to peak)</li>
+<li>dV/dt marker</li>
+<li>arrows from one channel to another (highlight activation sequence)</li>
+<li>vertical square or rectangle to highlight region</li>
+<li>vertical stripe through entire plot</li>
+</ul></section><section class="level2"><h3 data-anchor-id="animation-engine-anime.js" id="animation-engine-anime-js">Animation engine: anime.js<a class="anchor" aria-label="anchor" href="#animation-engine-anime-js"></a>
 </h3>
 <p><strong>Decision: use anime.js v4.</strong> It is a good fit for this layer:</p>
 <ul>
@@ -399,55 +416,28 @@ flowchart LR
 <th>Tracing operation</th>
 <th>anime.js compilation</th>
 </tr></thead>
-<tbody>
-<tr class="odd">
+<tbody><tr class="odd">
 <td>reveal trace/arrow</td>
 <td>SVG drawable from <code>0</code> to <code>1</code>
 </td>
-</tr>
-<tr class="even">
-<td>emphasize</td>
-<td>opacity, color, or stroke-width tween</td>
-</tr>
-<tr class="odd">
-<td>caliper</td>
-<td>line growth plus numeric label tween</td>
-</tr>
-<tr class="even">
-<td>pan/zoom</td>
-<td>SVG view-box or group transform tween</td>
-</tr>
-<tr class="odd">
-<td>hold</td>
-<td>timeline timer</td>
-</tr>
-<tr class="even">
-<td>simultaneous steps</td>
-<td>shared timeline label/position</td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
 <p>Vendor one pinned anime.js v4 build under <code>inst/htmlwidgets/lib/</code>. Keep selectors, timeline positions, and anime.js option names inside the compiler rather than in the public R object.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: create from a bookmark or explicit study window; returns a tracing object</span></span>
+<span>  <span class="co"># Creates a S7 Tracing object</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">add_caliper</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="co"># Example of annotation</span></span>
+<span><span class="va">add_marker</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">add_arrow</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span>  <span class="co"># Generic for adding objects: arrows, dots, letters, etc</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">emphasize</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">target</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">reveal</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">target</span>, <span class="va">at</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">duration</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO: append a timeline operation</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">render_tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"svg"</span>, <span class="st">"pdf"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -458,62 +448,7 @@ flowchart LR
 <span>  <span class="co"># TODO: compile the scene timeline to an anime.js-backed htmlwidget</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
-<p>Requirements:</p>
-<ul>
-<li>Single scene coordinate system so arrows/calipers may cross channel lanes.</li>
-<li>Static SVG first; PDF from the same terminal frame.</li>
-<li>Animated HTML via anime.js second; GIF/video capture later.</li>
-<li>Presentation layers: trace, marker, label, arrow, caliper, highlight, inset.</li>
-<li>Camera operations: reveal, pan, zoom, hold, and transition.</li>
-<li>A scene resolves referenced annotations before rendering and fails clearly if they are missing or ambiguous.</li>
-<li>Optional materialization later: bundle only selected raw segments for a portable presentation, without copying the full study.</li>
-</ul></section></section><section class="section level2"><h2 id="delivery-plan">Delivery Plan<a class="anchor" aria-label="anchor" href="#delivery-plan"></a>
-</h2>
-<ol type="1">
-<li>
-<strong>Data proof:</strong> study handle, streaming min/max cache, viewport router.</li>
-<li>
-<strong>Viewer proof:</strong> full-study overview, raw-resolution zoom, pan, channels/gain.</li>
-<li>
-<strong>Navigation:</strong> overview navigator, annotation overlay, filter/jump.</li>
-<li>
-<strong>Editing:</strong> move/add/delete, raw-data snapping, derived-annotator save.</li>
-<li>
-<strong>Bookmarks:</strong> saved view list and rapid high-resolution review.</li>
-<li>
-<strong>Static grammar:</strong> bookmark to SVG/PDF with labels, arrows, and calipers.</li>
-<li>
-<strong>Timeline:</strong> anime.js-backed HTML; portable media export after the grammar stabilizes.</li>
-</ol>
-<section class="level2"><h3 data-anchor-id="acceptance-gates" id="acceptance-gates">Acceptance gates<a class="anchor" aria-label="anchor" href="#acceptance-gates"></a>
-</h3>
-<ul>
-<li>Cache build memory is bounded by chunk size, not record duration.</li>
-<li>Cached full-study view and local pan/zoom remain viewport-sized in R and JS.</li>
-<li>Random cache buckets contain the exact raw minima/maxima and sample locations.</li>
-<li>Tier boundaries do not shift annotations, cursors, or bookmarked windows.</li>
-<li>Raw and overview views share the same x-range without a visible jump.</li>
-<li>Source annotation file remains byte-for-byte unchanged after review save.</li>
-<li>Saved edits and bookmarks survive restart and resolve against the same record.</li>
-<li>Benchmark the current <code>ort</code> record (27 channels, 977 Hz, 9,562,353 samples, about 0.5 GB) and repeat the gate on a record larger than 1 GB.</li>
-</ul>
-<p>Initial latency targets on a local SSD, to revise after measurement:</p>
-<ul>
-<li>cached overview visible in under 1 second;</li>
-<li>interaction feedback in under 100 ms;</li>
-<li>refined viewport visible in under 250 ms;</li>
-<li>no more than 4 plotted points/pixel/channel.</li>
-</ul></section><section class="level2"><h3 data-anchor-id="open-decisions" id="open-decisions">Open decisions<a class="anchor" aria-label="anchor" href="#open-decisions"></a>
-</h3>
-<ul>
-<li>Final intracardiac archetypes and their WFDB field mapping.</li>
-<li>Compare the compact indexed binary prototype with Parquet before stabilizing the cache format.</li>
-<li>Required maximum duration, sampling frequency, and channel count.</li>
-<li>Multi-segment WFDB records and discontinuous recordings.</li>
-<li>Screen sweep-speed calibration and default EP gain conventions.</li>
-<li>Presentation interchange: self-contained HTML only, or a portable scene bundle.</li>
-<li>GIF/video capture mechanism and reproducible frame timing.</li>
-</ul></section></section></main><div class="includes-after">
+</section></section></main><div class="includes-after">
 
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -611,7 +546,7 @@ flowchart LR
 <p>The stubs are aggregated in a Mermaid diagram to serve as a visual map of progress. If the content is <span class="blue">blue</span>, it currently is implemented, and if it is <span class="orange">orange</span>, it is planned but not yet implemented.</p>
 <section class="level2"><h3 data-anchor-id="goal" id="goal-1">Goal<a class="anchor" aria-label="anchor" href="#goal-1"></a>
 </h3>
-<p><code>gram</code> explores, annotates, and presents cardiac electrophysiology studies. <a href="https://shah-in-boots.github.io/EGM/" class="external-link">EGM</a> owns vendor import and WFDB-compatible signal/annotation I/O. <code>gram</code> starts after normalization to WFDB and does not duplicate the raw signal.</p>
+<p><a href="https://shah-in-boots.github.io/gram/">gram</a> explores, annotates, and presents cardiac electrophysiology studies. <a href="https://shah-in-boots.github.io/EGM/" class="external-link">EGM</a> owns vendor import and WFDB-compatible signal/annotation I/O. <a href="https://shah-in-boots.github.io/gram/">gram</a> starts after normalization to WFDB and does not duplicate the raw signal.</p>
 </section><section class="level2"><h3 data-anchor-id="arms-of-the-project" id="arms-of-the-project-1">Arms of the project<a class="anchor" aria-label="anchor" href="#arms-of-the-project-1"></a>
 </h3>
 <ol type="1">
@@ -627,7 +562,7 @@ flowchart LR
 <pre class="mermaid mermaid-js" data-label="project-arms">%%| uses mermaid.scss preferences for the boxes so the colors can be branded
 flowchart LR
     EGM["EGM + WFDB&lt;br/&gt;vendor import&lt;br/&gt;range I/O"]:::implemented
-    Backend["Data Backend&lt;br/&gt;study handle&lt;br/&gt;overview cache"]:::planned
+    Backend["Data Backend&lt;br/&gt;study handle&lt;br/&gt;overview cache"]:::implemented
     Viz["Visualization Engine&lt;br/&gt;uPlot explorer"]:::planned
     Annot["Annotation Interaction&lt;br/&gt;schema; query; edit"]:::planned
     Bookmarks["Bookmarks&lt;br/&gt;saved view state"]:::planned
@@ -653,7 +588,7 @@ flowchart LR
 <div>
 <pre class="mermaid mermaid-js" data-label="data-backend-map">flowchart LR
     EGMIO["EGM I/O&lt;br/&gt;read_signal()&lt;br/&gt;read_annotation()&lt;br/&gt;write_annotation()"]:::implemented
-    GramBackend["gram data backend&lt;br/&gt;study_cache()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::planned
+    GramBackend["{gram} data backend&lt;br/&gt;study_cache()&lt;br/&gt;build_overview()&lt;br/&gt;read_viewport()"]:::implemented
 
     EGMIO --&gt; GramBackend
 </pre>
@@ -663,30 +598,36 @@ flowchart LR
 </div>
 <section class="level2"><h3 data-anchor-id="study-handle" id="study-handle-1">Study handle<a class="anchor" aria-label="anchor" href="#study-handle-1"></a>
 </h3>
-<p><code>gram_study</code> contains paths, header metadata, record fingerprint, cache manifest, and annotation-layer metadata. It contains <strong>no full-study signal table</strong>.</p>
+<p>The study cache or handle contains paths, header metadata, record fingerprint, cache manifest, and annotation-layer metadata. It is referential only, and introduces an <code>S7</code> class called <code>StudyCache</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Read header and locate sidecars; do not read the signal.</span></span>
-<span><span class="va">study_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">record</span>, <span class="va">record_dir</span> <span class="op">=</span> <span class="st">"."</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span><span class="va">study_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span>, <span class="va">cache_dir</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">annotators</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/cache.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Stream the WFDB record in fixed-size chunks and build derived tiers.</span></span>
-<span><span class="va">build_overview</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">chunk_seconds</span> <span class="op">=</span> <span class="fl">60</span>, <span class="va">rebuild</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span><span class="va">build_overview</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">cache</span>,</span>
+<span>  <span class="va">chunk_seconds</span> <span class="op">=</span> <span class="fl">60</span>,</span>
+<span>  <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parquet"</span>, <span class="st">"rds"</span><span class="op">)</span>,</span>
+<span>  <span class="va">rebuild</span> <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/overview.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># Return only the samples needed for a viewport.</span></span>
+<span><span class="co"># Return only the samples needed for a viewport; `window` is in samples.</span></span>
 <span><span class="va">read_viewport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
-<span>  <span class="va">study</span>,</span>
+<span>  <span class="va">cache</span>,</span>
 <span>  <span class="va">window</span>,</span>
-<span>  <span class="va">channels</span>,</span>
-<span>  <span class="va">width_px</span>,</span>
+<span>  <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">width_px</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span>  <span class="co"># implemented in R/overview.R</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
+<p>Files gram writes beside a record are named <code>&lt;stem&gt;.gram.*</code>, so one rule keeps them out of annotator discovery and the package name says where they came from. <code>&lt;stem&gt;.gram.json</code> is a manifest shared by every part of gram: each writer reads it, replaces only its own section, and writes the whole file back atomically. The cache owns the <code>cache</code> section; bookmarks and the annotation sidecar will own sections of their own, and a rebuild can never clobber them.</p>
 <p>Requirements:</p>
 <ul>
 <li>Raw <code>.dat</code>/<code>.hea</code> files remain canonical and unmodified.</li>
@@ -702,16 +643,18 @@ flowchart LR
 <li>Geometric bucket sizes, e.g. <code>64, 256, 1024, ...</code> samples.</li>
 <li>Choose the finest tier that returns at most about 2–4 points/pixel/channel.</li>
 <li>Use raw signal once the visible range is already near screen resolution.</li>
-<li>Prototype with a compact indexed binary cache by channel and tier plus <code>manifest.json</code>; keep this format internal until Parquet benchmarks pass.</li>
-<li>Manifest: cache version, algorithm, record fingerprint, sampling frequency, sample count, channels, units, bucket sizes, and completion state.</li>
+<li>One table, all tiers stacked, in <code>&lt;stem&gt;.gram.parquet</code> (rds on request): <code>level</code>, <code>start</code>, then <code>ch&lt;i&gt;.min</code>, <code>ch&lt;i&gt;.min_at</code>, <code>ch&lt;i&gt;.max</code>, <code>ch&lt;i&gt;.max_at</code> per channel position. Parquet reads a subset of channels without touching the rest; rds cannot.</li>
+<li>The <code>cache</code> section of the manifest: version, algorithm, record fingerprint, table file and format, units, sampling frequency, sample count, channels, bucket sizes, and build time. Its presence is the completion marker, and a fingerprint that no longer matches the record reads as not built.</li>
 <li>Never silently use an overview tier for measurement or annotation snapping.</li>
 </ul>
 <p><code>LTTB</code> remains a benchmark alternative, not the first implementation. Clinical acceptance tests should compare reductions on narrow His/stim artifacts and noisy intracardiac channels.</p>
 </section><section class="level2"><h3 data-anchor-id="viewport-return-contract" id="viewport-return-contract-1">Viewport return contract<a class="anchor" aria-label="anchor" href="#viewport-return-contract-1"></a>
 </h3>
 <ul>
-<li>Raw: one shared <code>sample</code>/<code>time</code> array plus aligned channel arrays.</li>
-<li>Overview: one <code>sample</code>/<code>time</code>/<code>value</code> triplet per channel; extrema differ by channel. Collapse a min/max pair when both refer to the same sample.</li>
+<li>Raw: one shared <code>sample</code> array plus aligned channel arrays.</li>
+<li>Overview: one <code>sample</code>/<code>value</code> pair per channel; extrema differ by channel. Collapse a min/max pair when both refer to the same sample.</li>
+<li>
+<code>time</code> is never stored or returned; it is <code>sample / sample_rate</code>.</li>
 <li>Sample representation must remain exact for the supported maximum study size.</li>
 <li>
 <code>resolution</code>: <code>"raw"</code> or the cache bucket size.</li>
@@ -891,8 +834,17 @@ flowchart LR
 </div>
 </div>
 <p>Exploration and presentation use different renderers. uPlot/canvas prioritizes latency; short selected segments can be rendered as SVG for precise print and cross-channel markup. Both consume the same samples, annotations, and bookmark state.</p>
-<p><code>gram_scene</code> is a declarative, serializable scene graph plus timeline. Marks bind to data (<code>annotation id</code>, <code>sample</code>, <code>channel</code>), not pixels. R code is the authoring surface; the rendered image/animation is its preview.</p>
-<section class="level2"><h3 data-anchor-id="animation-engine-anime.js" id="animation-engine-anime-js-1">Animation engine: anime.js<a class="anchor" aria-label="anchor" href="#animation-engine-anime-js-1"></a>
+<section class="level2"><h3 data-anchor-id="grammar" id="grammar-1">Grammar<a class="anchor" aria-label="anchor" href="#grammar-1"></a>
+</h3>
+<p>Workspace for what to design for grammar. Series of examples to organize.</p>
+<ul>
+<li>Add H to mark His</li>
+<li>Add point on specific channel (snap to peak)</li>
+<li>dV/dt marker</li>
+<li>arrows from one channel to another (highlight activation sequence)</li>
+<li>vertical square or rectangle to highlight region</li>
+<li>vertical stripe through entire plot</li>
+</ul></section><section class="level2"><h3 data-anchor-id="animation-engine-anime.js" id="animation-engine-anime-js-1">Animation engine: anime.js<a class="anchor" aria-label="anchor" href="#animation-engine-anime-js-1"></a>
 </h3>
 <p><strong>Decision: use anime.js v4.</strong> It is a good fit for this layer:</p>
 <ul>
@@ -918,55 +870,28 @@ flowchart LR
 <th>Tracing operation</th>
 <th>anime.js compilation</th>
 </tr></thead>
-<tbody>
-<tr class="odd">
+<tbody><tr class="odd">
 <td>reveal trace/arrow</td>
 <td>SVG drawable from <code>0</code> to <code>1</code>
 </td>
-</tr>
-<tr class="even">
-<td>emphasize</td>
-<td>opacity, color, or stroke-width tween</td>
-</tr>
-<tr class="odd">
-<td>caliper</td>
-<td>line growth plus numeric label tween</td>
-</tr>
-<tr class="even">
-<td>pan/zoom</td>
-<td>SVG view-box or group transform tween</td>
-</tr>
-<tr class="odd">
-<td>hold</td>
-<td>timeline timer</td>
-</tr>
-<tr class="even">
-<td>simultaneous steps</td>
-<td>shared timeline label/position</td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
 <p>Vendor one pinned anime.js v4 build under <code>inst/htmlwidgets/lib/</code>. Keep selectors, timeline positions, and anime.js option names inside the compiler rather than in the public R object.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: create from a bookmark or explicit study window; returns a tracing object</span></span>
+<span>  <span class="co"># Creates a S7 Tracing object</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">add_caliper</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="co"># Example of annotation</span></span>
+<span><span class="va">add_marker</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">add_arrow</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">from</span>, <span class="va">to</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO</span></span>
+<span>  <span class="co"># Generic for adding objects: arrows, dots, letters, etc</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">emphasize</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">target</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">reveal</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">target</span>, <span class="va">at</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">duration</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># TODO: append a timeline operation</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">render_tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">format</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"svg"</span>, <span class="st">"pdf"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -977,62 +902,7 @@ flowchart LR
 <span>  <span class="co"># TODO: compile the scene timeline to an anime.js-backed htmlwidget</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
-<p>Requirements:</p>
-<ul>
-<li>Single scene coordinate system so arrows/calipers may cross channel lanes.</li>
-<li>Static SVG first; PDF from the same terminal frame.</li>
-<li>Animated HTML via anime.js second; GIF/video capture later.</li>
-<li>Presentation layers: trace, marker, label, arrow, caliper, highlight, inset.</li>
-<li>Camera operations: reveal, pan, zoom, hold, and transition.</li>
-<li>A scene resolves referenced annotations before rendering and fails clearly if they are missing or ambiguous.</li>
-<li>Optional materialization later: bundle only selected raw segments for a portable presentation, without copying the full study.</li>
-</ul></section></section><section class="section level2"><h2 id="delivery-plan-1">Delivery Plan<a class="anchor" aria-label="anchor" href="#delivery-plan-1"></a>
-</h2>
-<ol type="1">
-<li>
-<strong>Data proof:</strong> study handle, streaming min/max cache, viewport router.</li>
-<li>
-<strong>Viewer proof:</strong> full-study overview, raw-resolution zoom, pan, channels/gain.</li>
-<li>
-<strong>Navigation:</strong> overview navigator, annotation overlay, filter/jump.</li>
-<li>
-<strong>Editing:</strong> move/add/delete, raw-data snapping, derived-annotator save.</li>
-<li>
-<strong>Bookmarks:</strong> saved view list and rapid high-resolution review.</li>
-<li>
-<strong>Static grammar:</strong> bookmark to SVG/PDF with labels, arrows, and calipers.</li>
-<li>
-<strong>Timeline:</strong> anime.js-backed HTML; portable media export after the grammar stabilizes.</li>
-</ol>
-<section class="level2"><h3 data-anchor-id="acceptance-gates" id="acceptance-gates-1">Acceptance gates<a class="anchor" aria-label="anchor" href="#acceptance-gates-1"></a>
-</h3>
-<ul>
-<li>Cache build memory is bounded by chunk size, not record duration.</li>
-<li>Cached full-study view and local pan/zoom remain viewport-sized in R and JS.</li>
-<li>Random cache buckets contain the exact raw minima/maxima and sample locations.</li>
-<li>Tier boundaries do not shift annotations, cursors, or bookmarked windows.</li>
-<li>Raw and overview views share the same x-range without a visible jump.</li>
-<li>Source annotation file remains byte-for-byte unchanged after review save.</li>
-<li>Saved edits and bookmarks survive restart and resolve against the same record.</li>
-<li>Benchmark the current <code>ort</code> record (27 channels, 977 Hz, 9,562,353 samples, about 0.5 GB) and repeat the gate on a record larger than 1 GB.</li>
-</ul>
-<p>Initial latency targets on a local SSD, to revise after measurement:</p>
-<ul>
-<li>cached overview visible in under 1 second;</li>
-<li>interaction feedback in under 100 ms;</li>
-<li>refined viewport visible in under 250 ms;</li>
-<li>no more than 4 plotted points/pixel/channel.</li>
-</ul></section><section class="level2"><h3 data-anchor-id="open-decisions" id="open-decisions-1">Open decisions<a class="anchor" aria-label="anchor" href="#open-decisions-1"></a>
-</h3>
-<ul>
-<li>Final intracardiac archetypes and their WFDB field mapping.</li>
-<li>Compare the compact indexed binary prototype with Parquet before stabilizing the cache format.</li>
-<li>Required maximum duration, sampling frequency, and channel count.</li>
-<li>Multi-segment WFDB records and discontinuous recordings.</li>
-<li>Screen sweep-speed calibration and default EP gain conventions.</li>
-<li>Presentation interchange: self-contained HTML only, or a portable scene bundle.</li>
-<li>GIF/video capture mechanism and reproducible frame timing.</li>
-</ul></section></section></main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+</section></section></main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 

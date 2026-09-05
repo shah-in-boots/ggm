@@ -23,10 +23,12 @@ it is orange, it is planned but not yet implemented.
 
 ### Goal
 
-`gram` explores, annotates, and presents cardiac electrophysiology
-studies. [EGM](https://shah-in-boots.github.io/EGM/) owns vendor import
-and WFDB-compatible signal/annotation I/O. `gram` starts after
-normalization to WFDB and does not duplicate the raw signal.
+[gram](https://shah-in-boots.github.io/gram/) explores, annotates, and
+presents cardiac electrophysiology studies.
+[EGM](https://shah-in-boots.github.io/EGM/) owns vendor import and
+WFDB-compatible signal/annotation I/O.
+[gram](https://shah-in-boots.github.io/gram/) starts after normalization
+to WFDB and does not duplicate the raw signal.
 
 ### Arms of the project
 
@@ -39,7 +41,7 @@ normalization to WFDB and does not duplicate the raw signal.
 %%| uses mermaid.scss preferences for the boxes so the colors can be branded
 flowchart LR
     EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
-    Backend["Data Backend<br/>study handle<br/>overview cache"]:::planned
+    Backend["Data Backend<br/>study handle<br/>overview cache"]:::implemented
     Viz["Visualization Engine<br/>uPlot explorer"]:::planned
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
@@ -59,40 +61,53 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GramBackend["gram data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["{gram} data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::implemented
 
     EGMIO --> GramBackend
 ```
 
 ### Study handle
 
-`gram_study` contains paths, header metadata, record fingerprint, cache
-manifest, and annotation-layer metadata. It contains **no full-study
-signal table**.
+The study cache or handle contains paths, header metadata, record
+fingerprint, cache manifest, and annotation-layer metadata. It is
+referential only, and introduces an `S7` class called `StudyCache`.
 
 ``` r
 
 # Read header and locate sidecars; do not read the signal.
-study_cache <- function(record, record_dir = ".", cache_dir = NULL) {
-  # TODO
+study_cache <- function(path, cache_dir = NULL, annotators = NULL, ...) {
+  # implemented in R/cache.R
 }
 
 # Stream the WFDB record in fixed-size chunks and build derived tiers.
-build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
-  # TODO
+build_overview <- function(
+  cache,
+  chunk_seconds = 60,
+  format = c("parquet", "rds"),
+  rebuild = FALSE
+) {
+  # implemented in R/overview.R
 }
 
-# Return only the samples needed for a viewport.
+# Return only the samples needed for a viewport; `window` is in samples.
 read_viewport <- function(
-  study,
+  cache,
   window,
-  channels,
-  width_px,
+  channels = NULL,
+  width_px = NULL,
   resolution = c("auto", "raw", "overview")
 ) {
-  # TODO
+  # implemented in R/overview.R
 }
 ```
+
+Files gram writes beside a record are named `<stem>.gram.*`, so one rule
+keeps them out of annotator discovery and the package name says where
+they came from. `<stem>.gram.json` is a manifest shared by every part of
+gram: each writer reads it, replaces only its own section, and writes
+the whole file back atomically. The cache owns the `cache` section;
+bookmarks and the annotation sidecar will own sections of their own, and
+a rebuild can never clobber them.
 
 Requirements:
 
@@ -118,12 +133,15 @@ adjacent buckets; one streaming pass with bounded memory.
   points/pixel/channel.
 - Use raw signal once the visible range is already near screen
   resolution.
-- Prototype with a compact indexed binary cache by channel and tier plus
-  `manifest.json`; keep this format internal until Parquet benchmarks
-  pass.
-- Manifest: cache version, algorithm, record fingerprint, sampling
-  frequency, sample count, channels, units, bucket sizes, and completion
-  state.
+- One table, all tiers stacked, in `<stem>.gram.parquet` (rds on
+  request): `level`, `start`, then `ch<i>.min`, `ch<i>.min_at`,
+  `ch<i>.max`, `ch<i>.max_at` per channel position. Parquet reads a
+  subset of channels without touching the rest; rds cannot.
+- The `cache` section of the manifest: version, algorithm, record
+  fingerprint, table file and format, units, sampling frequency, sample
+  count, channels, bucket sizes, and build time. Its presence is the
+  completion marker, and a fingerprint that no longer matches the record
+  reads as not built.
 - Never silently use an overview tier for measurement or annotation
   snapping.
 
@@ -133,10 +151,10 @@ artifacts and noisy intracardiac channels.
 
 ### Viewport return contract
 
-- Raw: one shared `sample`/`time` array plus aligned channel arrays.
-- Overview: one `sample`/`time`/`value` triplet per channel; extrema
-  differ by channel. Collapse a min/max pair when both refer to the same
-  sample.
+- Raw: one shared `sample` array plus aligned channel arrays.
+- Overview: one `sample`/`value` pair per channel; extrema differ by
+  channel. Collapse a min/max pair when both refer to the same sample.
+- `time` is never stored or returned; it is `sample / sample_rate`.
 - Sample representation must remain exact for the supported maximum
   study size.
 - `resolution`: `"raw"` or the cache bucket size.
@@ -318,10 +336,17 @@ prioritizes latency; short selected segments can be rendered as SVG for
 precise print and cross-channel markup. Both consume the same samples,
 annotations, and bookmark state.
 
-`gram_scene` is a declarative, serializable scene graph plus timeline.
-Marks bind to data (`annotation id`, `sample`, `channel`), not pixels. R
-code is the authoring surface; the rendered image/animation is its
-preview.
+### Grammar
+
+Workspace for what to design for grammar. Series of examples to
+organize.
+
+- Add H to mark His
+- Add point on specific channel (snap to peak)
+- dV/dt marker
+- arrows from one channel to another (highlight activation sequence)
+- vertical square or rectangle to highlight region
+- vertical stripe through entire plot
 
 ### Animation engine: anime.js
 
@@ -350,14 +375,9 @@ This boundary keeps the R grammar stable if the JavaScript runtime
 changes. It also ensures a print still does not depend on replaying an
 animation to discover where its elements finish.
 
-| Tracing operation  | anime.js compilation                  |
-|--------------------|---------------------------------------|
-| reveal trace/arrow | SVG drawable from `0` to `1`          |
-| emphasize          | opacity, color, or stroke-width tween |
-| caliper            | line growth plus numeric label tween  |
-| pan/zoom           | SVG view-box or group transform tween |
-| hold               | timeline timer                        |
-| simultaneous steps | shared timeline label/position        |
+| Tracing operation  | anime.js compilation         |
+|--------------------|------------------------------|
+| reveal trace/arrow | SVG drawable from `0` to `1` |
 
 Vendor one pinned anime.js v4 build under `inst/htmlwidgets/lib/`. Keep
 selectors, timeline positions, and anime.js option names inside the
@@ -367,22 +387,17 @@ compiler rather than in the public R object.
 
 tracing <- function(x, ...) {
   # TODO: create from a bookmark or explicit study window; returns a tracing object
+  # Creates a S7 Tracing object
 }
 
-add_caliper <- function(x, from, to, label = NULL, ...) {
+# Example of annotation
+add_marker <- function(x, from, to, label = NULL, ...) {
   # TODO
-}
-
-add_arrow <- function(x, from, to, label = NULL, ...) {
-  # TODO
+  # Generic for adding objects: arrows, dots, letters, etc
 }
 
 emphasize <- function(x, target, ...) {
   # TODO
-}
-
-reveal <- function(x, target, at = NULL, duration = NULL, ...) {
-  # TODO: append a timeline operation
 }
 
 render_tracing <- function(x, format = c("svg", "pdf"), ...) {
@@ -393,72 +408,6 @@ animate_tracing <- function(x, autoplay = TRUE, controls = TRUE, ...) {
   # TODO: compile the scene timeline to an anime.js-backed htmlwidget
 }
 ```
-
-Requirements:
-
-- Single scene coordinate system so arrows/calipers may cross channel
-  lanes.
-- Static SVG first; PDF from the same terminal frame.
-- Animated HTML via anime.js second; GIF/video capture later.
-- Presentation layers: trace, marker, label, arrow, caliper, highlight,
-  inset.
-- Camera operations: reveal, pan, zoom, hold, and transition.
-- A scene resolves referenced annotations before rendering and fails
-  clearly if they are missing or ambiguous.
-- Optional materialization later: bundle only selected raw segments for
-  a portable presentation, without copying the full study.
-
-## Delivery Plan
-
-1.  **Data proof:** study handle, streaming min/max cache, viewport
-    router.
-2.  **Viewer proof:** full-study overview, raw-resolution zoom, pan,
-    channels/gain.
-3.  **Navigation:** overview navigator, annotation overlay, filter/jump.
-4.  **Editing:** move/add/delete, raw-data snapping, derived-annotator
-    save.
-5.  **Bookmarks:** saved view list and rapid high-resolution review.
-6.  **Static grammar:** bookmark to SVG/PDF with labels, arrows, and
-    calipers.
-7.  **Timeline:** anime.js-backed HTML; portable media export after the
-    grammar stabilizes.
-
-### Acceptance gates
-
-- Cache build memory is bounded by chunk size, not record duration.
-- Cached full-study view and local pan/zoom remain viewport-sized in R
-  and JS.
-- Random cache buckets contain the exact raw minima/maxima and sample
-  locations.
-- Tier boundaries do not shift annotations, cursors, or bookmarked
-  windows.
-- Raw and overview views share the same x-range without a visible jump.
-- Source annotation file remains byte-for-byte unchanged after review
-  save.
-- Saved edits and bookmarks survive restart and resolve against the same
-  record.
-- Benchmark the current `ort` record (27 channels, 977 Hz, 9,562,353
-  samples, about 0.5 GB) and repeat the gate on a record larger than 1
-  GB.
-
-Initial latency targets on a local SSD, to revise after measurement:
-
-- cached overview visible in under 1 second;
-- interaction feedback in under 100 ms;
-- refined viewport visible in under 250 ms;
-- no more than 4 plotted points/pixel/channel.
-
-### Open decisions
-
-- Final intracardiac archetypes and their WFDB field mapping.
-- Compare the compact indexed binary prototype with Parquet before
-  stabilizing the cache format.
-- Required maximum duration, sampling frequency, and channel count.
-- Multi-segment WFDB records and discontinuous recordings.
-- Screen sweep-speed calibration and default EP gain conventions.
-- Presentation interchange: self-contained HTML only, or a portable
-  scene bundle.
-- GIF/video capture mechanism and reproducible frame timing.
 
 ## Introduction
 
@@ -481,10 +430,12 @@ it is orange, it is planned but not yet implemented.
 
 ### Goal
 
-`gram` explores, annotates, and presents cardiac electrophysiology
-studies. [EGM](https://shah-in-boots.github.io/EGM/) owns vendor import
-and WFDB-compatible signal/annotation I/O. `gram` starts after
-normalization to WFDB and does not duplicate the raw signal.
+[gram](https://shah-in-boots.github.io/gram/) explores, annotates, and
+presents cardiac electrophysiology studies.
+[EGM](https://shah-in-boots.github.io/EGM/) owns vendor import and
+WFDB-compatible signal/annotation I/O.
+[gram](https://shah-in-boots.github.io/gram/) starts after normalization
+to WFDB and does not duplicate the raw signal.
 
 ### Arms of the project
 
@@ -497,7 +448,7 @@ normalization to WFDB and does not duplicate the raw signal.
 %%| uses mermaid.scss preferences for the boxes so the colors can be branded
 flowchart LR
     EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
-    Backend["Data Backend<br/>study handle<br/>overview cache"]:::planned
+    Backend["Data Backend<br/>study handle<br/>overview cache"]:::implemented
     Viz["Visualization Engine<br/>uPlot explorer"]:::planned
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
@@ -517,40 +468,53 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GramBackend["gram data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["{gram} data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::implemented
 
     EGMIO --> GramBackend
 ```
 
 ### Study handle
 
-`gram_study` contains paths, header metadata, record fingerprint, cache
-manifest, and annotation-layer metadata. It contains **no full-study
-signal table**.
+The study cache or handle contains paths, header metadata, record
+fingerprint, cache manifest, and annotation-layer metadata. It is
+referential only, and introduces an `S7` class called `StudyCache`.
 
 ``` r
 
 # Read header and locate sidecars; do not read the signal.
-study_cache <- function(record, record_dir = ".", cache_dir = NULL) {
-  # TODO
+study_cache <- function(path, cache_dir = NULL, annotators = NULL, ...) {
+  # implemented in R/cache.R
 }
 
 # Stream the WFDB record in fixed-size chunks and build derived tiers.
-build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
-  # TODO
+build_overview <- function(
+  cache,
+  chunk_seconds = 60,
+  format = c("parquet", "rds"),
+  rebuild = FALSE
+) {
+  # implemented in R/overview.R
 }
 
-# Return only the samples needed for a viewport.
+# Return only the samples needed for a viewport; `window` is in samples.
 read_viewport <- function(
-  study,
+  cache,
   window,
-  channels,
-  width_px,
+  channels = NULL,
+  width_px = NULL,
   resolution = c("auto", "raw", "overview")
 ) {
-  # TODO
+  # implemented in R/overview.R
 }
 ```
+
+Files gram writes beside a record are named `<stem>.gram.*`, so one rule
+keeps them out of annotator discovery and the package name says where
+they came from. `<stem>.gram.json` is a manifest shared by every part of
+gram: each writer reads it, replaces only its own section, and writes
+the whole file back atomically. The cache owns the `cache` section;
+bookmarks and the annotation sidecar will own sections of their own, and
+a rebuild can never clobber them.
 
 Requirements:
 
@@ -576,12 +540,15 @@ adjacent buckets; one streaming pass with bounded memory.
   points/pixel/channel.
 - Use raw signal once the visible range is already near screen
   resolution.
-- Prototype with a compact indexed binary cache by channel and tier plus
-  `manifest.json`; keep this format internal until Parquet benchmarks
-  pass.
-- Manifest: cache version, algorithm, record fingerprint, sampling
-  frequency, sample count, channels, units, bucket sizes, and completion
-  state.
+- One table, all tiers stacked, in `<stem>.gram.parquet` (rds on
+  request): `level`, `start`, then `ch<i>.min`, `ch<i>.min_at`,
+  `ch<i>.max`, `ch<i>.max_at` per channel position. Parquet reads a
+  subset of channels without touching the rest; rds cannot.
+- The `cache` section of the manifest: version, algorithm, record
+  fingerprint, table file and format, units, sampling frequency, sample
+  count, channels, bucket sizes, and build time. Its presence is the
+  completion marker, and a fingerprint that no longer matches the record
+  reads as not built.
 - Never silently use an overview tier for measurement or annotation
   snapping.
 
@@ -591,10 +558,10 @@ artifacts and noisy intracardiac channels.
 
 ### Viewport return contract
 
-- Raw: one shared `sample`/`time` array plus aligned channel arrays.
-- Overview: one `sample`/`time`/`value` triplet per channel; extrema
-  differ by channel. Collapse a min/max pair when both refer to the same
-  sample.
+- Raw: one shared `sample` array plus aligned channel arrays.
+- Overview: one `sample`/`value` pair per channel; extrema differ by
+  channel. Collapse a min/max pair when both refer to the same sample.
+- `time` is never stored or returned; it is `sample / sample_rate`.
 - Sample representation must remain exact for the supported maximum
   study size.
 - `resolution`: `"raw"` or the cache bucket size.
@@ -776,10 +743,17 @@ prioritizes latency; short selected segments can be rendered as SVG for
 precise print and cross-channel markup. Both consume the same samples,
 annotations, and bookmark state.
 
-`gram_scene` is a declarative, serializable scene graph plus timeline.
-Marks bind to data (`annotation id`, `sample`, `channel`), not pixels. R
-code is the authoring surface; the rendered image/animation is its
-preview.
+### Grammar
+
+Workspace for what to design for grammar. Series of examples to
+organize.
+
+- Add H to mark His
+- Add point on specific channel (snap to peak)
+- dV/dt marker
+- arrows from one channel to another (highlight activation sequence)
+- vertical square or rectangle to highlight region
+- vertical stripe through entire plot
 
 ### Animation engine: anime.js
 
@@ -808,14 +782,9 @@ This boundary keeps the R grammar stable if the JavaScript runtime
 changes. It also ensures a print still does not depend on replaying an
 animation to discover where its elements finish.
 
-| Tracing operation  | anime.js compilation                  |
-|--------------------|---------------------------------------|
-| reveal trace/arrow | SVG drawable from `0` to `1`          |
-| emphasize          | opacity, color, or stroke-width tween |
-| caliper            | line growth plus numeric label tween  |
-| pan/zoom           | SVG view-box or group transform tween |
-| hold               | timeline timer                        |
-| simultaneous steps | shared timeline label/position        |
+| Tracing operation  | anime.js compilation         |
+|--------------------|------------------------------|
+| reveal trace/arrow | SVG drawable from `0` to `1` |
 
 Vendor one pinned anime.js v4 build under `inst/htmlwidgets/lib/`. Keep
 selectors, timeline positions, and anime.js option names inside the
@@ -825,22 +794,17 @@ compiler rather than in the public R object.
 
 tracing <- function(x, ...) {
   # TODO: create from a bookmark or explicit study window; returns a tracing object
+  # Creates a S7 Tracing object
 }
 
-add_caliper <- function(x, from, to, label = NULL, ...) {
+# Example of annotation
+add_marker <- function(x, from, to, label = NULL, ...) {
   # TODO
-}
-
-add_arrow <- function(x, from, to, label = NULL, ...) {
-  # TODO
+  # Generic for adding objects: arrows, dots, letters, etc
 }
 
 emphasize <- function(x, target, ...) {
   # TODO
-}
-
-reveal <- function(x, target, at = NULL, duration = NULL, ...) {
-  # TODO: append a timeline operation
 }
 
 render_tracing <- function(x, format = c("svg", "pdf"), ...) {
@@ -851,72 +815,6 @@ animate_tracing <- function(x, autoplay = TRUE, controls = TRUE, ...) {
   # TODO: compile the scene timeline to an anime.js-backed htmlwidget
 }
 ```
-
-Requirements:
-
-- Single scene coordinate system so arrows/calipers may cross channel
-  lanes.
-- Static SVG first; PDF from the same terminal frame.
-- Animated HTML via anime.js second; GIF/video capture later.
-- Presentation layers: trace, marker, label, arrow, caliper, highlight,
-  inset.
-- Camera operations: reveal, pan, zoom, hold, and transition.
-- A scene resolves referenced annotations before rendering and fails
-  clearly if they are missing or ambiguous.
-- Optional materialization later: bundle only selected raw segments for
-  a portable presentation, without copying the full study.
-
-## Delivery Plan
-
-1.  **Data proof:** study handle, streaming min/max cache, viewport
-    router.
-2.  **Viewer proof:** full-study overview, raw-resolution zoom, pan,
-    channels/gain.
-3.  **Navigation:** overview navigator, annotation overlay, filter/jump.
-4.  **Editing:** move/add/delete, raw-data snapping, derived-annotator
-    save.
-5.  **Bookmarks:** saved view list and rapid high-resolution review.
-6.  **Static grammar:** bookmark to SVG/PDF with labels, arrows, and
-    calipers.
-7.  **Timeline:** anime.js-backed HTML; portable media export after the
-    grammar stabilizes.
-
-### Acceptance gates
-
-- Cache build memory is bounded by chunk size, not record duration.
-- Cached full-study view and local pan/zoom remain viewport-sized in R
-  and JS.
-- Random cache buckets contain the exact raw minima/maxima and sample
-  locations.
-- Tier boundaries do not shift annotations, cursors, or bookmarked
-  windows.
-- Raw and overview views share the same x-range without a visible jump.
-- Source annotation file remains byte-for-byte unchanged after review
-  save.
-- Saved edits and bookmarks survive restart and resolve against the same
-  record.
-- Benchmark the current `ort` record (27 channels, 977 Hz, 9,562,353
-  samples, about 0.5 GB) and repeat the gate on a record larger than 1
-  GB.
-
-Initial latency targets on a local SSD, to revise after measurement:
-
-- cached overview visible in under 1 second;
-- interaction feedback in under 100 ms;
-- refined viewport visible in under 250 ms;
-- no more than 4 plotted points/pixel/channel.
-
-### Open decisions
-
-- Final intracardiac archetypes and their WFDB field mapping.
-- Compare the compact indexed binary prototype with Parquet before
-  stabilizing the cache format.
-- Required maximum duration, sampling frequency, and channel count.
-- Multi-segment WFDB records and discontinuous recordings.
-- Screen sweep-speed calibration and default EP gain conventions.
-- Presentation interchange: self-contained HTML only, or a portable
-  scene bundle.
-- GIF/video capture mechanism and reproducible frame timing.
 
 ## Introduction
 
@@ -939,10 +837,12 @@ it is orange, it is planned but not yet implemented.
 
 ### Goal
 
-`gram` explores, annotates, and presents cardiac electrophysiology
-studies. [EGM](https://shah-in-boots.github.io/EGM/) owns vendor import
-and WFDB-compatible signal/annotation I/O. `gram` starts after
-normalization to WFDB and does not duplicate the raw signal.
+[gram](https://shah-in-boots.github.io/gram/) explores, annotates, and
+presents cardiac electrophysiology studies.
+[EGM](https://shah-in-boots.github.io/EGM/) owns vendor import and
+WFDB-compatible signal/annotation I/O.
+[gram](https://shah-in-boots.github.io/gram/) starts after normalization
+to WFDB and does not duplicate the raw signal.
 
 ### Arms of the project
 
@@ -955,7 +855,7 @@ normalization to WFDB and does not duplicate the raw signal.
 %%| uses mermaid.scss preferences for the boxes so the colors can be branded
 flowchart LR
     EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
-    Backend["Data Backend<br/>study handle<br/>overview cache"]:::planned
+    Backend["Data Backend<br/>study handle<br/>overview cache"]:::implemented
     Viz["Visualization Engine<br/>uPlot explorer"]:::planned
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
@@ -975,40 +875,53 @@ flowchart LR
 ``` mermaid
 flowchart LR
     EGMIO["EGM I/O<br/>read_signal()<br/>read_annotation()<br/>write_annotation()"]:::implemented
-    GramBackend["gram data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::planned
+    GramBackend["{gram} data backend<br/>study_cache()<br/>build_overview()<br/>read_viewport()"]:::implemented
 
     EGMIO --> GramBackend
 ```
 
 ### Study handle
 
-`gram_study` contains paths, header metadata, record fingerprint, cache
-manifest, and annotation-layer metadata. It contains **no full-study
-signal table**.
+The study cache or handle contains paths, header metadata, record
+fingerprint, cache manifest, and annotation-layer metadata. It is
+referential only, and introduces an `S7` class called `StudyCache`.
 
 ``` r
 
 # Read header and locate sidecars; do not read the signal.
-study_cache <- function(record, record_dir = ".", cache_dir = NULL) {
-  # TODO
+study_cache <- function(path, cache_dir = NULL, annotators = NULL, ...) {
+  # implemented in R/cache.R
 }
 
 # Stream the WFDB record in fixed-size chunks and build derived tiers.
-build_overview <- function(study, chunk_seconds = 60, rebuild = FALSE) {
-  # TODO
+build_overview <- function(
+  cache,
+  chunk_seconds = 60,
+  format = c("parquet", "rds"),
+  rebuild = FALSE
+) {
+  # implemented in R/overview.R
 }
 
-# Return only the samples needed for a viewport.
+# Return only the samples needed for a viewport; `window` is in samples.
 read_viewport <- function(
-  study,
+  cache,
   window,
-  channels,
-  width_px,
+  channels = NULL,
+  width_px = NULL,
   resolution = c("auto", "raw", "overview")
 ) {
-  # TODO
+  # implemented in R/overview.R
 }
 ```
+
+Files gram writes beside a record are named `<stem>.gram.*`, so one rule
+keeps them out of annotator discovery and the package name says where
+they came from. `<stem>.gram.json` is a manifest shared by every part of
+gram: each writer reads it, replaces only its own section, and writes
+the whole file back atomically. The cache owns the `cache` section;
+bookmarks and the annotation sidecar will own sections of their own, and
+a rebuild can never clobber them.
 
 Requirements:
 
@@ -1034,12 +947,15 @@ adjacent buckets; one streaming pass with bounded memory.
   points/pixel/channel.
 - Use raw signal once the visible range is already near screen
   resolution.
-- Prototype with a compact indexed binary cache by channel and tier plus
-  `manifest.json`; keep this format internal until Parquet benchmarks
-  pass.
-- Manifest: cache version, algorithm, record fingerprint, sampling
-  frequency, sample count, channels, units, bucket sizes, and completion
-  state.
+- One table, all tiers stacked, in `<stem>.gram.parquet` (rds on
+  request): `level`, `start`, then `ch<i>.min`, `ch<i>.min_at`,
+  `ch<i>.max`, `ch<i>.max_at` per channel position. Parquet reads a
+  subset of channels without touching the rest; rds cannot.
+- The `cache` section of the manifest: version, algorithm, record
+  fingerprint, table file and format, units, sampling frequency, sample
+  count, channels, bucket sizes, and build time. Its presence is the
+  completion marker, and a fingerprint that no longer matches the record
+  reads as not built.
 - Never silently use an overview tier for measurement or annotation
   snapping.
 
@@ -1049,10 +965,10 @@ artifacts and noisy intracardiac channels.
 
 ### Viewport return contract
 
-- Raw: one shared `sample`/`time` array plus aligned channel arrays.
-- Overview: one `sample`/`time`/`value` triplet per channel; extrema
-  differ by channel. Collapse a min/max pair when both refer to the same
-  sample.
+- Raw: one shared `sample` array plus aligned channel arrays.
+- Overview: one `sample`/`value` pair per channel; extrema differ by
+  channel. Collapse a min/max pair when both refer to the same sample.
+- `time` is never stored or returned; it is `sample / sample_rate`.
 - Sample representation must remain exact for the supported maximum
   study size.
 - `resolution`: `"raw"` or the cache bucket size.
@@ -1234,10 +1150,17 @@ prioritizes latency; short selected segments can be rendered as SVG for
 precise print and cross-channel markup. Both consume the same samples,
 annotations, and bookmark state.
 
-`gram_scene` is a declarative, serializable scene graph plus timeline.
-Marks bind to data (`annotation id`, `sample`, `channel`), not pixels. R
-code is the authoring surface; the rendered image/animation is its
-preview.
+### Grammar
+
+Workspace for what to design for grammar. Series of examples to
+organize.
+
+- Add H to mark His
+- Add point on specific channel (snap to peak)
+- dV/dt marker
+- arrows from one channel to another (highlight activation sequence)
+- vertical square or rectangle to highlight region
+- vertical stripe through entire plot
 
 ### Animation engine: anime.js
 
@@ -1266,14 +1189,9 @@ This boundary keeps the R grammar stable if the JavaScript runtime
 changes. It also ensures a print still does not depend on replaying an
 animation to discover where its elements finish.
 
-| Tracing operation  | anime.js compilation                  |
-|--------------------|---------------------------------------|
-| reveal trace/arrow | SVG drawable from `0` to `1`          |
-| emphasize          | opacity, color, or stroke-width tween |
-| caliper            | line growth plus numeric label tween  |
-| pan/zoom           | SVG view-box or group transform tween |
-| hold               | timeline timer                        |
-| simultaneous steps | shared timeline label/position        |
+| Tracing operation  | anime.js compilation         |
+|--------------------|------------------------------|
+| reveal trace/arrow | SVG drawable from `0` to `1` |
 
 Vendor one pinned anime.js v4 build under `inst/htmlwidgets/lib/`. Keep
 selectors, timeline positions, and anime.js option names inside the
@@ -1283,22 +1201,17 @@ compiler rather than in the public R object.
 
 tracing <- function(x, ...) {
   # TODO: create from a bookmark or explicit study window; returns a tracing object
+  # Creates a S7 Tracing object
 }
 
-add_caliper <- function(x, from, to, label = NULL, ...) {
+# Example of annotation
+add_marker <- function(x, from, to, label = NULL, ...) {
   # TODO
-}
-
-add_arrow <- function(x, from, to, label = NULL, ...) {
-  # TODO
+  # Generic for adding objects: arrows, dots, letters, etc
 }
 
 emphasize <- function(x, target, ...) {
   # TODO
-}
-
-reveal <- function(x, target, at = NULL, duration = NULL, ...) {
-  # TODO: append a timeline operation
 }
 
 render_tracing <- function(x, format = c("svg", "pdf"), ...) {
@@ -1309,69 +1222,3 @@ animate_tracing <- function(x, autoplay = TRUE, controls = TRUE, ...) {
   # TODO: compile the scene timeline to an anime.js-backed htmlwidget
 }
 ```
-
-Requirements:
-
-- Single scene coordinate system so arrows/calipers may cross channel
-  lanes.
-- Static SVG first; PDF from the same terminal frame.
-- Animated HTML via anime.js second; GIF/video capture later.
-- Presentation layers: trace, marker, label, arrow, caliper, highlight,
-  inset.
-- Camera operations: reveal, pan, zoom, hold, and transition.
-- A scene resolves referenced annotations before rendering and fails
-  clearly if they are missing or ambiguous.
-- Optional materialization later: bundle only selected raw segments for
-  a portable presentation, without copying the full study.
-
-## Delivery Plan
-
-1.  **Data proof:** study handle, streaming min/max cache, viewport
-    router.
-2.  **Viewer proof:** full-study overview, raw-resolution zoom, pan,
-    channels/gain.
-3.  **Navigation:** overview navigator, annotation overlay, filter/jump.
-4.  **Editing:** move/add/delete, raw-data snapping, derived-annotator
-    save.
-5.  **Bookmarks:** saved view list and rapid high-resolution review.
-6.  **Static grammar:** bookmark to SVG/PDF with labels, arrows, and
-    calipers.
-7.  **Timeline:** anime.js-backed HTML; portable media export after the
-    grammar stabilizes.
-
-### Acceptance gates
-
-- Cache build memory is bounded by chunk size, not record duration.
-- Cached full-study view and local pan/zoom remain viewport-sized in R
-  and JS.
-- Random cache buckets contain the exact raw minima/maxima and sample
-  locations.
-- Tier boundaries do not shift annotations, cursors, or bookmarked
-  windows.
-- Raw and overview views share the same x-range without a visible jump.
-- Source annotation file remains byte-for-byte unchanged after review
-  save.
-- Saved edits and bookmarks survive restart and resolve against the same
-  record.
-- Benchmark the current `ort` record (27 channels, 977 Hz, 9,562,353
-  samples, about 0.5 GB) and repeat the gate on a record larger than 1
-  GB.
-
-Initial latency targets on a local SSD, to revise after measurement:
-
-- cached overview visible in under 1 second;
-- interaction feedback in under 100 ms;
-- refined viewport visible in under 250 ms;
-- no more than 4 plotted points/pixel/channel.
-
-### Open decisions
-
-- Final intracardiac archetypes and their WFDB field mapping.
-- Compare the compact indexed binary prototype with Parquet before
-  stabilizing the cache format.
-- Required maximum duration, sampling frequency, and channel count.
-- Multi-segment WFDB records and discontinuous recordings.
-- Screen sweep-speed calibration and default EP gain conventions.
-- Presentation interchange: self-contained HTML only, or a portable
-  scene bundle.
-- GIF/video capture mechanism and reproducible frame timing.

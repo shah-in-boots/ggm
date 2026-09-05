@@ -9,11 +9,14 @@
 <url><loc>https://shah-in-boots.github.io/gram/index.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/add_arrow.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/at.html</loc></url>
+<url><loc>https://shah-in-boots.github.io/gram/reference/build_overview.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/cache_annotators.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/cache_paths.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/cache_study_data.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/emphasize.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/eval_tracing.html</loc></url>
+<url><loc>https://shah-in-boots.github.io/gram/reference/gm_bucket_extrema.html</loc></url>
+<url><loc>https://shah-in-boots.github.io/gram/reference/gm_manifest.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/gram_channels.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/gram_harness.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/gram_plot.html</loc></url>
@@ -24,6 +27,7 @@
 <url><loc>https://shah-in-boots.github.io/gram/reference/index.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/normalize_selection.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/read_study_signal.html</loc></url>
+<url><loc>https://shah-in-boots.github.io/gram/reference/read_viewport.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/render_gram_plot.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/render_gram_tracing.html</loc></url>
 <url><loc>https://shah-in-boots.github.io/gram/reference/reveal.html</loc></url>

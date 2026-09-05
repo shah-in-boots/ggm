@@ -16,4 +16,6 @@ cache_paths(cache)
 
 ## Value
 
-Named character vector of record paths.
+Named character vector of record paths: `data`, `header`, `manifest`,
+one `annotation_<ext>` per sidecar, and `cache` when an overview has
+been built.

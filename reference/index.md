@@ -6,6 +6,8 @@
   : Draw an arrow between two points
 - [`at()`](https://shah-in-boots.github.io/gram/reference/at.md) : Refer
   to a point on a channel
+- [`build_overview()`](https://shah-in-boots.github.io/gram/reference/build_overview.md)
+  : Build the overview cache for a study
 - [`cache_annotators()`](https://shah-in-boots.github.io/gram/reference/cache_annotators.md)
   : Available WFDB annotator sidecars
 - [`cache_paths()`](https://shah-in-boots.github.io/gram/reference/cache_paths.md)
@@ -35,6 +37,8 @@
   : Canonicalise a viewer selection to a sample range
 - [`read_study_signal()`](https://shah-in-boots.github.io/gram/reference/read_study_signal.md)
   : Read raw WFDB signal for a visible window
+- [`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
+  : Read the data needed to draw a window
 - [`render_gram_plot()`](https://shah-in-boots.github.io/gram/reference/render_gram_plot.md)
   : Shiny render function for a gram plot
 - [`render_gram_tracing()`](https://shah-in-boots.github.io/gram/reference/render_gram_tracing.md)
