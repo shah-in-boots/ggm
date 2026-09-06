@@ -1,13 +1,47 @@
 # verbs -----------------------------------------------------------------
 
-test_that("channel indices below one are refused rather than sent", {
-  # a 0-based index arriving from the browser would silently draw the wrong
-  # lead, so the verb refuses before gm_send() ever reaches a session
+test_that("a push carries a spec built by the named backend", {
+  # the same translation a first render runs, sent into a live widget; the
+  # session is faked so the message can be read back instead of delivered
+  captured <- NULL
+  proxy <- structure(
+    list(
+      id = "viewer",
+      session = list(sendCustomMessage = function(type, message) {
+        captured <<- list(type = type, message = message)
+      })
+    ),
+    class = "gm_proxy"
+  )
+
+  gm_set_data(
+    proxy,
+    panels = list(list(label = "I", x = 0:2, y = c(1, 3, 2))),
+    window = list(min = 0, max = 2),
+    backend = "uplot",
+    scale = list(kind = "elapsed", unit = "s")
+  )
+
+  expect_equal(captured$type, "gram:set_data")
+  expect_named(captured$message, c("id", "spec", "window"))
+  expect_equal(captured$message$id, "viewer")
+  expect_equal(captured$message$window, list(min = 0, max = 2))
+  expect_equal(captured$message$spec$x_axis_label, "Time (s)")
+  expect_length(captured$message$spec$panels, 1L)
+})
+
+test_that("a push refuses what a first render would refuse", {
   proxy <- structure(list(id = "x", session = NULL), class = "gm_proxy")
 
-  expect_error(gm_set_visible(proxy, c(0, 1)), "1-based channel indices")
-  expect_error(gm_set_visible(proxy, c(1, NA)), "1-based channel indices")
-  expect_error(gm_set_visible(proxy, "I"), "1-based channel indices")
+  expect_error(gm_set_data(proxy, list(), list(min = 0, max = 1)), "at least one panel")
+  expect_error(
+    gm_set_data(proxy, list(list(x = 1:3, y = 1:3)), list(min = 2, max = 1)),
+    "min < max"
+  )
+  expect_error(
+    gm_set_data(proxy, list(list(x = 1:3, y = 1:3)), list(min = 0, max = 1), backend = "bogus"),
+    "should be"
+  )
 })
 
 

@@ -21,13 +21,17 @@ harnessScript <- 'tracing(
 #' The viewer opens on the whole record. At a coarse overview tier that is the
 #' study navigator, so a reader starts by seeing the study rather than an
 #' opening slice of it. Dragging across a panel zooms; the wheel pans; both
-#' report the range wanted and are answered with whichever tier fits it.
+#' report the range wanted and are answered with whichever tier fits it. The
+#' harness is the controller: it knows the backend by name only, and every
+#' change it makes -- a new window, a new tier, a different set of channels --
+#' is one push of a fresh spec into the live widget.
 #'
 #' @param cache A `StudyCache` from [study_cache()].
 #' @param window Sample range the viewer opens on, as `list(begin =, end =)`.
 #'   Defaults to the whole record.
 #' @param channels Channels loaded into the viewer panel. Defaults to every
 #'   channel in the header.
+#' @param backend Renderer for the viewer panel; see [gram_plot()].
 #' @param script Initial contents of the scripting panel.
 #' @param ... Passed to [shiny::shinyApp()].
 #' @return A Shiny app object.
@@ -36,14 +40,17 @@ harnessScript <- 'tracing(
 gram_harness <- function(cache,
                         window = NULL,
                         channels = NULL,
+                        backend = c("uplot"),
                         script = harnessScript,
                         ...) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     stop("gram_harness() needs the shiny package", call. = FALSE)
   }
+  backend <- match.arg(backend)
 
   viewChannels <- channels %||% cache@channels
   startWindow <- window %||% list(begin = 0, end = cache@n_samples)
+  elapsed <- list(kind = "elapsed", unit = "s")
   template <- system.file("harness", "index.html", package = "gram")
   if (!nzchar(template)) {
     stop("harness template not found; is gram installed correctly?", call. = FALSE)
@@ -55,7 +62,8 @@ gram_harness <- function(cache,
       cache@stem, "  ",
       format(cache@n_samples / cache@sample_rate, digits = 4), " s  ",
       length(cache@channels), " ch  ",
-      format(cache@sample_rate), " Hz"
+      format(cache@sample_rate), " Hz  ",
+      backend
     ),
     viewer = gram_plotOutput("viewer", height = "420px"),
     reset = shiny::actionButton("reset", "Whole study"),
@@ -83,27 +91,41 @@ gram_harness <- function(cache,
     })
 
     chosen <- gram_channelsServer("channels")
-    shiny::observe({
-      gm_set_visible(gm_proxy("viewer"), chosen())
+
+    # What is on screen: the loaded panels, narrowed to the picked channels.
+    # Nothing picked means nothing to push, and the last state stands.
+    shown <- shiny::reactive({
+      shiny::req(length(chosen()) > 0L)
+      view()$panels[chosen()]
     })
 
-    # Rendered once. Every later change to the window or the panel width is
-    # pushed into the live widget instead, so panning does not tear the whole
-    # stack down and rebuild it through Shiny.
+    # Rendered once, with every channel, from nothing reactive. Every later
+    # change -- a new window, a new tier, a width report, a channel toggle --
+    # invalidates shown() and is one push into the live widget, so the stack is
+    # never torn down and rebuilt through Shiny. The first push repeats the
+    # opening picture; that is the price of never rendering against an
+    # `input$channels` that has not arrived yet.
     output$viewer <- render_gram_plot({
       opening <- shiny::isolate(view())
       gram_plot(
         panels = opening$panels,
         window = opening$window,
         extent = opening$extent,
-        scale = list(kind = "elapsed", unit = "s"),
+        backend = backend,
+        scale = elapsed,
         height = 420
       )
     })
 
-    shiny::observeEvent(view(), {
-      gm_set_data(gm_proxy("viewer"), view()$panels, view()$window)
-    }, ignoreInit = TRUE)
+    shiny::observeEvent(shown(), {
+      gm_set_data(
+        gm_proxy("viewer"),
+        panels = shown(),
+        window = view()$window,
+        backend = backend,
+        scale = elapsed
+      )
+    })
 
     # zoom and pan arrive on the same channel: both say which range is wanted
     shiny::observeEvent(input$viewer_viewport, {

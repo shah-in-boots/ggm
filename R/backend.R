@@ -20,28 +20,28 @@ gm_send <- function(proxy, channel, payload) {
 
 # verbs -----------------------------------------------------------------
 
-gm_set_visible <- function(proxy, channels) {
-  if (!is.numeric(channels) || any(!is.finite(channels)) || any(channels < 1)) {
-    stop("`channels` must be 1-based channel indices", call. = FALSE)
-  }
-  gm_send(
-    proxy,
-    "gram:set_visible",
-    list(channels = I(as.integer(sort(unique(channels)))))
-  )
-}
-
-# Replace the data an already-rendered viewer is holding, rather than
-# re-rendering the widget. The window travels with the panels because it is
-# what the panels are drawn against; the record extent does not, since it
-# cannot change while the widget lives.
-gm_set_data <- function(proxy, panels, window) {
+# Replace what an already-rendered viewer is drawing, rather than re-rendering
+# the widget. The spec is built here, by the same backend that built the
+# widget's, so a push and a first render are the same translation; the window
+# travels beside it because it is what the panels are drawn against. The
+# record extent does not travel, since it cannot change while the widget
+# lives. Which channels are on screen is decided by which panels are handed
+# over: narrowing them is how a controller hides a channel.
+gm_set_data <- function(proxy,
+                        panels,
+                        window,
+                        backend = c("uplot"),
+                        scale = list(kind = "index", rate = 1),
+                        panel_height = 120) {
+  panels <- gm_validate_panels(panels)
+  window <- gm_validate_range(window, "window")
+  chosen <- gm_backend(match.arg(backend))
   gm_send(
     proxy,
     "gram:set_data",
     list(
-      panels = gm_validate_panels(panels),
-      window = gm_validate_range(window, "window")
+      spec = chosen$spec(panels, window, scale, panel_height),
+      window = window
     )
   )
 }

@@ -8,7 +8,7 @@ gram_plot(
   panels,
   window = NULL,
   extent = NULL,
-  backend = "uplot",
+  backend = c("uplot"),
   scale = list(kind = "index", rate = 1),
   panel_height = 120,
   width = NULL,
@@ -30,8 +30,8 @@ the union of the panel x extents.}
 clamped to this, so a reader may pan beyond what is loaded and have the
 controller fill it in. Defaults to \code{window}.}
 
-\item{backend}{Renderer to draw with, resolved in the browser. Only
-\code{"uplot"} ships today.}
+\item{backend}{Renderer to draw with. Its spec is built here in R and its
+library is attached to the widget, both resolved by \code{gm_backend()}.}
 
 \item{scale}{X-scale description. \code{kind} may be \code{"index"} for sample
 numbers, \code{"elapsed"} for elapsed seconds, or \code{"timestamp"} for Unix
@@ -51,8 +51,10 @@ An \code{htmlwidget}.
 signal channel so each has an independent y-scale, while synchronising the
 x-range and cursor across panels. Each panel carries its own \code{x} and \code{y},
 which is what lets an overview tier draw its per-channel extrema; panels may
-differ in length. Use \code{\link[=view_uplot]{view_uplot()}} to read and display a window from a
-\code{StudyCache} directly.
+differ in length. The backend named in \code{backend} turns the panels into what
+its library wants, in R, and only that backend's assets travel with the
+widget. Use \code{\link[=view_uplot]{view_uplot()}} to read and display a window from a \code{StudyCache}
+directly.
 }
 \seealso{
 \code{\link[=view_uplot]{view_uplot()}}, \code{\link[=read_viewport]{read_viewport()}}

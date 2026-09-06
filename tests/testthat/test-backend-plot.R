@@ -1,4 +1,4 @@
-test_that("gram_plot creates a uPlot htmlwidget", {
+test_that("gram_plot creates a widget carrying a backend's spec", {
   widget <- gram_plot(
     panels = list(
       list(label = "I", x = 0:2, y = c(1, 3, 2)),
@@ -10,15 +10,7 @@ test_that("gram_plot creates a uPlot htmlwidget", {
   expect_s3_class(widget, "htmlwidget")
   expect_s3_class(widget, "gram_plot")
   expect_equal(widget$x$backend, "uplot")
-  expect_equal(widget$x$scale$kind, "elapsed")
-  expect_equal(widget$x$layout, list(panel_height = 120))
-  expect_length(widget$x$panels, 2L)
-  expect_equal(
-    vapply(widget$x$panels, `[[`, character(1), "label"),
-    c("I", "II")
-  )
-  expect_equal(vapply(widget$x$panels, function(p) length(p$x), integer(1)), c(3L, 3L))
-  expect_equal(vapply(widget$x$panels, function(p) length(p$y), integer(1)), c(3L, 3L))
+  expect_named(widget$x, c("backend", "spec", "window", "extent"))
 
   # the drawn range is the panels' own when the caller does not say otherwise,
   # and the record is assumed to be no wider than what was handed over
@@ -38,23 +30,10 @@ test_that("panels may differ in length", {
   )
 
   expect_equal(
-    vapply(widget$x$panels, function(p) length(p$x), integer(1)),
+    vapply(widget$x$spec$panels, function(p) length(p$x), integer(1)),
     c(4L, 2L)
   )
   expect_equal(widget$x$window, list(min = 0, max = 3))
-})
-
-test_that("a single-point panel survives as an array", {
-  # a dead lead reduces to one point at a coarse tier; unwrapped it would reach
-  # the browser as a scalar and uPlot would be handed a number where it wants
-  # a series
-  widget <- gram_plot(
-    panels = list(list(label = "flat", x = 1, y = 0)),
-    window = list(min = 0, max = 2)
-  )
-
-  expect_s3_class(widget$x$panels[[1L]]$x, "AsIs")
-  expect_true(grepl('"x":\\[1\\]', as.character(htmlwidgets:::toJSON(widget$x))))
 })
 
 test_that("gram_plot rejects panels a renderer cannot draw", {
@@ -80,16 +59,51 @@ test_that("gram_plot rejects panels a renderer cannot draw", {
   )
 })
 
-
-test_that("the pinned uPlot and stacked-panel assets are installed", {
-  uplotAssets <- c("uPlot.iife.min.js", "uPlot.min.css", "LICENSE")
-  paths <- c(
-    file.path(
-      system.file("htmlwidgets/lib/uplot", package = "gram"),
-      uplotAssets
-    ),
-    system.file("htmlwidgets/lib/gram/gram-uplot.css", package = "gram")
+test_that("a backend that does not exist is refused at the prompt", {
+  # the browser would throw too, but that error lands in a console the caller
+  # may never open; match.arg names the choices where they typed the wrong one
+  expect_error(
+    gram_plot(list(list(x = 1:3, y = 1:3)), backend = "bogus"),
+    "should be"
   )
+})
+
+
+# backends -------------------------------------------------------------
+
+test_that("only the chosen backend's assets travel with the widget", {
+  # the modularity claim, on the wire rather than in prose: a widget names its
+  # backend and carries that backend's library and adapter and nothing else.
+  # Core (the lifecycle) comes from the yaml and is not in this list.
+  widget <- gram_plot(list(list(x = 1:3, y = 1:3)), backend = "uplot")
+  carried <- vapply(widget$dependencies, function(d) d$name, character(1))
+
+  expect_equal(carried, c("uplot", "gram-adapter-uplot"))
+})
+
+test_that("a backend is a spec function and a dependency list", {
+  backend <- gm_backend("uplot")
+
+  expect_named(backend, c("spec", "dependencies"))
+  expect_true(is.function(backend$spec))
+  expect_true(all(vapply(
+    backend$dependencies,
+    function(d) inherits(d, "html_dependency"),
+    logical(1)
+  )))
+  expect_error(gm_backend("bogus"), "should be")
+})
+
+
+# assets ---------------------------------------------------------------
+
+test_that("the pinned uPlot and shared assets are installed", {
+  lib <- system.file("htmlwidgets/lib", package = "gram")
+  paths <- file.path(lib, c(
+    "uplot/uPlot.iife.min.js", "uplot/uPlot.min.css", "uplot/LICENSE",
+    "gram/gram-core.js", "gram/gram-core.css",
+    "gram/gram-adapter-uplot.js", "gram/gram-uplot.css"
+  ))
 
   expect_true(all(file.exists(paths)))
   expect_true(all(file.info(paths)$size > 0))

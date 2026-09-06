@@ -1,8 +1,9 @@
-# The widget and its payload. Nothing here is uPlot-specific: `gram_plot()`
-# validates panels, ships JSON, and names a backend in the payload. Which
-# renderer draws it is settled in the browser, by GRAM.adapters[cfg.backend],
-# so a second backend is a new adapter in the same bundle rather than a second
-# htmlwidget with its own dependency set.
+# The widget, its payload, and the register of backends. Nothing here belongs
+# to one renderer: `gram_plot()` validates the neutral panels, asks the chosen
+# backend for its spec, ships that with the window and extent, and attaches
+# only that backend's assets. What a backend is on the R side is settled by
+# `gm_backend()`: a spec builder and a dependency list, under a name the
+# browser resolves through GRAM.adapters.
 #
 # Panels are per-channel rather than one shared x plus aligned y columns. The
 # overview tiers built by build_overview() store where each extremum fell
@@ -19,8 +20,10 @@
 #' signal channel so each has an independent y-scale, while synchronising the
 #' x-range and cursor across panels. Each panel carries its own `x` and `y`,
 #' which is what lets an overview tier draw its per-channel extrema; panels may
-#' differ in length. Use [view_uplot()] to read and display a window from a
-#' `StudyCache` directly.
+#' differ in length. The backend named in `backend` turns the panels into what
+#' its library wants, in R, and only that backend's assets travel with the
+#' widget. Use [view_uplot()] to read and display a window from a `StudyCache`
+#' directly.
 #'
 #' @param panels List of panels, one per channel. Each is a list holding
 #'   numeric `x` and `y` of equal length, and optionally a `label` and a
@@ -32,8 +35,8 @@
 #' @param extent Record range as `list(min =, max =)` in x units. Panning is
 #'   clamped to this, so a reader may pan beyond what is loaded and have the
 #'   controller fill it in. Defaults to `window`.
-#' @param backend Renderer to draw with, resolved in the browser. Only
-#'   `"uplot"` ships today.
+#' @param backend Renderer to draw with. Its spec is built here in R and its
+#'   library is attached to the widget, both resolved by `gm_backend()`.
 #' @param scale X-scale description. `kind` may be `"index"` for sample
 #'   numbers, `"elapsed"` for elapsed seconds, or `"timestamp"` for Unix
 #'   timestamps.
@@ -47,7 +50,7 @@ gram_plot <- function(
   panels,
   window = NULL,
   extent = NULL,
-  backend = "uplot",
+  backend = c("uplot"),
   scale = list(kind = "index", rate = 1),
   panel_height = 120,
   width = NULL,
@@ -61,10 +64,7 @@ gram_plot <- function(
   }
   window <- gm_validate_range(window, "window")
   extent <- gm_validate_range(extent %||% window, "extent")
-
-  if (length(backend) != 1L || !is.character(backend) || !nzchar(backend)) {
-    stop("`backend` must be a single non-empty string", call. = FALSE)
-  }
+  backend <- match.arg(backend)
 
   if (
     !is.list(scale) ||
@@ -82,16 +82,15 @@ gram_plot <- function(
     stop("`panel_height` must be a single number of at least 80", call. = FALSE)
   }
 
-  # payload -> renderValue(x) in gram_plot.js
+  chosen <- gm_backend(backend)
+
+  # payload -> renderValue(x) in gram_plot.js; `spec` is opaque to everything
+  # but the adapter that asked for it
   x <- list(
     backend = backend,
-    panels = panels,
+    spec = chosen$spec(panels, window, scale, panel_height),
     window = window,
-    extent = extent,
-    scale = scale,
-    layout = list(
-      panel_height = as.double(panel_height)
-    )
+    extent = extent
   )
 
   htmlwidgets::createWidget(
@@ -101,12 +100,63 @@ gram_plot <- function(
     height = height,
     package = "gram",
     elementId = elementId,
+    dependencies = chosen$dependencies,
     sizingPolicy = htmlwidgets::sizingPolicy(
       browser.fill = TRUE, # fill viewer/browser
       viewer.fill = TRUE
     )
   )
 }
+
+
+# backends --------------------------------------------------------------
+
+#' The register of render backends
+#'
+#' A backend on the R side is two things: a `spec` function that turns neutral
+#' panels into whatever its library wants, and the `dependencies` that library
+#' needs in the browser. Both are looked up here by name, by [gram_plot()] and
+#' by the push path alike, and a third backend is a third entry.
+#'
+#' Every `spec` function takes `(panels, window, scale, panel_height)` and may
+#' return anything serialisable; the browser-side adapter of the same name is
+#' the only reader. Only the chosen backend's assets travel with a widget, so a
+#' plotly widget never fetches uPlot and a uPlot widget never fetches plotly.
+#'
+#' @param name Backend name.
+#' @return A list holding `spec`, a function, and `dependencies`, a list of
+#'   [htmltools::htmlDependency()] objects.
+#' @keywords internal
+#' @noRd
+gm_backend <- function(name = c("uplot")) {
+  name <- match.arg(name)
+  gram <- function(id, version, ...) {
+    htmltools::htmlDependency(
+      id, version,
+      package = "gram", src = "htmlwidgets/lib", ..., all_files = FALSE
+    )
+  }
+
+  switch(
+    name,
+    uplot = list(
+      spec = gm_uplot_spec,
+      dependencies = list(
+        gram(
+          "uplot", "1.6.32",
+          script = "uplot/uPlot.iife.min.js", stylesheet = "uplot/uPlot.min.css"
+        ),
+        gram(
+          "gram-adapter-uplot", "0.4.0",
+          script = "gram/gram-adapter-uplot.js", stylesheet = "gram/gram-uplot.css"
+        )
+      )
+    )
+  )
+}
+
+
+# validation ------------------------------------------------------------
 
 # Returns the panels with `x` and `y` as doubles wrapped in I(), because a
 # constant channel really does reduce to a single point at a coarse tier and an
@@ -148,8 +198,8 @@ gm_validate_panels <- function(panels) {
     }
 
     # a missing colour is left out rather than sent as null, which jsonlite
-    # would render as an empty object; the adapter falls back on
-    # `panel.color || <default>`
+    # would render as an empty object; a spec builder falls back on its own
+    # default
     keep <- list()
     if (!is.null(panel$label)) {
       keep$label <- as.character(panel$label)[[1L]]

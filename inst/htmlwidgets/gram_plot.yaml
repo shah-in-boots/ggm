@@ -1,16 +1,13 @@
-# uPlot must load before the adapter. gram_plot.js (the binding) is loaded
-# automatically by name.
+# Only what every backend shares. The chosen backend's library and adapter
+# travel with the widget instead, attached by gram_plot() through
+# createWidget(dependencies = ), so a plotly widget never fetches uPlot and
+# vice versa. gram_plot.js (the binding) is loaded automatically by name.
 dependencies:
-  - name: uplot
-    version: 1.6.32
-    src: htmlwidgets/lib/uplot
-    script: uPlot.iife.min.js
-    stylesheet: uPlot.min.css
   # Pre-release, so this version is not tracked against the package. It is the
   # only varying part of the asset URL, so if a browser serves stale css or js
   # during development, hard-reload rather than bumping it.
   - name: gram-core
-    version: 0.3.0
+    version: 0.4.0
     src: htmlwidgets/lib/gram
-    stylesheet: gram-uplot.css
-    script: gram-adapter-uplot.js
+    stylesheet: gram-core.css
+    script: gram-core.js

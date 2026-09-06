@@ -1,6 +1,8 @@
-# Cache to picture. gm_viewport_panels() is the seam: it turns whichever shape
-# read_viewport() hands back into the backend-neutral panel payload, so a
-# renderer never learns whether it is drawing raw samples or bucket extrema.
+# Cache to panels. gm_viewport_panels() is the seam: it turns whichever shape
+# read_viewport() hands back into the backend-neutral panels every renderer
+# starts from, so a backend never learns whether it is drawing raw samples or
+# bucket extrema. Each backend's viewer -- view_uplot() and its siblings --
+# begins here.
 
 #' Read a viewport and shape it for a renderer
 #'
@@ -56,55 +58,5 @@ gm_viewport_panels <- function(cache,
     extent = list(min = 0, max = cache@n_samples / rate),
     resolution = view$resolution,
     level = view$level
-  )
-}
-
-#' View a study window
-#'
-#' Reads one window from a `StudyCache` and returns the standalone widget.
-#' The window is given in samples, the same currency [read_viewport()] and
-#' [normalize_selection()] speak, so a selection made in the viewer can be fed
-#' straight back without conversion.
-#'
-#' The whole record is a valid window. At a coarse overview tier that is the
-#' study navigator, so the default shows the entire study rather than an
-#' arbitrary opening slice.
-#'
-#' @inheritParams read_viewport
-#' @param cache A `StudyCache` created by [study_cache()].
-#' @param window Sample range as `list(begin =, end =)`, half-open. Defaults to
-#'   the whole record.
-#' @param channels Channel labels or indices. Defaults to all channels.
-#' @param backend Renderer to draw with. Passed to [gram_plot()].
-#' @param width,height Optional widget dimensions.
-#' @return An `htmlwidget`.
-#' @family backend viewers
-#' @seealso [gram_plot()], [read_viewport()]
-#' @export
-view_uplot <- function(cache,
-                       window = NULL,
-                       channels = NULL,
-                       width_px = 1200,
-                       resolution = c("auto", "raw", "overview"),
-                       backend = "uplot",
-                       width = NULL,
-                       height = 500) {
-  window <- window %||% list(begin = 0, end = cache@n_samples)
-  view <- gm_viewport_panels(
-    cache = cache,
-    window = window,
-    channels = channels,
-    width_px = width_px,
-    resolution = match.arg(resolution)
-  )
-
-  gram_plot(
-    panels = view$panels,
-    window = view$window,
-    extent = view$extent,
-    backend = backend,
-    scale = list(kind = "elapsed", unit = "s"),
-    width = width,
-    height = height
   )
 }

@@ -1,41 +1,32 @@
-// Each signal channel owns one uPlot instance. Panels keep independent
-// y-scales while sharing x-range and cursor state.
+// Drives uPlot from the spec gm_uplot_spec() built in R: one uPlot instance
+// per panel, independent y-scales, one shared x-range and cursor.
+//
+// uPlot is imperative, so R could only send what serialises -- the per-panel
+// data, labels and strokes, the axis label, the sizes. Everything that is a
+// function lives here: the hooks that keep the panels in step, the cursor
+// sync, the wheel pan, and the rebuild. The lifecycle and the gesture rules
+// shared with other backends are in gram-core.js.
 //
 // Every panel carries its own x, because an overview tier reports each
 // channel's extrema at the samples they actually fell on, so the per-channel
 // vectors have different lengths. Panels are therefore drawn against
 // cfg.window rather than against their own extents -- without that they would
 // each autoscale to a slightly different range and the stack would lose its
-// alignment. Panning clamps to cfg.extent, the whole record, so a reader can
-// pan past what is loaded; the canvas is briefly empty there until the
-// controller answers with the next window.
+// alignment. Panning clamps to cfg.extent, the whole record.
 
 (function () {
   "use strict";
 
   var GRAM = (window.GRAM = window.GRAM || {});
-  GRAM.instances = GRAM.instances || {};
   GRAM.adapters = GRAM.adapters || {};
   var syncSequence = 0;
-  var viewportDebounceMs = 150;
-
-  function getScaleKind(cfg) {
-    return cfg.scale && cfg.scale.kind || "index";
-  }
-
-  function getXAxisLabel(cfg) {
-    var kind = getScaleKind(cfg);
-    if (kind === "elapsed") return "Time (s)";
-    if (kind === "index") return "Sample";
-    return null;
-  }
 
   function getPanelWidth(state) {
     return state.el.clientWidth || 800;
   }
 
   function getPanelHeight(state) {
-    return state.cfg.layout && state.cfg.layout.panel_height || 120;
+    return state.cfg.spec.panel_height || 120;
   }
 
   // The controller picks an overview tier from the panel width, so it has to
@@ -56,22 +47,6 @@
     }
   }
 
-  function channelLabel(cfg, channelIndex) {
-    var panel = cfg.panels[channelIndex] || {};
-    return panel.label || ("ch" + (channelIndex + 1));
-  }
-
-  function channelSeries(cfg, channelIndex) {
-    var panel = cfg.panels[channelIndex] || {};
-    return {
-      label: channelLabel(cfg, channelIndex),
-      stroke: panel.color || "#111",
-      points: { show: false }
-    };
-  }
-
-  // state.visible holds original channel indices, ascending. Panels are the
-  // visible subset, so a panel's position is not its channel number.
   function scalesDiffer(scale, min, max) {
     return scale.min !== min || scale.max !== max;
   }
@@ -114,35 +89,13 @@
     window.clearTimeout(state.viewportTimer);
     state.viewportTimer = window.setTimeout(function () {
       requestViewport(state);
-    }, viewportDebounceMs);
+    }, GRAM.viewportDebounceMs);
   }
 
   function syncScaleFrom(state, source, scaleKey) {
     if (!state.ready || state.syncingScale || scaleKey !== "x") return;
     setSharedXRange(state, source.scales.x.min, source.scales.x.max, source);
     scheduleViewportRequest(state);
-  }
-
-  function horizontalWheelDelta(event) {
-    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return event.deltaX;
-    if (event.shiftKey) return event.deltaY;
-    return 0;
-  }
-
-  function wheelDeltaInPixels(event, plot) {
-    var delta = horizontalWheelDelta(event);
-    if (event.deltaMode === 1) return delta * 16;
-    if (event.deltaMode === 2) return delta * plot.bbox.width;
-    return delta;
-  }
-
-  function clampRangeToExtent(extent, min, max) {
-    var span = max - min;
-
-    if (span >= extent.max - extent.min) return [extent.min, extent.max];
-    if (min < extent.min) return [extent.min, extent.min + span];
-    if (max > extent.max) return [extent.max - span, extent.max];
-    return [min, max];
   }
 
   function panSharedXRange(state, source, pixelDelta) {
@@ -155,7 +108,7 @@
     }
 
     var domainDelta = pixelDelta / source.bbox.width * visibleSpan;
-    var range = clampRangeToExtent(
+    var range = GRAM.clampRangeToExtent(
       extent,
       scale.min + domainDelta,
       scale.max + domainDelta
@@ -170,7 +123,7 @@
     if (!overlay) return;
 
     var onWheel = function (event) {
-      var delta = wheelDeltaInPixels(event, plot);
+      var delta = GRAM.wheelDelta(event, plot.bbox.width);
       if (delta === 0 || !panSharedXRange(state, plot, delta)) return;
       event.preventDefault();
     };
@@ -179,22 +132,25 @@
     state.wheelHandlers.push({ element: overlay, handler: onWheel });
   }
 
-  function buildOpts(state, channelIndex, showXAxis) {
-    var cfg = state.cfg;
+  function buildOpts(state, panel, showXAxis) {
+    var spec = state.cfg.spec;
     return {
       width: getPanelWidth(state),
       height: getPanelHeight(state),
-      series: [{}, channelSeries(cfg, channelIndex)],
+      series: [
+        {},
+        { label: panel.label, stroke: panel.stroke, points: { show: false } }
+      ],
       scales: {
-        x: { time: getScaleKind(cfg) === "timestamp" }
+        x: { time: !!spec.x_is_time }
       },
       axes: [
         {
           show: showXAxis,
-          label: showXAxis ? getXAxisLabel(cfg) : null
+          label: showXAxis ? spec.x_axis_label : null
         },
         {
-          size: 72
+          size: spec.y_axis_size || 72
         }
       ],
       cursor: {
@@ -213,15 +169,13 @@
     };
   }
 
-  function createPanel(state, channelIndex, showXAxis) {
-    var panel = state.cfg.panels[channelIndex] || {};
+  function createPanel(state, panel, showXAxis) {
     var holder = document.createElement("div");
     holder.className = "gram-uplot-panel";
-    holder.dataset.channel = channelLabel(state.cfg, channelIndex);
+    holder.dataset.channel = panel.label;
     state.panels.appendChild(holder);
 
-    var data = [panel.x, panel.y];
-    var plot = new uPlot(buildOpts(state, channelIndex, showXAxis), data, holder);
+    var plot = new uPlot(buildOpts(state, panel, showXAxis), [panel.x, panel.y], holder);
     state.holders.push(holder);
     state.plots.push(plot);
     addHorizontalPan(state, holder, plot);
@@ -229,11 +183,9 @@
 
   // --- panel set -------------------------------------------------
   //
-  // Which channels are on screen is view state, so a controller decides it
-  // and sends setVisible; this file only renders the answer. Dropping a
-  // channel rebuilds the panels rather than hiding a series inside one: an
-  // emptied panel would still hold its lane, and the x-axis belongs to the
-  // last visible panel, so it has to move when the bottom channel goes away.
+  // Which channels are on screen is a controller decision, and the controller
+  // is R: it pushes a spec holding only the panels to draw. This file draws
+  // every panel it is handed, and the x-axis belongs to the last one.
   // Rebuilding a handful of uPlots over a viewport-sized window is cheap, and
   // it keeps one code path for both first render and every later change.
 
@@ -253,8 +205,9 @@
 
   function buildPanels(state) {
     teardownPanels(state);
-    state.visible.forEach(function (channelIndex, position) {
-      createPanel(state, channelIndex, position === state.visible.length - 1);
+    var panels = state.cfg.spec.panels;
+    panels.forEach(function (panel, position) {
+      createPanel(state, panel, position === panels.length - 1);
     });
     state.ready = true;
     // adding panels can introduce a vertical scrollbar; re-measure once the
@@ -263,21 +216,6 @@
     // panels autoscale x to their own data, which differs per channel on an
     // overview tier; the loaded window is the only range they share
     setSharedXRange(state, state.cfg.window.min, state.cfg.window.max, null);
-  }
-
-  // Rebuild for a new visible set, leaving the reader where they were rather
-  // than snapping back to the full record.
-  function setVisibleChannels(state, visible) {
-    var held = state.plots.length
-      ? [state.plots[0].scales.x.min, state.plots[0].scales.x.max]
-      : null;
-
-    state.visible = visible;
-    buildPanels(state);
-
-    if (held && state.plots.length) {
-      setSharedXRange(state, held[0], held[1], null);
-    }
   }
 
   var adapter = {
@@ -290,8 +228,6 @@
         holders: [],
         wheelHandlers: [],
         panels: document.createElement("div"),
-        // every channel is on screen until a controller says otherwise
-        visible: cfg.panels.map(function (_, i) { return i; }),
         syncKey: "gram-uplot-" + (++syncSequence),
         syncingScale: false,
         applying: false,
@@ -301,7 +237,7 @@
       };
 
       el.innerHTML = "";
-      el.classList.add("gram-uplot-stack");
+      el.classList.add("gram-stack");
       state.panels.className = "gram-uplot-panels";
       el.appendChild(state.panels);
 
@@ -312,21 +248,12 @@
     destroy: function (state) {
       window.clearTimeout(state.viewportTimer);
       teardownPanels(state);
-      state.el.classList.remove("gram-uplot-stack");
+      state.el.classList.remove("gram-stack");
       state.el.innerHTML = "";
     },
 
     resize: function (state) {
       resizePanels(state);
-    },
-
-    // visible: 1-based channel indices, matching R habits. state.visible is
-    // 0-based, so convert on the way in.
-    setVisible: function (state, visible) {
-      setVisibleChannels(
-        state,
-        visible.map(function (i) { return i - 1; })
-      );
     },
 
     // A full rebuild rather than plot.setData(). uPlot's setData either
@@ -336,81 +263,14 @@
     // file's one path for every change.
     //
     // ponytail: full rebuild per push; per-plot setData if 27 panels measure janky
-    setData: function (state, panels, bounds) {
+    setData: function (state, spec, bounds) {
       state.applying = true;
-      state.cfg.panels = panels;
+      state.cfg.spec = spec;
       state.cfg.window = bounds;
-      // a push normally carries every channel, so the visible subset survives;
-      // drop only indices a shorter payload no longer has
-      state.visible = state.visible.filter(function (i) {
-        return i < panels.length;
-      });
-      if (state.visible.length === 0) {
-        state.visible = panels.map(function (_, i) { return i; });
-      }
       buildPanels(state);
       state.applying = false;
     }
   };
 
   GRAM.adapters.uplot = adapter;
-
-
-  // --- lifecycle, called by the widget binding --------------------
-  //
-  // The backend is named in the payload and resolved here, so a second
-  // renderer is another entry in GRAM.adapters rather than another htmlwidget
-  // with its own binding and dependency set. An adapter has to provide
-  // create/destroy/resize/setVisible/setData.
-
-  GRAM.create = function (el, cfg) {
-    var backend = GRAM.adapters[cfg.backend || "uplot"];
-    if (!backend) {
-      throw new Error("gram: unknown backend '" + cfg.backend + "'");
-    }
-
-    GRAM.destroy(el.id); // re-render safety
-    GRAM.instances[el.id] = {
-      backend: backend,
-      state: backend.create(el, cfg)
-    };
-    return GRAM.instances[el.id];
-  };
-
-  GRAM.destroy = function (id) {
-    var instance = GRAM.instances[id];
-    if (!instance) return;
-    instance.backend.destroy(instance.state);
-    delete GRAM.instances[id];
-  };
-
-  GRAM.resize = function (id) {
-    var instance = GRAM.instances[id];
-    if (instance) instance.backend.resize(instance.state);
-  };
-
-
-  // --- shiny ------------------------------------------------------
-
-  // priority "event" is required: without it Shiny drops a value identical to
-  // the last one, so panning back to a range already visited would go
-  // unreported and the window would never be refilled
-  GRAM.emit = function (el, event, value) {
-    if (!window.Shiny || !el || !el.id) return;
-    Shiny.setInputValue(el.id + "_" + event, value, { priority: "event" });
-  };
-
-  if (window.Shiny) {
-    Shiny.addCustomMessageHandler("gram:set_visible", function (msg) {
-      var instance = GRAM.instances[msg.id];
-      if (instance) instance.backend.setVisible(instance.state, msg.channels);
-    });
-
-    Shiny.addCustomMessageHandler("gram:set_data", function (msg) {
-      var instance = GRAM.instances[msg.id];
-      if (instance) {
-        instance.backend.setData(instance.state, msg.panels, msg.window);
-      }
-    });
-  }
 })();

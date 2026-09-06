@@ -1,22 +1,7 @@
-/* Panel layout only. Channel selection is application chrome and belongs to
-   whatever controller owns the view state -- see the harness template -- so
-   nothing here styles a control. */
-
-.gram-uplot-stack {
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-x: contain;
-  background: #fff;
-  /* `safe center` centres the panels when they do not fill the height and
-     degrades to flex-start when they overflow; a plain `center` would put
-     the top panel out of scroll reach. */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  justify-content: safe center;
-}
+/* uPlot panel rules only. The scrolling box around them is `.gram-stack` in
+   gram-core.css, shared by every backend. Channel selection is application
+   chrome and belongs to whatever controller owns the view state -- see the
+   harness template -- so nothing here styles a control. */
 
 .gram-uplot-panels {
   width: 100%;

@@ -8,6 +8,7 @@ gram_harness(
   cache,
   window = NULL,
   channels = NULL,
+  backend = c("uplot"),
   script = harnessScript,
   ...
 )
@@ -20,6 +21,8 @@ Defaults to the whole record.}
 
 \item{channels}{Channels loaded into the viewer panel. Defaults to every
 channel in the header.}
+
+\item{backend}{Renderer for the viewer panel; see \code{\link[=gram_plot]{gram_plot()}}.}
 
 \item{script}{Initial contents of the scripting panel.}
 
@@ -37,6 +40,9 @@ tracing grammar, and the compiled tracing. Scripts are evaluated by
 The viewer opens on the whole record. At a coarse overview tier that is the
 study navigator, so a reader starts by seeing the study rather than an
 opening slice of it. Dragging across a panel zooms; the wheel pans; both
-report the range wanted and are answered with whichever tier fits it.
+report the range wanted and are answered with whichever tier fits it. The
+harness is the controller: it knows the backend by name only, and every
+change it makes -- a new window, a new tier, a different set of channels --
+is one push of a fresh spec into the live widget.
 }
 \concept{harness}
