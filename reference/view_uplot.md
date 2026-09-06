@@ -1,19 +1,23 @@
-# View a study window with the uPlot backend
+# View a study window
 
-Reads one window from the canonical WFDB signal, adapts it to uPlot's
-aligned column format, and returns the standalone widget. When neither
-`end` nor `interval` is supplied it reads ten seconds from `begin`.
+Reads one window from a `StudyCache` and returns the standalone widget.
+The window is given in samples, the same currency
+[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
+and
+[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)
+speak, so a selection made in the viewer can be fed straight back
+without conversion.
 
 ## Usage
 
 ``` r
 view_uplot(
   cache,
-  begin = NULL,
-  end = NULL,
-  interval = NULL,
+  window = NULL,
   channels = NULL,
-  units = c("physical", "digital"),
+  width_px = 1200,
+  resolution = c("auto", "raw", "overview"),
+  backend = "uplot",
   width = NULL,
   height = 500
 )
@@ -26,28 +30,29 @@ view_uplot(
   A `StudyCache` created by
   [`study_cache()`](https://shah-in-boots.github.io/gram/reference/study_cache.md).
 
-- begin, end:
+- window:
 
-  Times delimiting a half-open range. These follow
-  [`EGM::validate_time_parameters()`](https://shah-in-boots.github.io/EGM/reference/validate_time_parameters.html):
-  time-only character values are elapsed from the record start, dated
-  character values and `POSIXt` objects are absolute, and `difftime`
-  values are elapsed durations. Numeric values are not accepted.
-
-- interval:
-
-  A duration after `begin` that takes precedence over `end`. Numeric
-  values are seconds; compact durations such as `"100 ms"` are also
-  accepted.
+  Sample range as `list(begin =, end =)`, half-open. Defaults to the
+  whole record.
 
 - channels:
 
   Channel labels or indices. Defaults to all channels.
 
-- units:
+- width_px:
 
-  Signal units passed to
-  [`read_study_signal()`](https://shah-in-boots.github.io/gram/reference/read_study_signal.md).
+  Width of the plot in pixels. Required unless `resolution = "raw"`.
+
+- resolution:
+
+  `"auto"` chooses by window and width, `"raw"` always reads the signal,
+  and `"overview"` always reads a cache level, the finest one when the
+  window is small.
+
+- backend:
+
+  Renderer to draw with. Passed to
+  [`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md).
 
 - width, height:
 
@@ -57,7 +62,16 @@ view_uplot(
 
 An `htmlwidget`.
 
+## Details
+
+The whole record is a valid window. At a coarse overview tier that is
+the study navigator, so the default shows the entire study rather than
+an arbitrary opening slice.
+
 ## See also
+
+[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md),
+[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
 
 Other backend viewers:
 [`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)

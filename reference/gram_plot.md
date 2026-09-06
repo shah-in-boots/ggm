@@ -1,20 +1,22 @@
-# Create a uPlot-backed electrogram widget
+# Create an electrogram widget
 
-`gram_plot()` is the low-level plotting primitive. It renders one uPlot
-per signal channel so each panel has an independent y-scale, while
-synchronizing the x-range and cursor across panels. Data must already be
-in uPlot's aligned column format: a list containing one shared x vector
-followed by one y vector per signal series. Use
+`gram_plot()` is the low-level plotting primitive. It renders one panel
+per signal channel so each has an independent y-scale, while
+synchronising the x-range and cursor across panels. Each panel carries
+its own `x` and `y`, which is what lets an overview tier draw its
+per-channel extrema; panels may differ in length. Use
 [`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md)
-to read and display a raw window from a `StudyCache` directly.
+to read and display a window from a `StudyCache` directly.
 
 ## Usage
 
 ``` r
 gram_plot(
-  columns,
+  panels,
+  window = NULL,
+  extent = NULL,
+  backend = "uplot",
   scale = list(kind = "index", rate = 1),
-  series = NULL,
   panel_height = 120,
   width = NULL,
   height = NULL,
@@ -24,21 +26,34 @@ gram_plot(
 
 ## Arguments
 
-- columns:
+- panels:
 
-  List of numeric vectors in the form
-  `list(x, channel_1, channel_2, ...)`. All vectors must have equal
-  length.
+  List of panels, one per channel. Each is a list holding numeric `x`
+  and `y` of equal length, and optionally a `label` and a `color`.
+  Lengths may differ between panels.
+
+- window:
+
+  Loaded range as `list(min =, max =)` in x units. Panels are drawn
+  against this rather than against their own extents, so overview panels
+  whose extrema fall on different samples still line up. Defaults to the
+  union of the panel x extents.
+
+- extent:
+
+  Record range as `list(min =, max =)` in x units. Panning is clamped to
+  this, so a reader may pan beyond what is loaded and have the
+  controller fill it in. Defaults to `window`.
+
+- backend:
+
+  Renderer to draw with, resolved in the browser. Only `"uplot"` ships
+  today.
 
 - scale:
 
   X-scale description. `kind` may be `"index"` for sample numbers,
   `"elapsed"` for elapsed seconds, or `"timestamp"` for Unix timestamps.
-
-- series:
-
-  Optional list of per-channel display lists. Each entry may contain
-  `label` and `color`.
 
 - panel_height:
 
@@ -55,3 +70,8 @@ gram_plot(
 ## Value
 
 An `htmlwidget`.
+
+## See also
+
+[`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md),
+[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)

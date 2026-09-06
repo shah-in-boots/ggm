@@ -1,8 +1,7 @@
 # Launch the development harness
 
-Opens a page with three panels: the uPlot viewer over a fixed window, a
-scripting panel for the tracing grammar, and the compiled tracing.
-Scripts are evaluated by
+Opens a page with three panels: the signal viewer, a scripting panel for
+the tracing grammar, and the compiled tracing. Scripts are evaluated by
 [`eval_tracing()`](https://shah-in-boots.github.io/gram/reference/eval_tracing.md),
 not by R.
 
@@ -11,8 +10,7 @@ not by R.
 ``` r
 gram_harness(
   cache,
-  begin = "00:00:00",
-  interval = "1200 ms",
+  window = NULL,
   channels = NULL,
   script = harnessScript,
   ...
@@ -26,9 +24,10 @@ gram_harness(
   A `StudyCache` from
   [`study_cache()`](https://shah-in-boots.github.io/gram/reference/study_cache.md).
 
-- begin, interval:
+- window:
 
-  Window shown in the viewer panel.
+  Sample range the viewer opens on, as `list(begin =, end =)`. Defaults
+  to the whole record.
 
 - channels:
 
@@ -47,3 +46,11 @@ gram_harness(
 ## Value
 
 A Shiny app object.
+
+## Details
+
+The viewer opens on the whole record. At a coarse overview tier that is
+the study navigator, so a reader starts by seeing the study rather than
+an opening slice of it. Dragging across a panel zooms; the wheel pans;
+both report the range wanted and are answered with whichever tier fits
+it.

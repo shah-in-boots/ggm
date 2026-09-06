@@ -42,7 +42,7 @@ to WFDB and does not duplicate the raw signal.
 flowchart LR
     EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
     Backend["Data Backend<br/>study handle<br/>overview cache"]:::implemented
-    Viz["Visualization Engine<br/>uPlot explorer"]:::planned
+    Viz["Visualization Engine<br/>uPlot explorer"]:::implemented
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
     Presentation["Mark-up and Presentation<br/>tracing grammar; anime.js; export"]:::planned
@@ -158,17 +158,54 @@ artifacts and noisy intracardiac channels.
 - Sample representation must remain exact for the supported maximum
   study size.
 - `resolution`: `"raw"` or the cache bucket size.
-- `request_id`: used to reject stale asynchronous responses.
+- `request_id`: used to reject stale asynchronous responses. Not
+  implemented: R is single-threaded and reads are serialised, so
+  responses cannot arrive out of order until reads go asynchronous.
+
+### Panel payload
+
+A renderer never learns which tier it was handed. `gm_viewport_panels()`
+flattens both viewport shapes into one list of panels, each carrying its
+own `x` and `y` in elapsed seconds:
+
+``` json
+{ "backend": "uplot",
+  "panels": [ {"label": "HIS D", "x": [...], "y": [...]},
+              {"label": "CS 1-2", "x": [...], "y": [...]} ],
+  "window": {"min": 12.5, "max": 22.5},
+  "extent": {"min": 0, "max": 9787.464},
+  "scale": {"kind": "elapsed", "unit": "s"},
+  "layout": {"panel_height": 120} }
+```
+
+Panels rather than one shared x plus aligned y columns, because an
+overview tier reports each channel’s extrema at the samples they fell
+on. Aligning them is not merely awkward: on a 27-channel record one
+window at level 4 gives per-channel counts from 2335 to 4670, 24
+distinct lengths, and the only shared axis is the union of every
+channel’s extrema samples — a mostly-empty grid that discards the
+positions the cache exists to keep. A raw window simply hands every
+panel the same `x`.
+
+`window` is what is loaded; `extent` is the record. Panels are drawn
+against `window`, not against their own extents, or each would autoscale
+to a slightly different range and the stack would lose its alignment — a
+bucket straddling the window edge is returned whole, so points reach
+past the window by up to one bucket. Panning clamps to `extent`, so a
+reader may pan past what is loaded; the canvas is briefly empty there
+until the controller answers.
 
 ## Visualization Engine
 
 ``` mermaid
 flowchart LR
-    RangeReads["EGM range reads<br/>viewport source"]:::implemented
-    UplotRenderer["uPlot renderer<br/>synced channels<br/>pan; zoom; cursor"]:::planned
+    Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
+    Panels["panel payload<br/>gm_viewport_panels()<br/>backend neutral"]:::implemented
+    UplotRenderer["uPlot adapter<br/>gram_plot(); view_uplot()<br/>synced channels; pan; zoom"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
-    RangeReads --> UplotRenderer
+    Viewport --> Panels
+    Panels --> UplotRenderer
     UplotRenderer --> StudyExplorer
 ```
 
@@ -178,6 +215,27 @@ case; its input must remain viewport-sized. See the [uPlot API
 documentation](https://github.com/leeoniya/uPlot/blob/master/docs/README.md).
 
 ``` r
+
+# Read a window and return the widget. `window` is in samples, the same
+# currency read_viewport() and normalize_selection() speak, so a selection made
+# in the viewer feeds straight back. Defaults to the whole record, which at a
+# coarse tier is the study navigator.
+view_uplot <- function(
+  cache,
+  window = NULL,
+  channels = NULL,
+  width_px = 1200,
+  resolution = c("auto", "raw", "overview"),
+  backend = "uplot",
+  ...
+) {
+  # implemented in R/backend-viewer.R
+}
+
+# The widget and its payload; nothing here is uPlot-specific.
+gram_plot <- function(panels, window = NULL, extent = NULL, backend = "uplot", ...) {
+  # implemented in R/backend-plot.R
+}
 
 # Server-backed explorer: R services viewport and annotation requests.
 explore_study <- function(study, channels = NULL, annotators = NULL, ...) {
@@ -189,6 +247,29 @@ view_segment <- function(x, annotations = NULL, ...) {
   # TODO
 }
 ```
+
+### Swapping the renderer
+
+The backend is named in the payload and resolved in the browser, by
+`GRAM.adapters[cfg.backend]`. A second renderer is another entry in that
+registry rather than another htmlwidget with its own binding and
+dependency set, and it has to supply:
+
+| Method | Called when |
+|----|----|
+| `create(el, cfg)` | first render; returns the instance state |
+| `destroy(state)` | teardown, including a re-render of the same element |
+| `resize(state)` | the element’s box changed |
+| `setVisible(state, channels)` | a controller changed which channels are on screen |
+| `setData(state, panels, bounds)` | a controller pushed a new window |
+
+Navigation is one channel in the other direction. Zoom (a drag release)
+and pan (the wheel) both end in a scale change, so both are reported as
+the range wanted — debounced, and suppressed while a push is being
+applied, since a reply would otherwise be read as a fresh request and
+loop. The controller answers with whichever tier fits, so the same
+gesture refines an overview into raw without the browser knowing which
+it asked for.
 
 Design:
 
@@ -449,7 +530,7 @@ to WFDB and does not duplicate the raw signal.
 flowchart LR
     EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
     Backend["Data Backend<br/>study handle<br/>overview cache"]:::implemented
-    Viz["Visualization Engine<br/>uPlot explorer"]:::planned
+    Viz["Visualization Engine<br/>uPlot explorer"]:::implemented
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
     Presentation["Mark-up and Presentation<br/>tracing grammar; anime.js; export"]:::planned
@@ -565,17 +646,54 @@ artifacts and noisy intracardiac channels.
 - Sample representation must remain exact for the supported maximum
   study size.
 - `resolution`: `"raw"` or the cache bucket size.
-- `request_id`: used to reject stale asynchronous responses.
+- `request_id`: used to reject stale asynchronous responses. Not
+  implemented: R is single-threaded and reads are serialised, so
+  responses cannot arrive out of order until reads go asynchronous.
+
+### Panel payload
+
+A renderer never learns which tier it was handed. `gm_viewport_panels()`
+flattens both viewport shapes into one list of panels, each carrying its
+own `x` and `y` in elapsed seconds:
+
+``` json
+{ "backend": "uplot",
+  "panels": [ {"label": "HIS D", "x": [...], "y": [...]},
+              {"label": "CS 1-2", "x": [...], "y": [...]} ],
+  "window": {"min": 12.5, "max": 22.5},
+  "extent": {"min": 0, "max": 9787.464},
+  "scale": {"kind": "elapsed", "unit": "s"},
+  "layout": {"panel_height": 120} }
+```
+
+Panels rather than one shared x plus aligned y columns, because an
+overview tier reports each channel’s extrema at the samples they fell
+on. Aligning them is not merely awkward: on a 27-channel record one
+window at level 4 gives per-channel counts from 2335 to 4670, 24
+distinct lengths, and the only shared axis is the union of every
+channel’s extrema samples — a mostly-empty grid that discards the
+positions the cache exists to keep. A raw window simply hands every
+panel the same `x`.
+
+`window` is what is loaded; `extent` is the record. Panels are drawn
+against `window`, not against their own extents, or each would autoscale
+to a slightly different range and the stack would lose its alignment — a
+bucket straddling the window edge is returned whole, so points reach
+past the window by up to one bucket. Panning clamps to `extent`, so a
+reader may pan past what is loaded; the canvas is briefly empty there
+until the controller answers.
 
 ## Visualization Engine
 
 ``` mermaid
 flowchart LR
-    RangeReads["EGM range reads<br/>viewport source"]:::implemented
-    UplotRenderer["uPlot renderer<br/>synced channels<br/>pan; zoom; cursor"]:::planned
+    Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
+    Panels["panel payload<br/>gm_viewport_panels()<br/>backend neutral"]:::implemented
+    UplotRenderer["uPlot adapter<br/>gram_plot(); view_uplot()<br/>synced channels; pan; zoom"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
-    RangeReads --> UplotRenderer
+    Viewport --> Panels
+    Panels --> UplotRenderer
     UplotRenderer --> StudyExplorer
 ```
 
@@ -585,6 +703,27 @@ case; its input must remain viewport-sized. See the [uPlot API
 documentation](https://github.com/leeoniya/uPlot/blob/master/docs/README.md).
 
 ``` r
+
+# Read a window and return the widget. `window` is in samples, the same
+# currency read_viewport() and normalize_selection() speak, so a selection made
+# in the viewer feeds straight back. Defaults to the whole record, which at a
+# coarse tier is the study navigator.
+view_uplot <- function(
+  cache,
+  window = NULL,
+  channels = NULL,
+  width_px = 1200,
+  resolution = c("auto", "raw", "overview"),
+  backend = "uplot",
+  ...
+) {
+  # implemented in R/backend-viewer.R
+}
+
+# The widget and its payload; nothing here is uPlot-specific.
+gram_plot <- function(panels, window = NULL, extent = NULL, backend = "uplot", ...) {
+  # implemented in R/backend-plot.R
+}
 
 # Server-backed explorer: R services viewport and annotation requests.
 explore_study <- function(study, channels = NULL, annotators = NULL, ...) {
@@ -596,6 +735,29 @@ view_segment <- function(x, annotations = NULL, ...) {
   # TODO
 }
 ```
+
+### Swapping the renderer
+
+The backend is named in the payload and resolved in the browser, by
+`GRAM.adapters[cfg.backend]`. A second renderer is another entry in that
+registry rather than another htmlwidget with its own binding and
+dependency set, and it has to supply:
+
+| Method | Called when |
+|----|----|
+| `create(el, cfg)` | first render; returns the instance state |
+| `destroy(state)` | teardown, including a re-render of the same element |
+| `resize(state)` | the element’s box changed |
+| `setVisible(state, channels)` | a controller changed which channels are on screen |
+| `setData(state, panels, bounds)` | a controller pushed a new window |
+
+Navigation is one channel in the other direction. Zoom (a drag release)
+and pan (the wheel) both end in a scale change, so both are reported as
+the range wanted — debounced, and suppressed while a push is being
+applied, since a reply would otherwise be read as a fresh request and
+loop. The controller answers with whichever tier fits, so the same
+gesture refines an overview into raw without the browser knowing which
+it asked for.
 
 Design:
 
@@ -856,7 +1018,7 @@ to WFDB and does not duplicate the raw signal.
 flowchart LR
     EGM["EGM + WFDB<br/>vendor import<br/>range I/O"]:::implemented
     Backend["Data Backend<br/>study handle<br/>overview cache"]:::implemented
-    Viz["Visualization Engine<br/>uPlot explorer"]:::planned
+    Viz["Visualization Engine<br/>uPlot explorer"]:::implemented
     Annot["Annotation Interaction<br/>schema; query; edit"]:::planned
     Bookmarks["Bookmarks<br/>saved view state"]:::planned
     Presentation["Mark-up and Presentation<br/>tracing grammar; anime.js; export"]:::planned
@@ -972,17 +1134,54 @@ artifacts and noisy intracardiac channels.
 - Sample representation must remain exact for the supported maximum
   study size.
 - `resolution`: `"raw"` or the cache bucket size.
-- `request_id`: used to reject stale asynchronous responses.
+- `request_id`: used to reject stale asynchronous responses. Not
+  implemented: R is single-threaded and reads are serialised, so
+  responses cannot arrive out of order until reads go asynchronous.
+
+### Panel payload
+
+A renderer never learns which tier it was handed. `gm_viewport_panels()`
+flattens both viewport shapes into one list of panels, each carrying its
+own `x` and `y` in elapsed seconds:
+
+``` json
+{ "backend": "uplot",
+  "panels": [ {"label": "HIS D", "x": [...], "y": [...]},
+              {"label": "CS 1-2", "x": [...], "y": [...]} ],
+  "window": {"min": 12.5, "max": 22.5},
+  "extent": {"min": 0, "max": 9787.464},
+  "scale": {"kind": "elapsed", "unit": "s"},
+  "layout": {"panel_height": 120} }
+```
+
+Panels rather than one shared x plus aligned y columns, because an
+overview tier reports each channel’s extrema at the samples they fell
+on. Aligning them is not merely awkward: on a 27-channel record one
+window at level 4 gives per-channel counts from 2335 to 4670, 24
+distinct lengths, and the only shared axis is the union of every
+channel’s extrema samples — a mostly-empty grid that discards the
+positions the cache exists to keep. A raw window simply hands every
+panel the same `x`.
+
+`window` is what is loaded; `extent` is the record. Panels are drawn
+against `window`, not against their own extents, or each would autoscale
+to a slightly different range and the stack would lose its alignment — a
+bucket straddling the window edge is returned whole, so points reach
+past the window by up to one bucket. Panning clamps to `extent`, so a
+reader may pan past what is loaded; the canvas is briefly empty there
+until the controller answers.
 
 ## Visualization Engine
 
 ``` mermaid
 flowchart LR
-    RangeReads["EGM range reads<br/>viewport source"]:::implemented
-    UplotRenderer["uPlot renderer<br/>synced channels<br/>pan; zoom; cursor"]:::planned
+    Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
+    Panels["panel payload<br/>gm_viewport_panels()<br/>backend neutral"]:::implemented
+    UplotRenderer["uPlot adapter<br/>gram_plot(); view_uplot()<br/>synced channels; pan; zoom"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
-    RangeReads --> UplotRenderer
+    Viewport --> Panels
+    Panels --> UplotRenderer
     UplotRenderer --> StudyExplorer
 ```
 
@@ -992,6 +1191,27 @@ case; its input must remain viewport-sized. See the [uPlot API
 documentation](https://github.com/leeoniya/uPlot/blob/master/docs/README.md).
 
 ``` r
+
+# Read a window and return the widget. `window` is in samples, the same
+# currency read_viewport() and normalize_selection() speak, so a selection made
+# in the viewer feeds straight back. Defaults to the whole record, which at a
+# coarse tier is the study navigator.
+view_uplot <- function(
+  cache,
+  window = NULL,
+  channels = NULL,
+  width_px = 1200,
+  resolution = c("auto", "raw", "overview"),
+  backend = "uplot",
+  ...
+) {
+  # implemented in R/backend-viewer.R
+}
+
+# The widget and its payload; nothing here is uPlot-specific.
+gram_plot <- function(panels, window = NULL, extent = NULL, backend = "uplot", ...) {
+  # implemented in R/backend-plot.R
+}
 
 # Server-backed explorer: R services viewport and annotation requests.
 explore_study <- function(study, channels = NULL, annotators = NULL, ...) {
@@ -1003,6 +1223,29 @@ view_segment <- function(x, annotations = NULL, ...) {
   # TODO
 }
 ```
+
+### Swapping the renderer
+
+The backend is named in the payload and resolved in the browser, by
+`GRAM.adapters[cfg.backend]`. A second renderer is another entry in that
+registry rather than another htmlwidget with its own binding and
+dependency set, and it has to supply:
+
+| Method | Called when |
+|----|----|
+| `create(el, cfg)` | first render; returns the instance state |
+| `destroy(state)` | teardown, including a re-render of the same element |
+| `resize(state)` | the element’s box changed |
+| `setVisible(state, channels)` | a controller changed which channels are on screen |
+| `setData(state, panels, bounds)` | a controller pushed a new window |
+
+Navigation is one channel in the other direction. Zoom (a drag release)
+and pan (the wheel) both end in a scale change, so both are reported as
+the range wanted — debounced, and suppressed while a push is being
+applied, since a reply would otherwise be read as a fresh request and
+loop. The controller answers with whichever tier fits, so the same
+gesture refines an overview into raw without the browser knowing which
+it asked for.
 
 Design:
 

@@ -24,7 +24,7 @@
 - [`gram_harness()`](https://shah-in-boots.github.io/gram/reference/gram_harness.md)
   : Launch the development harness
 - [`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md)
-  : Create a uPlot-backed electrogram widget
+  : Create an electrogram widget
 - [`gram_plotOutput()`](https://shah-in-boots.github.io/gram/reference/gram_plotOutput.md)
   : Shiny output binding for a gram plot
 - [`gram_tracing()`](https://shah-in-boots.github.io/gram/reference/gram_tracing.md)
@@ -52,4 +52,4 @@
 - [`tracing_spec()`](https://shah-in-boots.github.io/gram/reference/tracing_spec.md)
   : Compile a tracing to SVG and a timeline spec
 - [`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md)
-  : View a study window with the uPlot backend
+  : View a study window
