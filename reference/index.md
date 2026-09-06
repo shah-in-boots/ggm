@@ -52,4 +52,4 @@
 - [`tracing_spec()`](https://shah-in-boots.github.io/gram/reference/tracing_spec.md)
   : Compile a tracing to SVG and a timeline spec
 - [`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md)
-  : View a study window
+  : View a study window with uPlot

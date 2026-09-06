@@ -4,7 +4,9 @@
 per signal channel so each has an independent y-scale, while
 synchronising the x-range and cursor across panels. Each panel carries
 its own `x` and `y`, which is what lets an overview tier draw its
-per-channel extrema; panels may differ in length. Use
+per-channel extrema; panels may differ in length. The backend named in
+`backend` turns the panels into what its library wants, in R, and only
+that backend's assets travel with the widget. Use
 [`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md)
 to read and display a window from a `StudyCache` directly.
 
@@ -15,7 +17,7 @@ gram_plot(
   panels,
   window = NULL,
   extent = NULL,
-  backend = "uplot",
+  backend = c("uplot"),
   scale = list(kind = "index", rate = 1),
   panel_height = 120,
   width = NULL,
@@ -47,8 +49,8 @@ gram_plot(
 
 - backend:
 
-  Renderer to draw with, resolved in the browser. Only `"uplot"` ships
-  today.
+  Renderer to draw with. Its spec is built here in R and its library is
+  attached to the widget, both resolved by `gm_backend()`.
 
 - scale:
 

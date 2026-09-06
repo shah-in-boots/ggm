@@ -3,13 +3,17 @@
 signal channel so each has an independent y-scale, while synchronising the
 x-range and cursor across panels. Each panel carries its own x and y,
 which is what lets an overview tier draw its per-channel extrema; panels may
-differ in length. Use view_uplot() to read and display a window from a
-StudyCache directly."><meta property="og:description" content="gram_plot() is the low-level plotting primitive. It renders one panel per
+differ in length. The backend named in backend turns the panels into what
+its library wants, in R, and only that backend's assets travel with the
+widget. Use view_uplot() to read and display a window from a StudyCache
+directly."><meta property="og:description" content="gram_plot() is the low-level plotting primitive. It renders one panel per
 signal channel so each has an independent y-scale, while synchronising the
 x-range and cursor across panels. Each panel carries its own x and y,
 which is what lets an overview tier draw its per-channel extrema; panels may
-differ in length. Use view_uplot() to read and display a window from a
-StudyCache directly."></head><body>
+differ in length. The backend named in backend turns the panels into what
+its library wants, in R, and only that backend's assets travel with the
+widget. Use view_uplot() to read and display a window from a StudyCache
+directly."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -51,8 +55,10 @@ StudyCache directly."></head><body>
 signal channel so each has an independent y-scale, while synchronising the
 x-range and cursor across panels. Each panel carries its own <code>x</code> and <code>y</code>,
 which is what lets an overview tier draw its per-channel extrema; panels may
-differ in length. Use <code><a href="view_uplot.html">view_uplot()</a></code> to read and display a window from a
-<code>StudyCache</code> directly.</p>
+differ in length. The backend named in <code>backend</code> turns the panels into what
+its library wants, in R, and only that backend's assets travel with the
+widget. Use <code><a href="view_uplot.html">view_uplot()</a></code> to read and display a window from a <code>StudyCache</code>
+directly.</p>
     </div>
 
     <div class="section level2">
@@ -61,7 +67,7 @@ differ in length. Use <code><a href="view_uplot.html">view_uplot()</a></code> to
 <span>  <span class="va">panels</span>,</span>
 <span>  window <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  extent <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  backend <span class="op">=</span> <span class="st">"uplot"</span>,</span>
+<span>  backend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"uplot"</span><span class="op">)</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>kind <span class="op">=</span> <span class="st">"index"</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  panel_height <span class="op">=</span> <span class="fl">120</span>,</span>
 <span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -94,8 +100,8 @@ controller fill it in. Defaults to <code>window</code>.</p></dd>
 
 
 <dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
-<dd><p>Renderer to draw with, resolved in the browser. Only
-<code>"uplot"</code> ships today.</p></dd>
+<dd><p>Renderer to draw with. Its spec is built here in R and its
+library is attached to the widget, both resolved by <code>gm_backend()</code>.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>

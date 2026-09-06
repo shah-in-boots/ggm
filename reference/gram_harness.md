@@ -12,6 +12,7 @@ gram_harness(
   cache,
   window = NULL,
   channels = NULL,
+  backend = c("uplot"),
   script = harnessScript,
   ...
 )
@@ -34,6 +35,11 @@ gram_harness(
   Channels loaded into the viewer panel. Defaults to every channel in
   the header.
 
+- backend:
+
+  Renderer for the viewer panel; see
+  [`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md).
+
 - script:
 
   Initial contents of the scripting panel.
@@ -53,4 +59,6 @@ The viewer opens on the whole record. At a coarse overview tier that is
 the study navigator, so a reader starts by seeing the study rather than
 an opening slice of it. Dragging across a panel zooms; the wheel pans;
 both report the range wanted and are answered with whichever tier fits
-it.
+it. The harness is the controller: it knows the backend by name only,
+and every change it makes – a new window, a new tier, a different set of
+channels – is one push of a fresh spec into the live widget.

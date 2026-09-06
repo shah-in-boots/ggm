@@ -1,12 +1,8 @@
-# View a study window
+# View a study window with uPlot
 
-Reads one window from a `StudyCache` and returns the standalone widget.
-The window is given in samples, the same currency
-[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
-and
-[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)
-speak, so a selection made in the viewer can be fed straight back
-without conversion.
+Reads one window from a `StudyCache` and returns the uPlot widget: cache
+and window in, widget out, no controller. It is the one-call check that
+this backend draws a window, and it lives beside the spec it exercises.
 
 ## Usage
 
@@ -17,7 +13,6 @@ view_uplot(
   channels = NULL,
   width_px = 1200,
   resolution = c("auto", "raw", "overview"),
-  backend = "uplot",
   width = NULL,
   height = 500
 )
@@ -49,11 +44,6 @@ view_uplot(
   and `"overview"` always reads a cache level, the finest one when the
   window is small.
 
-- backend:
-
-  Renderer to draw with. Passed to
-  [`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md).
-
 - width, height:
 
   Optional widget dimensions.
@@ -64,9 +54,14 @@ An `htmlwidget`.
 
 ## Details
 
-The whole record is a valid window. At a coarse overview tier that is
-the study navigator, so the default shows the entire study rather than
-an arbitrary opening slice.
+The window is given in samples, the same currency
+[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
+and
+[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)
+speak, so a selection made in the viewer can be fed straight back
+without conversion. The whole record is a valid window; at a coarse
+overview tier that is the study navigator, so the default shows the
+entire study rather than an arbitrary opening slice.
 
 ## See also
 
