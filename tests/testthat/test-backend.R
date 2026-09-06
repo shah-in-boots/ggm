@@ -1,31 +1,13 @@
-test_that("gram_plot creates a uPlot htmlwidget", {
-  widget <- gram_plot(
-    columns = list(0:2, c(1, 3, 2), c(2, 1, 3)),
-    scale = list(kind = "elapsed", unit = "s"),
-    series = list(list(label = "I"), list(label = "II"))
-  )
+# verbs -----------------------------------------------------------------
 
-  expect_s3_class(widget, "htmlwidget")
-  expect_s3_class(widget, "gram_plot")
-  expect_equal(widget$x$backend, "uplot")
-  expect_equal(widget$x$scale$kind, "elapsed")
-  expect_equal(widget$x$layout, list(panel_height = 120))
-  expect_equal(vapply(widget$x$columns, length, integer(1)), rep(3L, 3L))
-})
+test_that("channel indices below one are refused rather than sent", {
+  # a 0-based index arriving from the browser would silently draw the wrong
+  # lead, so the verb refuses before gm_send() ever reaches a session
+  proxy <- structure(list(id = "x", session = NULL), class = "gm_proxy")
 
-test_that("gram_plot rejects data that uPlot cannot align", {
-  expect_error(gram_plot(list(1:3)), "at least one signal")
-  expect_error(gram_plot(list(1:3, 1:2)), "equal length")
-  expect_error(gram_plot(list(c(1, 3, 2), 1:3)), "in increasing order")
-  expect_error(
-    gram_plot(list(1:3, 1:3), series = list(list(), list())),
-    "one list per signal"
-  )
-  expect_error(
-    gram_plot(list(1:3, 1:3), scale = list(kind = "time")),
-    "timestamp"
-  )
-  expect_error(gram_plot(list(1:3, 1:3), panel_height = 40), "at least 80")
+  expect_error(gm_set_visible(proxy, c(0, 1)), "1-based channel indices")
+  expect_error(gm_set_visible(proxy, c(1, NA)), "1-based channel indices")
+  expect_error(gm_set_visible(proxy, "I"), "1-based channel indices")
 })
 
 
@@ -77,19 +59,4 @@ test_that("a malformed selection is refused rather than guessed at", {
     normalize_selection(cache, list(xmin = NULL, xmax = 0.2)),
     "two finite seconds"
   )
-})
-
-
-test_that("the pinned uPlot and stacked-panel assets are installed", {
-  uplotAssets <- c("uPlot.iife.min.js", "uPlot.min.css", "LICENSE")
-  paths <- c(
-    file.path(
-      system.file("htmlwidgets/lib/uplot", package = "gram"),
-      uplotAssets
-    ),
-    system.file("htmlwidgets/lib/gram/gram-uplot.css", package = "gram")
-  )
-
-  expect_true(all(file.exists(paths)))
-  expect_true(all(file.info(paths)$size > 0))
 })

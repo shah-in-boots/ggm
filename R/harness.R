@@ -14,12 +14,18 @@ harnessScript <- 'tracing(
 
 #' Launch the development harness
 #'
-#' Opens a page with three panels: the uPlot viewer over a fixed window, a
-#' scripting panel for the tracing grammar, and the compiled tracing. Scripts
-#' are evaluated by [eval_tracing()], not by R.
+#' Opens a page with three panels: the signal viewer, a scripting panel for the
+#' tracing grammar, and the compiled tracing. Scripts are evaluated by
+#' [eval_tracing()], not by R.
+#'
+#' The viewer opens on the whole record. At a coarse overview tier that is the
+#' study navigator, so a reader starts by seeing the study rather than an
+#' opening slice of it. Dragging across a panel zooms; the wheel pans; both
+#' report the range wanted and are answered with whichever tier fits it.
 #'
 #' @param cache A `StudyCache` from [study_cache()].
-#' @param begin,interval Window shown in the viewer panel.
+#' @param window Sample range the viewer opens on, as `list(begin =, end =)`.
+#'   Defaults to the whole record.
 #' @param channels Channels loaded into the viewer panel. Defaults to every
 #'   channel in the header.
 #' @param script Initial contents of the scripting panel.
@@ -28,8 +34,7 @@ harnessScript <- 'tracing(
 #' @family harness
 #' @export
 gram_harness <- function(cache,
-                        begin = "00:00:00",
-                        interval = "1200 ms",
+                        window = NULL,
                         channels = NULL,
                         script = harnessScript,
                         ...) {
@@ -38,6 +43,7 @@ gram_harness <- function(cache,
   }
 
   viewChannels <- channels %||% cache@channels
+  startWindow <- window %||% list(begin = 0, end = cache@n_samples)
   template <- system.file("harness", "index.html", package = "gram")
   if (!nzchar(template)) {
     stop("harness template not found; is gram installed correctly?", call. = FALSE)
@@ -52,6 +58,7 @@ gram_harness <- function(cache,
       format(cache@sample_rate), " Hz"
     ),
     viewer = gram_plotOutput("viewer", height = "420px"),
+    reset = shiny::actionButton("reset", "Whole study"),
     channels = gram_channelsUI("channels", viewChannels),
     tracing = gram_tracingOutput("tracing", height = "340px"),
     script = shiny::textAreaInput("script", NULL, value = script),
@@ -62,23 +69,52 @@ gram_harness <- function(cache,
   server <- function(input, output, session) {
     current <- shiny::reactiveVal(NULL)
     failure <- shiny::reactiveVal(NULL)
+    window <- shiny::reactiveVal(startWindow)
 
-    selected <- shiny::reactive(
-      normalize_selection(cache, input$viewer_selection)
-    )
+    # The browser is the only party that knows how wide a panel is, and the
+    # tier depends on it. 1200 stands in until the widget reports.
+    view <- shiny::reactive({
+      gm_viewport_panels(
+        cache,
+        window = window(),
+        channels = viewChannels,
+        width_px = input$viewer_width %||% 1200
+      )
+    })
 
     chosen <- gram_channelsServer("channels")
     shiny::observe({
       gm_set_visible(gm_proxy("viewer"), chosen())
     })
 
+    # Rendered once. Every later change to the window or the panel width is
+    # pushed into the live widget instead, so panning does not tear the whole
+    # stack down and rebuild it through Shiny.
     output$viewer <- render_gram_plot({
-      view_uplot(
-        cache,
-        begin = begin,
-        interval = interval,
-        channels = viewChannels
+      opening <- shiny::isolate(view())
+      gram_plot(
+        panels = opening$panels,
+        window = opening$window,
+        extent = opening$extent,
+        scale = list(kind = "elapsed", unit = "s"),
+        height = 420
       )
+    })
+
+    shiny::observeEvent(view(), {
+      gm_set_data(gm_proxy("viewer"), view()$panels, view()$window)
+    }, ignoreInit = TRUE)
+
+    # zoom and pan arrive on the same channel: both say which range is wanted
+    shiny::observeEvent(input$viewer_viewport, {
+      requested <- normalize_selection(cache, input$viewer_viewport)
+      if (!is.null(requested)) {
+        window(requested)
+      }
+    })
+
+    shiny::observeEvent(input$reset, {
+      window(list(begin = 0, end = cache@n_samples))
     })
 
     run_script <- function(text) {
@@ -101,16 +137,19 @@ gram_harness <- function(cache,
     })
 
     output$status <- shiny::renderUI({
-      window <- selected()
-      report <- if (is.null(window)) {
-        "selection: drag across the signal"
+      shown <- window()
+      # naming the tier is not decoration: an overview tier is an envelope of
+      # bucket extrema, and nothing may be measured or annotated on it
+      tier <- if (identical(view()$resolution, "raw")) {
+        "raw"
       } else {
-        paste0(
-          "selection: samples ", window$begin, "-", window$end, "  (",
-          format((window$end - window$begin) / cache@sample_rate, digits = 4),
-          " s)"
-        )
+        paste0("overview ", view()$resolution, " (level ", view()$level, ")")
       }
+      report <- paste0(
+        "window: samples ", shown$begin, "-", shown$end, "  (",
+        format((shown$end - shown$begin) / cache@sample_rate, digits = 4),
+        " s)  ", tier
+      )
 
       if (!is.null(failure())) {
         return(shiny::tags$pre(

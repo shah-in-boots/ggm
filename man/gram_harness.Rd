@@ -6,8 +6,7 @@
 \usage{
 gram_harness(
   cache,
-  begin = "00:00:00",
-  interval = "1200 ms",
+  window = NULL,
   channels = NULL,
   script = harnessScript,
   ...
@@ -16,7 +15,8 @@ gram_harness(
 \arguments{
 \item{cache}{A \code{StudyCache} from \code{\link[=study_cache]{study_cache()}}.}
 
-\item{begin, interval}{Window shown in the viewer panel.}
+\item{window}{Sample range the viewer opens on, as \code{list(begin =, end =)}.
+Defaults to the whole record.}
 
 \item{channels}{Channels loaded into the viewer panel. Defaults to every
 channel in the header.}
@@ -29,8 +29,14 @@ channel in the header.}
 A Shiny app object.
 }
 \description{
-Opens a page with three panels: the uPlot viewer over a fixed window, a
-scripting panel for the tracing grammar, and the compiled tracing. Scripts
-are evaluated by \code{\link[=eval_tracing]{eval_tracing()}}, not by R.
+Opens a page with three panels: the signal viewer, a scripting panel for the
+tracing grammar, and the compiled tracing. Scripts are evaluated by
+\code{\link[=eval_tracing]{eval_tracing()}}, not by R.
+}
+\details{
+The viewer opens on the whole record. At a coarse overview tier that is the
+study navigator, so a reader starts by seeing the study rather than an
+opening slice of it. Dragging across a panel zooms; the wheel pans; both
+report the range wanted and are answered with whichever tier fits it.
 }
 \concept{harness}

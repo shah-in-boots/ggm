@@ -31,6 +31,21 @@ gm_set_visible <- function(proxy, channels) {
   )
 }
 
+# Replace the data an already-rendered viewer is holding, rather than
+# re-rendering the widget. The window travels with the panels because it is
+# what the panels are drawn against; the record extent does not, since it
+# cannot change while the widget lives.
+gm_set_data <- function(proxy, panels, window) {
+  gm_send(
+    proxy,
+    "gram:set_data",
+    list(
+      panels = gm_validate_panels(panels),
+      window = gm_validate_range(window, "window")
+    )
+  )
+}
+
 
 # selection -------------------------------------------------------------
 

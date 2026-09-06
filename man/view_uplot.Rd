@@ -2,15 +2,15 @@
 % Please edit documentation in R/backend-viewer.R
 \name{view_uplot}
 \alias{view_uplot}
-\title{View a study window with the uPlot backend}
+\title{View a study window}
 \usage{
 view_uplot(
   cache,
-  begin = NULL,
-  end = NULL,
-  interval = NULL,
+  window = NULL,
   channels = NULL,
-  units = c("physical", "digital"),
+  width_px = 1200,
+  resolution = c("auto", "raw", "overview"),
+  backend = "uplot",
   width = NULL,
   height = 500
 )
@@ -18,19 +18,19 @@ view_uplot(
 \arguments{
 \item{cache}{A \code{StudyCache} created by \code{\link[=study_cache]{study_cache()}}.}
 
-\item{begin, end}{Times delimiting a half-open range. These follow
-\code{\link[EGM:validate_time_parameters]{EGM::validate_time_parameters()}}: time-only character values are elapsed
-from the record start, dated character values and \code{POSIXt} objects are
-absolute, and \code{difftime} values are elapsed durations. Numeric values are
-not accepted.}
-
-\item{interval}{A duration after \code{begin} that takes precedence over \code{end}.
-Numeric values are seconds; compact durations such as \code{"100 ms"} are also
-accepted.}
+\item{window}{Sample range as \code{list(begin =, end =)}, half-open. Defaults to
+the whole record.}
 
 \item{channels}{Channel labels or indices. Defaults to all channels.}
 
-\item{units}{Signal units passed to \code{\link[=read_study_signal]{read_study_signal()}}.}
+\item{width_px}{Width of the plot in pixels. Required unless
+\code{resolution = "raw"}.}
+
+\item{resolution}{\code{"auto"} chooses by window and width, \code{"raw"} always
+reads the signal, and \code{"overview"} always reads a cache level, the
+finest one when the window is small.}
+
+\item{backend}{Renderer to draw with. Passed to \code{\link[=gram_plot]{gram_plot()}}.}
 
 \item{width, height}{Optional widget dimensions.}
 }
@@ -38,11 +38,19 @@ accepted.}
 An \code{htmlwidget}.
 }
 \description{
-Reads one window from the canonical WFDB signal, adapts it to uPlot's
-aligned column format, and returns the standalone widget. When neither \code{end}
-nor \code{interval} is supplied it reads ten seconds from \code{begin}.
+Reads one window from a \code{StudyCache} and returns the standalone widget.
+The window is given in samples, the same currency \code{\link[=read_viewport]{read_viewport()}} and
+\code{\link[=normalize_selection]{normalize_selection()}} speak, so a selection made in the viewer can be fed
+straight back without conversion.
+}
+\details{
+The whole record is a valid window. At a coarse overview tier that is the
+study navigator, so the default shows the entire study rather than an
+arbitrary opening slice.
 }
 \seealso{
+\code{\link[=gram_plot]{gram_plot()}}, \code{\link[=read_viewport]{read_viewport()}}
+
 Other backend viewers:
 \code{\link[=normalize_selection]{normalize_selection()}}
 }
