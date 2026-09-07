@@ -49,3 +49,9 @@ gram_channelsServer(id)
 `gram_channelsServer()` returns a reactive giving the selected channel
 indices: 1-based into `channels`, ascending, and `integer(0)` when
 nothing is selected. Labels are `channels[chosen()]`.
+
+## See also
+
+Other controller:
+[`gram_harness()`](https://shah-in-boots.github.io/gram/reference/gram_harness.md),
+[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)

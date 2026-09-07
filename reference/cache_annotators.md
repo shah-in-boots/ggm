@@ -17,3 +17,10 @@ cache_annotators(cache)
 ## Value
 
 Character vector of annotator extensions.
+
+## See also
+
+Other cache:
+[`cache_paths()`](https://shah-in-boots.github.io/gram/reference/cache_paths.md),
+[`cache_study_data()`](https://shah-in-boots.github.io/gram/reference/cache_study_data.md),
+[`study_cache()`](https://shah-in-boots.github.io/gram/reference/study_cache.md)

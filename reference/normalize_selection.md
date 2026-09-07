@@ -27,5 +27,6 @@ the selection holds no samples.
 
 ## See also
 
-Other backend viewers:
-[`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md)
+Other controller:
+[`gram_channels`](https://shah-in-boots.github.io/gram/reference/gram_channels.md),
+[`gram_harness()`](https://shah-in-boots.github.io/gram/reference/gram_harness.md)

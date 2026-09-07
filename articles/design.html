@@ -208,14 +208,12 @@ flowchart LR
 <code>request_id</code>: used to reject stale asynchronous responses. Not implemented: R is single-threaded and reads are serialised, so responses cannot arrive out of order until reads go asynchronous.</li>
 </ul></section><section class="level2"><h3 data-anchor-id="panel-payload" id="panel-payload">Panel payload<a class="anchor" aria-label="anchor" href="#panel-payload"></a>
 </h3>
-<p>A renderer never learns which tier it was handed. <code>gm_viewport_panels()</code> flattens both viewport shapes into one list of panels, each carrying its own <code>x</code> and <code>y</code> in elapsed seconds:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">"backend"</span><span class="fu">:</span> <span class="st">"uplot"</span><span class="fu">,</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"panels"</span><span class="fu">:</span> <span class="ot">[</span> <span class="fu">{</span><span class="dt">"label"</span><span class="fu">:</span> <span class="st">"HIS D"</span><span class="fu">,</span> <span class="dt">"x"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span> <span class="dt">"y"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">{</span><span class="dt">"label"</span><span class="fu">:</span> <span class="st">"CS 1-2"</span><span class="fu">,</span> <span class="dt">"x"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span> <span class="dt">"y"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">}</span> <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"window"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="fl">12.5</span><span class="fu">,</span> <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">22.5</span><span class="fu">},</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"extent"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span> <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">9787.464</span><span class="fu">},</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"scale"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kind"</span><span class="fu">:</span> <span class="st">"elapsed"</span><span class="fu">,</span> <span class="dt">"unit"</span><span class="fu">:</span> <span class="st">"s"</span><span class="fu">},</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"layout"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"panel_height"</span><span class="fu">:</span> <span class="dv">120</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
+<p>A renderer never learns which tier it was handed. <code>gm_viewport_panels()</code> flattens both viewport shapes into one list of panels, each carrying its own <code>x</code> and <code>y</code> in elapsed seconds. Panels are the contract <strong>on the R side</strong>: every backend starts from them. What crosses the wire is the backend’s own spec, built in R from those panels:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">"backend"</span><span class="fu">:</span> <span class="st">"plotly"</span><span class="fu">,</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"spec"</span><span class="fu">:</span>    <span class="fu">{</span> <span class="dt">"...exactly what the library wants, built by gm_plotly_spec()..."</span> <span class="fu">},</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"window"</span><span class="fu">:</span>  <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="fl">12.5</span><span class="fu">,</span> <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">22.5</span><span class="fu">},</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"extent"</span><span class="fu">:</span>  <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span>    <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">9787.464</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
+<p><code>spec</code> is opaque to everything but the adapter of the same name. <code>window</code> and <code>extent</code> stay top-level because two jobs need them regardless of renderer: skipping the viewport request when the drawn range still equals what was pushed, and clamping a pan to the record.</p>
 <p>Panels rather than one shared x plus aligned y columns, because an overview tier reports each channel’s extrema at the samples they fell on. Aligning them is not merely awkward: on a 27-channel record one window at level 4 gives per-channel counts from 2335 to 4670, 24 distinct lengths, and the only shared axis is the union of every channel’s extrema samples — a mostly-empty grid that discards the positions the cache exists to keep. A raw window simply hands every panel the same <code>x</code>.</p>
 <p><code>window</code> is what is loaded; <code>extent</code> is the record. Panels are drawn against <code>window</code>, not against their own extents, or each would autoscale to a slightly different range and the stack would lose its alignment — a bucket straddling the window edge is returned whole, so points reach past the window by up to one bucket. Panning clamps to <code>extent</code>, so a reader may pan past what is loaded; the canvas is briefly empty there until the controller answers.</p>
 </section></section><section class="section level2"><h2 id="visualization-engine">Visualization Engine<a class="anchor" aria-label="anchor" href="#visualization-engine"></a>
@@ -226,13 +224,16 @@ flowchart LR
 <div>
 <pre class="mermaid mermaid-js" data-label="visualization-map">flowchart LR
     Viewport["read_viewport()&lt;br/&gt;raw and overview tiers"]:::implemented
-    Panels["panel payload&lt;br/&gt;gm_viewport_panels()&lt;br/&gt;backend neutral"]:::implemented
-    UplotRenderer["uPlot adapter&lt;br/&gt;gram_plot(); view_uplot()&lt;br/&gt;synced channels; pan; zoom"]:::implemented
+    Panels["panels&lt;br/&gt;gm_viewport_panels()&lt;br/&gt;backend neutral, in R"]:::implemented
+    Uplot["uPlot&lt;br/&gt;gm_uplot_spec(); view_uplot()&lt;br/&gt;backend-uplot.R"]:::implemented
+    Plotly["plotly.js&lt;br/&gt;gm_plotly_spec(); view_plotly()&lt;br/&gt;backend-plotly.R"]:::implemented
     StudyExplorer["Study explorer&lt;br/&gt;explore_study()&lt;br/&gt;view_segment()"]:::planned
 
     Viewport --&gt; Panels
-    Panels --&gt; UplotRenderer
-    UplotRenderer --&gt; StudyExplorer
+    Panels --&gt; Uplot
+    Panels --&gt; Plotly
+    Uplot --&gt; StudyExplorer
+    Plotly --&gt; StudyExplorer
 </pre>
 </div>
 </div>
@@ -245,20 +246,18 @@ flowchart LR
 <span><span class="co"># currency read_viewport() and normalize_selection() speak, so a selection made</span></span>
 <span><span class="co"># in the viewer feeds straight back. Defaults to the whole record, which at a</span></span>
 <span><span class="co"># coarse tier is the study navigator.</span></span>
-<span><span class="va">view_uplot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
-<span>  <span class="va">cache</span>,</span>
-<span>  <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">width_px</span> <span class="op">=</span> <span class="fl">1200</span>,</span>
-<span>  <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span>,</span>
-<span>  <span class="va">backend</span> <span class="op">=</span> <span class="st">"uplot"</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># implemented in R/backend-viewer.R</span></span>
+<span><span class="va">view_uplot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">cache</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">width_px</span> <span class="op">=</span> <span class="fl">1200</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/backend-uplot.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># The widget and its payload; nothing here is uPlot-specific.</span></span>
-<span><span class="va">gram_plot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">panels</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">extent</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">backend</span> <span class="op">=</span> <span class="st">"uplot"</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="co"># The same twelve lines with backend = "plotly"; the parallel is the point.</span></span>
+<span><span class="va">view_plotly</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">cache</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">width_px</span> <span class="op">=</span> <span class="fl">1200</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/backend-plotly.R</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># The widget and its payload; nothing here belongs to one renderer.</span></span>
+<span><span class="va">gram_plot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">panels</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">extent</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>                      <span class="va">backend</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"uplot"</span>, <span class="st">"plotly"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># implemented in R/backend-plot.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -274,7 +273,17 @@ flowchart LR
 </div>
 <section class="level2"><h3 data-anchor-id="swapping-the-renderer" id="swapping-the-renderer">Swapping the renderer<a class="anchor" aria-label="anchor" href="#swapping-the-renderer"></a>
 </h3>
-<p>The backend is named in the payload and resolved in the browser, by <code>GRAM.adapters[cfg.backend]</code>. A second renderer is another entry in that registry rather than another htmlwidget with its own binding and dependency set, and it has to supply:</p>
+<p>The rule that decides what lives where: <strong>JavaScript owns what happens at interaction speed and what needs a live DOM; R owns everything that is data.</strong> So each backend’s translation – panels into what its library wants – is an R function, and the JavaScript per backend shrinks to the library call and its events. This is how <a href="https://plotly-r.com" class="external-link">plotly</a> and <a href="https://github.com/rstudio/DT" class="external-link">DT</a> are built, and it puts every choice about a figure where it can be read with <code><a href="https://rdrr.io/r/utils/str.html" class="external-link">str()</a></code>.</p>
+<p>A backend is one file on each side, named for it, holding everything specific to it and nothing else; a file named for a role holds only what every backend shares:</p>
+<pre><code>R/backend-plot.R        gram_plot(), gm_backend() -- the register -- validators
+R/backend-viewer.R      gm_viewport_panels(): cache to panels, the seam
+R/backend-proxy.R       gm_set_data(), normalize_selection(): controller &lt;-&gt; live widget
+R/backend-uplot.R       gm_uplot_spec(), view_uplot()
+R/backend-plotly.R      gm_plotly_spec(), view_plotly()
+lib/gram/gram-core.js   lifecycle, emit, the set_data handler, gesture rules
+lib/gram/gram-adapter-uplot.js    drives uPlot from the spec; hooks and sync
+lib/gram/gram-adapter-plotly.js   drives Plotly.react from the spec; two events</code></pre>
+<p><code>gm_backend(name)</code> returns the backend’s <code>spec</code> function and the <code>htmlDependency</code> list its library needs; <code><a href="../reference/gram_plot.html">gram_plot()</a></code> attaches only those, so a plotly widget never fetches uPlot and vice versa. <code>view_&lt;backend&gt;()</code> is each backend’s troubleshooting entry: cache and window in, that backend’s widget out, no controller. The browser resolves <code>cfg.backend</code> through <code>GRAM.adapters</code>, and an adapter supplies four methods:</p>
 <table class="table caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -287,7 +296,7 @@ flowchart LR
 <tbody>
 <tr class="odd">
 <td><code>create(el, cfg)</code></td>
-<td>first render; returns the instance state</td>
+<td>first render; <code>cfg.spec</code> is the library’s input; returns the state</td>
 </tr>
 <tr class="even">
 <td><code>destroy(state)</code></td>
@@ -295,18 +304,16 @@ flowchart LR
 </tr>
 <tr class="odd">
 <td><code>resize(state)</code></td>
-<td>the element’s box changed</td>
+<td>the element’s box changed; emit <code>width</code> only on change</td>
 </tr>
 <tr class="even">
-<td><code>setVisible(state, channels)</code></td>
-<td>a controller changed which channels are on screen</td>
-</tr>
-<tr class="odd">
-<td><code>setData(state, panels, bounds)</code></td>
-<td>a controller pushed a new window</td>
+<td><code>setData(state, spec, window)</code></td>
+<td>a controller pushed a new spec; re-force the x range; never emit</td>
 </tr>
 </tbody>
 </table>
+<p>Which channels are on screen is a controller decision, and the controller is R: it narrows the already-loaded panels and pushes a smaller spec. There is no <code>setVisible</code>.</p>
+<p>The two adapters differ in the way their libraries do. uPlot is imperative – its options carry functions – so <code>gm_uplot_spec()</code> sends only data, labels and sizes and the adapter keeps the hooks, the sync and the rebuild. plotly is declarative, so <code>gm_plotly_spec()</code> is the whole figure (traces, a coupled grid, one shared x axis, every y fixed, the gesture surface) and the adapter adds the element’s width and two listeners. Their looks differ; that is the accepted cost of swapping, not something to reconcile.</p>
 <p>Navigation is one channel in the other direction. Zoom (a drag release) and pan (the wheel) both end in a scale change, so both are reported as the range wanted — debounced, and suppressed while a push is being applied, since a reply would otherwise be read as a fresh request and loop. The controller answers with whichever tier fits, so the same gesture refines an overview into raw without the browser knowing which it asked for.</p>
 <p>Design:</p>
 <ul>
@@ -386,7 +393,7 @@ flowchart LR
 <p>Annotation schemas are user-supplied and versioned. Each archetype defines: code, label, point/span/group geometry, channel scope, style, allowed attributes, and optional snap rule (<code>none</code>, peak, trough, maximum absolute slope).</p>
 <p>Programmed stimulation should be a span/group with child stimulus marks and attributes such as site and coupling intervals. This supports useful filtering; hundreds of unrelated ticks do not.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">annotation_schema</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">definition</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: validate and register archetypes</span></span>
 <span><span class="op">}</span></span>
@@ -420,7 +427,7 @@ flowchart LR
 </h3>
 <p>A bookmark is a <strong>saved view</strong>, not copied signal data: record fingerprint, sample range, channel order, gains, visible annotation layers, label, notes, and tags. It appears in navigation like an event and is the input to <code><a href="../reference/tracing.html">tracing()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bookmark_view</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">window</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">state</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span>
@@ -495,7 +502,7 @@ flowchart LR
 </table>
 <p>Vendor one pinned anime.js v4 build under <code>inst/htmlwidgets/lib/</code>. Keep selectors, timeline positions, and anime.js option names inside the compiler rather than in the public R object.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: create from a bookmark or explicit study window; returns a tracing object</span></span>
 <span>  <span class="co"># Creates a S7 Tracing object</span></span>
@@ -733,14 +740,12 @@ flowchart LR
 <code>request_id</code>: used to reject stale asynchronous responses. Not implemented: R is single-threaded and reads are serialised, so responses cannot arrive out of order until reads go asynchronous.</li>
 </ul></section><section class="level2"><h3 data-anchor-id="panel-payload" id="panel-payload-1">Panel payload<a class="anchor" aria-label="anchor" href="#panel-payload-1"></a>
 </h3>
-<p>A renderer never learns which tier it was handed. <code>gm_viewport_panels()</code> flattens both viewport shapes into one list of panels, each carrying its own <code>x</code> and <code>y</code> in elapsed seconds:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">"backend"</span><span class="fu">:</span> <span class="st">"uplot"</span><span class="fu">,</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"panels"</span><span class="fu">:</span> <span class="ot">[</span> <span class="fu">{</span><span class="dt">"label"</span><span class="fu">:</span> <span class="st">"HIS D"</span><span class="fu">,</span> <span class="dt">"x"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span> <span class="dt">"y"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">{</span><span class="dt">"label"</span><span class="fu">:</span> <span class="st">"CS 1-2"</span><span class="fu">,</span> <span class="dt">"x"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span> <span class="dt">"y"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">}</span> <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"window"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="fl">12.5</span><span class="fu">,</span> <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">22.5</span><span class="fu">},</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"extent"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span> <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">9787.464</span><span class="fu">},</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"scale"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kind"</span><span class="fu">:</span> <span class="st">"elapsed"</span><span class="fu">,</span> <span class="dt">"unit"</span><span class="fu">:</span> <span class="st">"s"</span><span class="fu">},</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"layout"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"panel_height"</span><span class="fu">:</span> <span class="dv">120</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
+<p>A renderer never learns which tier it was handed. <code>gm_viewport_panels()</code> flattens both viewport shapes into one list of panels, each carrying its own <code>x</code> and <code>y</code> in elapsed seconds. Panels are the contract <strong>on the R side</strong>: every backend starts from them. What crosses the wire is the backend’s own spec, built in R from those panels:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">"backend"</span><span class="fu">:</span> <span class="st">"plotly"</span><span class="fu">,</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"spec"</span><span class="fu">:</span>    <span class="fu">{</span> <span class="dt">"...exactly what the library wants, built by gm_plotly_spec()..."</span> <span class="fu">},</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"window"</span><span class="fu">:</span>  <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="fl">12.5</span><span class="fu">,</span> <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">22.5</span><span class="fu">},</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"extent"</span><span class="fu">:</span>  <span class="fu">{</span><span class="dt">"min"</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span>    <span class="dt">"max"</span><span class="fu">:</span> <span class="fl">9787.464</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
+<p><code>spec</code> is opaque to everything but the adapter of the same name. <code>window</code> and <code>extent</code> stay top-level because two jobs need them regardless of renderer: skipping the viewport request when the drawn range still equals what was pushed, and clamping a pan to the record.</p>
 <p>Panels rather than one shared x plus aligned y columns, because an overview tier reports each channel’s extrema at the samples they fell on. Aligning them is not merely awkward: on a 27-channel record one window at level 4 gives per-channel counts from 2335 to 4670, 24 distinct lengths, and the only shared axis is the union of every channel’s extrema samples — a mostly-empty grid that discards the positions the cache exists to keep. A raw window simply hands every panel the same <code>x</code>.</p>
 <p><code>window</code> is what is loaded; <code>extent</code> is the record. Panels are drawn against <code>window</code>, not against their own extents, or each would autoscale to a slightly different range and the stack would lose its alignment — a bucket straddling the window edge is returned whole, so points reach past the window by up to one bucket. Panning clamps to <code>extent</code>, so a reader may pan past what is loaded; the canvas is briefly empty there until the controller answers.</p>
 </section></section><section class="section level2"><h2 id="visualization-engine-1">Visualization Engine<a class="anchor" aria-label="anchor" href="#visualization-engine-1"></a>
@@ -751,13 +756,16 @@ flowchart LR
 <div>
 <pre class="mermaid mermaid-js" data-label="visualization-map">flowchart LR
     Viewport["read_viewport()&lt;br/&gt;raw and overview tiers"]:::implemented
-    Panels["panel payload&lt;br/&gt;gm_viewport_panels()&lt;br/&gt;backend neutral"]:::implemented
-    UplotRenderer["uPlot adapter&lt;br/&gt;gram_plot(); view_uplot()&lt;br/&gt;synced channels; pan; zoom"]:::implemented
+    Panels["panels&lt;br/&gt;gm_viewport_panels()&lt;br/&gt;backend neutral, in R"]:::implemented
+    Uplot["uPlot&lt;br/&gt;gm_uplot_spec(); view_uplot()&lt;br/&gt;backend-uplot.R"]:::implemented
+    Plotly["plotly.js&lt;br/&gt;gm_plotly_spec(); view_plotly()&lt;br/&gt;backend-plotly.R"]:::implemented
     StudyExplorer["Study explorer&lt;br/&gt;explore_study()&lt;br/&gt;view_segment()"]:::planned
 
     Viewport --&gt; Panels
-    Panels --&gt; UplotRenderer
-    UplotRenderer --&gt; StudyExplorer
+    Panels --&gt; Uplot
+    Panels --&gt; Plotly
+    Uplot --&gt; StudyExplorer
+    Plotly --&gt; StudyExplorer
 </pre>
 </div>
 </div>
@@ -770,20 +778,18 @@ flowchart LR
 <span><span class="co"># currency read_viewport() and normalize_selection() speak, so a selection made</span></span>
 <span><span class="co"># in the viewer feeds straight back. Defaults to the whole record, which at a</span></span>
 <span><span class="co"># coarse tier is the study navigator.</span></span>
-<span><span class="va">view_uplot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
-<span>  <span class="va">cache</span>,</span>
-<span>  <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">width_px</span> <span class="op">=</span> <span class="fl">1200</span>,</span>
-<span>  <span class="va">resolution</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"raw"</span>, <span class="st">"overview"</span><span class="op">)</span>,</span>
-<span>  <span class="va">backend</span> <span class="op">=</span> <span class="st">"uplot"</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># implemented in R/backend-viewer.R</span></span>
+<span><span class="va">view_uplot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">cache</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">width_px</span> <span class="op">=</span> <span class="fl">1200</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/backend-uplot.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># The widget and its payload; nothing here is uPlot-specific.</span></span>
-<span><span class="va">gram_plot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">panels</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">extent</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">backend</span> <span class="op">=</span> <span class="st">"uplot"</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="co"># The same twelve lines with backend = "plotly"; the parallel is the point.</span></span>
+<span><span class="va">view_plotly</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">cache</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">channels</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">width_px</span> <span class="op">=</span> <span class="fl">1200</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># implemented in R/backend-plotly.R</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># The widget and its payload; nothing here belongs to one renderer.</span></span>
+<span><span class="va">gram_plot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">panels</span>, <span class="va">window</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">extent</span> <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>                      <span class="va">backend</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"uplot"</span>, <span class="st">"plotly"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># implemented in R/backend-plot.R</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -799,7 +805,17 @@ flowchart LR
 </div>
 <section class="level2"><h3 data-anchor-id="swapping-the-renderer" id="swapping-the-renderer-1">Swapping the renderer<a class="anchor" aria-label="anchor" href="#swapping-the-renderer-1"></a>
 </h3>
-<p>The backend is named in the payload and resolved in the browser, by <code>GRAM.adapters[cfg.backend]</code>. A second renderer is another entry in that registry rather than another htmlwidget with its own binding and dependency set, and it has to supply:</p>
+<p>The rule that decides what lives where: <strong>JavaScript owns what happens at interaction speed and what needs a live DOM; R owns everything that is data.</strong> So each backend’s translation – panels into what its library wants – is an R function, and the JavaScript per backend shrinks to the library call and its events. This is how <a href="https://plotly-r.com" class="external-link">plotly</a> and <a href="https://github.com/rstudio/DT" class="external-link">DT</a> are built, and it puts every choice about a figure where it can be read with <code><a href="https://rdrr.io/r/utils/str.html" class="external-link">str()</a></code>.</p>
+<p>A backend is one file on each side, named for it, holding everything specific to it and nothing else; a file named for a role holds only what every backend shares:</p>
+<pre><code>R/backend-plot.R        gram_plot(), gm_backend() -- the register -- validators
+R/backend-viewer.R      gm_viewport_panels(): cache to panels, the seam
+R/backend-proxy.R       gm_set_data(), normalize_selection(): controller &lt;-&gt; live widget
+R/backend-uplot.R       gm_uplot_spec(), view_uplot()
+R/backend-plotly.R      gm_plotly_spec(), view_plotly()
+lib/gram/gram-core.js   lifecycle, emit, the set_data handler, gesture rules
+lib/gram/gram-adapter-uplot.js    drives uPlot from the spec; hooks and sync
+lib/gram/gram-adapter-plotly.js   drives Plotly.react from the spec; two events</code></pre>
+<p><code>gm_backend(name)</code> returns the backend’s <code>spec</code> function and the <code>htmlDependency</code> list its library needs; <code><a href="../reference/gram_plot.html">gram_plot()</a></code> attaches only those, so a plotly widget never fetches uPlot and vice versa. <code>view_&lt;backend&gt;()</code> is each backend’s troubleshooting entry: cache and window in, that backend’s widget out, no controller. The browser resolves <code>cfg.backend</code> through <code>GRAM.adapters</code>, and an adapter supplies four methods:</p>
 <table class="table caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -812,7 +828,7 @@ flowchart LR
 <tbody>
 <tr class="odd">
 <td><code>create(el, cfg)</code></td>
-<td>first render; returns the instance state</td>
+<td>first render; <code>cfg.spec</code> is the library’s input; returns the state</td>
 </tr>
 <tr class="even">
 <td><code>destroy(state)</code></td>
@@ -820,18 +836,16 @@ flowchart LR
 </tr>
 <tr class="odd">
 <td><code>resize(state)</code></td>
-<td>the element’s box changed</td>
+<td>the element’s box changed; emit <code>width</code> only on change</td>
 </tr>
 <tr class="even">
-<td><code>setVisible(state, channels)</code></td>
-<td>a controller changed which channels are on screen</td>
-</tr>
-<tr class="odd">
-<td><code>setData(state, panels, bounds)</code></td>
-<td>a controller pushed a new window</td>
+<td><code>setData(state, spec, window)</code></td>
+<td>a controller pushed a new spec; re-force the x range; never emit</td>
 </tr>
 </tbody>
 </table>
+<p>Which channels are on screen is a controller decision, and the controller is R: it narrows the already-loaded panels and pushes a smaller spec. There is no <code>setVisible</code>.</p>
+<p>The two adapters differ in the way their libraries do. uPlot is imperative – its options carry functions – so <code>gm_uplot_spec()</code> sends only data, labels and sizes and the adapter keeps the hooks, the sync and the rebuild. plotly is declarative, so <code>gm_plotly_spec()</code> is the whole figure (traces, a coupled grid, one shared x axis, every y fixed, the gesture surface) and the adapter adds the element’s width and two listeners. Their looks differ; that is the accepted cost of swapping, not something to reconcile.</p>
 <p>Navigation is one channel in the other direction. Zoom (a drag release) and pan (the wheel) both end in a scale change, so both are reported as the range wanted — debounced, and suppressed while a push is being applied, since a reply would otherwise be read as a fresh request and loop. The controller answers with whichever tier fits, so the same gesture refines an overview into raw without the browser knowing which it asked for.</p>
 <p>Design:</p>
 <ul>
@@ -911,7 +925,7 @@ flowchart LR
 <p>Annotation schemas are user-supplied and versioned. Each archetype defines: code, label, point/span/group geometry, channel scope, style, allowed attributes, and optional snap rule (<code>none</code>, peak, trough, maximum absolute slope).</p>
 <p>Programmed stimulation should be a span/group with child stimulus marks and attributes such as site and coupling intervals. This supports useful filtering; hundreds of unrelated ticks do not.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">annotation_schema</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">definition</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: validate and register archetypes</span></span>
 <span><span class="op">}</span></span>
@@ -945,7 +959,7 @@ flowchart LR
 </h3>
 <p>A bookmark is a <strong>saved view</strong>, not copied signal data: record fingerprint, sample range, channel order, gains, visible annotation layers, label, notes, and tags. It appears in navigation like an event and is the input to <code><a href="../reference/tracing.html">tracing()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bookmark_view</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">study</span>, <span class="va">window</span>, <span class="va">label</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">state</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO</span></span>
 <span><span class="op">}</span></span>
@@ -1020,7 +1034,7 @@ flowchart LR
 </table>
 <p>Vendor one pinned anime.js v4 build under <code>inst/htmlwidgets/lib/</code>. Keep selectors, timeline positions, and anime.js option names inside the compiler rather than in the public R object.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tracing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># TODO: create from a bookmark or explicit study window; returns a tracing object</span></span>
 <span>  <span class="co"># Creates a S7 Tracing object</span></span>

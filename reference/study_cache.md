@@ -53,3 +53,8 @@ A `StudyCache`.
 [`build_overview()`](https://shah-in-boots.github.io/gram/reference/build_overview.md),
 [`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md),
 [`read_study_signal()`](https://shah-in-boots.github.io/gram/reference/read_study_signal.md)
+
+Other cache:
+[`cache_annotators()`](https://shah-in-boots.github.io/gram/reference/cache_annotators.md),
+[`cache_paths()`](https://shah-in-boots.github.io/gram/reference/cache_paths.md),
+[`cache_study_data()`](https://shah-in-boots.github.io/gram/reference/cache_study_data.md)

@@ -12,7 +12,7 @@ gram_harness(
   cache,
   window = NULL,
   channels = NULL,
-  backend = c("uplot"),
+  backend = c("uplot", "plotly"),
   script = harnessScript,
   ...
 )
@@ -62,3 +62,9 @@ both report the range wanted and are answered with whichever tier fits
 it. The harness is the controller: it knows the backend by name only,
 and every change it makes – a new window, a new tier, a different set of
 channels – is one push of a fresh spec into the live widget.
+
+## See also
+
+Other controller:
+[`gram_channels`](https://shah-in-boots.github.io/gram/reference/gram_channels.md),
+[`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)

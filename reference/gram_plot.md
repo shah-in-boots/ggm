@@ -17,7 +17,7 @@ gram_plot(
   panels,
   window = NULL,
   extent = NULL,
-  backend = c("uplot"),
+  backend = c("uplot", "plotly"),
   scale = list(kind = "index", rate = 1),
   panel_height = 120,
   width = NULL,
@@ -77,3 +77,9 @@ An `htmlwidget`.
 
 [`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md),
 [`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
+
+Other widgets:
+[`gram_plotOutput()`](https://shah-in-boots.github.io/gram/reference/gram_plotOutput.md),
+[`gram_tracingOutput()`](https://shah-in-boots.github.io/gram/reference/gram_tracingOutput.md),
+[`render_gram_plot()`](https://shah-in-boots.github.io/gram/reference/render_gram_plot.md),
+[`render_gram_tracing()`](https://shah-in-boots.github.io/gram/reference/render_gram_tracing.md)

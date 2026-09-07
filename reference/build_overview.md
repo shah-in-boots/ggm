@@ -57,3 +57,7 @@ units. Time is never stored; it is `sample / sample_rate`.
 ## See also
 
 [`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
+
+Other viewport:
+[`read_study_signal()`](https://shah-in-boots.github.io/gram/reference/read_study_signal.md),
+[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)

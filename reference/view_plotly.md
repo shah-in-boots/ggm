@@ -1,13 +1,15 @@
-# View a study window with uPlot
+# View a study window with plotly
 
-Reads one window from a `StudyCache` and returns the uPlot widget: cache
-and window in, widget out, no controller. It is the one-call check that
-this backend draws a window, and it lives beside the spec it exercises.
+Reads one window from a `StudyCache` and returns the plotly widget:
+cache and window in, widget out, no controller. It is the one-call check
+that this backend draws a window, and it lives beside the spec it
+exercises. Needs the `plotly` package, whose plotly.js bundle is
+borrowed rather than vendored.
 
 ## Usage
 
 ``` r
-view_uplot(
+view_plotly(
   cache,
   window = NULL,
   channels = NULL,
@@ -58,15 +60,12 @@ The window is given in samples, the same currency
 [`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
 and
 [`normalize_selection()`](https://shah-in-boots.github.io/gram/reference/normalize_selection.md)
-speak, so a selection made in the viewer can be fed straight back
-without conversion. The whole record is a valid window; at a coarse
-overview tier that is the study navigator, so the default shows the
-entire study rather than an arbitrary opening slice.
+speak. The whole record is a valid window and the default.
 
 ## See also
 
-[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md),
-[`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
+[`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md),
+[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md)
 
 Other backend viewers:
-[`view_plotly()`](https://shah-in-boots.github.io/gram/reference/view_plotly.md)
+[`view_uplot()`](https://shah-in-boots.github.io/gram/reference/view_uplot.md)

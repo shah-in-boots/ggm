@@ -21,3 +21,11 @@ gram_tracingOutput(outputId, width = "100%", height = "400px")
 ## Value
 
 A Shiny widget output element.
+
+## See also
+
+Other widgets:
+[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md),
+[`gram_plotOutput()`](https://shah-in-boots.github.io/gram/reference/gram_plotOutput.md),
+[`render_gram_plot()`](https://shah-in-boots.github.io/gram/reference/render_gram_plot.md),
+[`render_gram_tracing()`](https://shah-in-boots.github.io/gram/reference/render_gram_tracing.md)

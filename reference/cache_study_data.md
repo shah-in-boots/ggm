@@ -38,3 +38,10 @@ cache_study_data(
 ## Value
 
 The path to `dir`, invisibly when a download happened.
+
+## See also
+
+Other cache:
+[`cache_annotators()`](https://shah-in-boots.github.io/gram/reference/cache_annotators.md),
+[`cache_paths()`](https://shah-in-boots.github.io/gram/reference/cache_paths.md),
+[`study_cache()`](https://shah-in-boots.github.io/gram/reference/study_cache.md)
