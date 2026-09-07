@@ -90,6 +90,7 @@ gm_bucket_extrema <- function(values, samples, bucket) {
 #' @return The handle, invisibly. The overview lives on disk, not in the
 #'   handle, so no reassignment is needed.
 #' @seealso [read_viewport()]
+#' @family viewport
 #' @export
 build_overview <- function(cache,
                            chunk_seconds = 60,
@@ -255,6 +256,7 @@ build_overview <- function(cache,
 #'   position in the pyramid. Extrema fall at different samples per channel,
 #'   which is why the two shapes differ.
 #' @seealso [build_overview()], [read_study_signal()]
+#' @family viewport
 #' @export
 read_viewport <- function(cache,
                           window,

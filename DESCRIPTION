@@ -29,6 +29,7 @@ Suggests:
     ggplot2,
     knitr,
     piggyback,
+    plotly,
     quarto,
     rmarkdown,
     shiny,

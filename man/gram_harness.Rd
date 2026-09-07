@@ -8,7 +8,7 @@ gram_harness(
   cache,
   window = NULL,
   channels = NULL,
-  backend = c("uplot"),
+  backend = c("uplot", "plotly"),
   script = harnessScript,
   ...
 )
@@ -45,4 +45,9 @@ harness is the controller: it knows the backend by name only, and every
 change it makes -- a new window, a new tier, a different set of channels --
 is one push of a fresh spec into the live widget.
 }
-\concept{harness}
+\seealso{
+Other controller:
+\code{\link{gram_channels}},
+\code{\link[=normalize_selection]{normalize_selection()}}
+}
+\concept{controller}

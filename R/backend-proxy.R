@@ -1,3 +1,14 @@
+# The controller's side of a live widget: a handle to it, the way to message
+# it, and the verbs a controller uses in both directions -- push a fresh spec
+# down, and turn the selection the widget reports back up into samples.
+#
+# Only gm_proxy() and gm_send() know the transport is Shiny (a session, a
+# custom message). Everything above them -- which backend, what spec, what
+# window -- is settled before the message exists. A host other than Shiny
+# replaces those two functions; the verbs above them do not change. The
+# harness and the channels module are Shiny through and through and would be
+# replaced with it -- they are the host, not the seam.
+
 # proxy -----------------------------------------------------------------
 
 gm_proxy <- function(id, session = shiny::getDefaultReactiveDomain()) {
@@ -30,7 +41,7 @@ gm_send <- function(proxy, channel, payload) {
 gm_set_data <- function(proxy,
                         panels,
                         window,
-                        backend = c("uplot"),
+                        backend = c("uplot", "plotly"),
                         scale = list(kind = "index", rate = 1),
                         panel_height = 120) {
   panels <- gm_validate_panels(panels)
@@ -57,7 +68,7 @@ gm_set_data <- function(proxy,
 #' @return A list with `begin` and `end` sample indices delimiting a half-open
 #'   range, clamped to the record. `NULL` when nothing is selected and when the
 #'   selection holds no samples.
-#' @family backend viewers
+#' @family controller
 #' @export
 normalize_selection <- function(cache, selection) {
   if (is.null(selection)) {

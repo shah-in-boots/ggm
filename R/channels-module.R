@@ -18,7 +18,7 @@
 #'   nothing is selected. Labels are `channels[chosen()]`.
 #'
 #' @name gram_channels
-#' @family shiny modules
+#' @family controller
 NULL
 
 #' @rdname gram_channels

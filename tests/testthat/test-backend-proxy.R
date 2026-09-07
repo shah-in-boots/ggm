@@ -30,6 +30,31 @@ test_that("a push carries a spec built by the named backend", {
   expect_length(captured$message$spec$panels, 1L)
 })
 
+test_that("a push for plotly carries the figure", {
+  skip_if_not_installed("plotly")
+  captured <- NULL
+  proxy <- structure(
+    list(
+      id = "viewer",
+      session = list(sendCustomMessage = function(type, message) {
+        captured <<- list(type = type, message = message)
+      })
+    ),
+    class = "gm_proxy"
+  )
+
+  gm_set_data(
+    proxy,
+    panels = list(list(label = "I", x = 0:2, y = c(1, 3, 2))),
+    window = list(min = 0, max = 2),
+    backend = "plotly"
+  )
+
+  expect_named(captured$message$spec, c("data", "layout", "config"))
+  expect_equal(captured$message$spec$layout$xaxis$range, c(0, 2))
+  expect_equal(captured$message$spec$layout$grid$rows, 1L)
+})
+
 test_that("a push refuses what a first render would refuse", {
   proxy <- structure(list(id = "x", session = NULL), class = "gm_proxy")
 

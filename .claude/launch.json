@@ -9,6 +9,15 @@
         "pkgload::load_all('.', quiet = TRUE); cache <- study_cache(file.path('inst', 'extdata', 'bard-egm.dat'), cache_dir = tempfile('gram-cache-')); build_overview(cache); shiny::runApp(gram_harness(cache), port = 7788, host = '127.0.0.1', launch.browser = FALSE)"
       ],
       "port": 7788
+    },
+    {
+      "name": "gram-harness-plotly",
+      "runtimeExecutable": "Rscript",
+      "runtimeArgs": [
+        "-e",
+        "pkgload::load_all('.', quiet = TRUE); cache <- study_cache(file.path('inst', 'extdata', 'bard-egm.dat'), cache_dir = tempfile('gram-cache-')); build_overview(cache); shiny::runApp(gram_harness(cache, backend = \"plotly\"), port = 7789, host = '127.0.0.1', launch.browser = FALSE)"
+      ],
+      "port": 7789
     }
   ]
 }

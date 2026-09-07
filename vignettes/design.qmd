@@ -182,17 +182,21 @@ intracardiac channels.
 
 A renderer never learns which tier it was handed. `gm_viewport_panels()`
 flattens both viewport shapes into one list of panels, each carrying its own
-`x` and `y` in elapsed seconds:
+`x` and `y` in elapsed seconds. Panels are the contract **on the R side**:
+every backend starts from them. What crosses the wire is the backend's own
+spec, built in R from those panels:
 
 ```json
-{ "backend": "uplot",
-  "panels": [ {"label": "HIS D", "x": [...], "y": [...]},
-              {"label": "CS 1-2", "x": [...], "y": [...]} ],
-  "window": {"min": 12.5, "max": 22.5},
-  "extent": {"min": 0, "max": 9787.464},
-  "scale": {"kind": "elapsed", "unit": "s"},
-  "layout": {"panel_height": 120} }
+{ "backend": "plotly",
+  "spec":    { "...exactly what the library wants, built by gm_plotly_spec()..." },
+  "window":  {"min": 12.5, "max": 22.5},
+  "extent":  {"min": 0,    "max": 9787.464} }
 ```
+
+`spec` is opaque to everything but the adapter of the same name. `window` and
+`extent` stay top-level because two jobs need them regardless of renderer:
+skipping the viewport request when the drawn range still equals what was
+pushed, and clamping a pan to the record.
 
 Panels rather than one shared x plus aligned y columns, because an overview
 tier reports each channel's extrema at the samples they fell on. Aligning them
@@ -215,13 +219,16 @@ the canvas is briefly empty there until the controller answers.
 %%| label: visualization-map
 flowchart LR
     Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
-    Panels["panel payload<br/>gm_viewport_panels()<br/>backend neutral"]:::implemented
-    UplotRenderer["uPlot adapter<br/>gram_plot(); view_uplot()<br/>synced channels; pan; zoom"]:::implemented
+    Panels["panels<br/>gm_viewport_panels()<br/>backend neutral, in R"]:::implemented
+    Uplot["uPlot<br/>gm_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
+    Plotly["plotly.js<br/>gm_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
     Viewport --> Panels
-    Panels --> UplotRenderer
-    UplotRenderer --> StudyExplorer
+    Panels --> Uplot
+    Panels --> Plotly
+    Uplot --> StudyExplorer
+    Plotly --> StudyExplorer
 ```
 
 uPlot is the canvas renderer, not the data backend. Its numeric x-scale,
@@ -234,20 +241,18 @@ its input must remain viewport-sized. See the
 # currency read_viewport() and normalize_selection() speak, so a selection made
 # in the viewer feeds straight back. Defaults to the whole record, which at a
 # coarse tier is the study navigator.
-view_uplot <- function(
-  cache,
-  window = NULL,
-  channels = NULL,
-  width_px = 1200,
-  resolution = c("auto", "raw", "overview"),
-  backend = "uplot",
-  ...
-) {
-  # implemented in R/backend-viewer.R
+view_uplot <- function(cache, window = NULL, channels = NULL, width_px = 1200, ...) {
+  # implemented in R/backend-uplot.R
 }
 
-# The widget and its payload; nothing here is uPlot-specific.
-gram_plot <- function(panels, window = NULL, extent = NULL, backend = "uplot", ...) {
+# The same twelve lines with backend = "plotly"; the parallel is the point.
+view_plotly <- function(cache, window = NULL, channels = NULL, width_px = 1200, ...) {
+  # implemented in R/backend-plotly.R
+}
+
+# The widget and its payload; nothing here belongs to one renderer.
+gram_plot <- function(panels, window = NULL, extent = NULL,
+                      backend = c("uplot", "plotly"), ...) {
   # implemented in R/backend-plot.R
 }
 
@@ -264,18 +269,53 @@ view_segment <- function(x, annotations = NULL, ...) {
 
 ## Swapping the renderer
 
-The backend is named in the payload and resolved in the browser, by
-`GRAM.adapters[cfg.backend]`. A second renderer is another entry in that
-registry rather than another htmlwidget with its own binding and dependency
-set, and it has to supply:
+The rule that decides what lives where: **JavaScript owns what happens at
+interaction speed and what needs a live DOM; R owns everything that is data.**
+So each backend's translation -- panels into what its library wants -- is an R
+function, and the JavaScript per backend shrinks to the library call and its
+events. This is how `{plotly}` and `{DT}` are built, and it puts every choice
+about a figure where it can be read with `str()`.
+
+A backend is one file on each side, named for it, holding everything specific
+to it and nothing else; a file named for a role holds only what every backend
+shares:
+
+```
+R/backend-plot.R        gram_plot(), gm_backend() -- the register -- validators
+R/backend-viewer.R      gm_viewport_panels(): cache to panels, the seam
+R/backend-proxy.R       gm_set_data(), normalize_selection(): controller <-> live widget
+R/backend-uplot.R       gm_uplot_spec(), view_uplot()
+R/backend-plotly.R      gm_plotly_spec(), view_plotly()
+lib/gram/gram-core.js   lifecycle, emit, the set_data handler, gesture rules
+lib/gram/gram-adapter-uplot.js    drives uPlot from the spec; hooks and sync
+lib/gram/gram-adapter-plotly.js   drives Plotly.react from the spec; two events
+```
+
+`gm_backend(name)` returns the backend's `spec` function and the
+`htmlDependency` list its library needs; `gram_plot()` attaches only those, so
+a plotly widget never fetches uPlot and vice versa. `view_<backend>()` is each
+backend's troubleshooting entry: cache and window in, that backend's widget
+out, no controller. The browser resolves `cfg.backend` through
+`GRAM.adapters`, and an adapter supplies four methods:
 
 | Method | Called when |
 |---|---|
-| `create(el, cfg)` | first render; returns the instance state |
+| `create(el, cfg)` | first render; `cfg.spec` is the library's input; returns the state |
 | `destroy(state)` | teardown, including a re-render of the same element |
-| `resize(state)` | the element's box changed |
-| `setVisible(state, channels)` | a controller changed which channels are on screen |
-| `setData(state, panels, bounds)` | a controller pushed a new window |
+| `resize(state)` | the element's box changed; emit `width` only on change |
+| `setData(state, spec, window)` | a controller pushed a new spec; re-force the x range; never emit |
+
+Which channels are on screen is a controller decision, and the controller is
+R: it narrows the already-loaded panels and pushes a smaller spec. There is no
+`setVisible`.
+
+The two adapters differ in the way their libraries do. uPlot is imperative --
+its options carry functions -- so `gm_uplot_spec()` sends only data, labels
+and sizes and the adapter keeps the hooks, the sync and the rebuild. plotly is
+declarative, so `gm_plotly_spec()` is the whole figure (traces, a coupled
+grid, one shared x axis, every y fixed, the gesture surface) and the adapter
+adds the element's width and two listeners. Their looks differ; that is the
+accepted cost of swapping, not something to reconcile.
 
 Navigation is one channel in the other direction. Zoom (a drag release) and pan
 (the wheel) both end in a scale change, so both are reported as the range

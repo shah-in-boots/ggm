@@ -17,3 +17,10 @@ overview has been built.
 \description{
 All paths in a study group
 }
+\seealso{
+Other cache:
+\code{\link[=cache_annotators]{cache_annotators()}},
+\code{\link[=cache_study_data]{cache_study_data()}},
+\code{\link[=study_cache]{study_cache()}}
+}
+\concept{cache}

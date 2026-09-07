@@ -37,3 +37,9 @@ An \code{EGM} signal table.
 Thin wrapper around \code{\link[EGM:read_signal]{EGM::read_signal()}} that uses the parsed header stored
 in the \code{StudyCache}.
 }
+\seealso{
+Other viewport:
+\code{\link[=build_overview]{build_overview()}},
+\code{\link[=read_viewport]{read_viewport()}}
+}
+\concept{viewport}

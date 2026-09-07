@@ -11,6 +11,7 @@
 #' @param force Re-download even if the files are already cached.
 #' @param quiet Suppress piggyback's download progress bar.
 #' @return The path to `dir`, invisibly when a download happened.
+#' @family cache
 #' @export
 cache_study_data <- function(dataset = "ort",
                                dir = tools::R_user_dir("gram", "cache"),

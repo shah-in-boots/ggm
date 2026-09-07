@@ -79,6 +79,14 @@ test_that("only the chosen backend's assets travel with the widget", {
   carried <- vapply(widget$dependencies, function(d) d$name, character(1))
 
   expect_equal(carried, c("uplot", "gram-adapter-uplot"))
+  expect_false("plotly-main" %in% carried)
+
+  skip_if_not_installed("plotly")
+  widget <- gram_plot(list(list(x = 1:3, y = 1:3)), backend = "plotly")
+  carried <- vapply(widget$dependencies, function(d) d$name, character(1))
+
+  expect_equal(carried, c("plotly-main", "gram-adapter-plotly"))
+  expect_false("uplot" %in% carried)
 })
 
 test_that("a backend is a spec function and a dependency list", {
@@ -102,7 +110,8 @@ test_that("the pinned uPlot and shared assets are installed", {
   paths <- file.path(lib, c(
     "uplot/uPlot.iife.min.js", "uplot/uPlot.min.css", "uplot/LICENSE",
     "gram/gram-core.js", "gram/gram-core.css",
-    "gram/gram-adapter-uplot.js", "gram/gram-uplot.css"
+    "gram/gram-adapter-uplot.js", "gram/gram-uplot.css",
+    "gram/gram-adapter-plotly.js"
   ))
 
   expect_true(all(file.exists(paths)))

@@ -35,12 +35,12 @@ harnessScript <- 'tracing(
 #' @param script Initial contents of the scripting panel.
 #' @param ... Passed to [shiny::shinyApp()].
 #' @return A Shiny app object.
-#' @family harness
+#' @family controller
 #' @export
 gram_harness <- function(cache,
                         window = NULL,
                         channels = NULL,
-                        backend = c("uplot"),
+                        backend = c("uplot", "plotly"),
                         script = harnessScript,
                         ...) {
   if (!requireNamespace("shiny", quietly = TRUE)) {

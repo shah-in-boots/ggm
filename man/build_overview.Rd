@@ -43,4 +43,9 @@ Time is never stored; it is \code{sample / sample_rate}.
 }
 \seealso{
 \code{\link[=read_viewport]{read_viewport()}}
+
+Other viewport:
+\code{\link[=read_study_signal]{read_study_signal()}},
+\code{\link[=read_viewport]{read_viewport()}}
 }
+\concept{viewport}

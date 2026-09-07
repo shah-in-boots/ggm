@@ -19,3 +19,11 @@ A Shiny render function.
 \description{
 Shiny render function for a gram plot
 }
+\seealso{
+Other widgets:
+\code{\link[=gram_plot]{gram_plot()}},
+\code{\link[=gram_plotOutput]{gram_plotOutput()}},
+\code{\link[=gram_tracingOutput]{gram_tracingOutput()}},
+\code{\link[=render_gram_tracing]{render_gram_tracing()}}
+}
+\concept{widgets}

@@ -37,4 +37,10 @@ this record live. Nothing is read from the signal and nothing is written.
 }
 \seealso{
 \code{\link[=build_overview]{build_overview()}}, \code{\link[=read_viewport]{read_viewport()}}, \code{\link[=read_study_signal]{read_study_signal()}}
+
+Other cache:
+\code{\link[=cache_annotators]{cache_annotators()}},
+\code{\link[=cache_paths]{cache_paths()}},
+\code{\link[=cache_study_data]{cache_study_data()}}
 }
+\concept{cache}

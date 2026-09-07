@@ -8,7 +8,7 @@ gram_plot(
   panels,
   window = NULL,
   extent = NULL,
-  backend = c("uplot"),
+  backend = c("uplot", "plotly"),
   scale = list(kind = "index", rate = 1),
   panel_height = 120,
   width = NULL,
@@ -58,4 +58,11 @@ directly.
 }
 \seealso{
 \code{\link[=view_uplot]{view_uplot()}}, \code{\link[=read_viewport]{read_viewport()}}
+
+Other widgets:
+\code{\link[=gram_plotOutput]{gram_plotOutput()}},
+\code{\link[=gram_tracingOutput]{gram_tracingOutput()}},
+\code{\link[=render_gram_plot]{render_gram_plot()}},
+\code{\link[=render_gram_tracing]{render_gram_tracing()}}
 }
+\concept{widgets}

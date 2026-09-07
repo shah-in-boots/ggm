@@ -129,6 +129,7 @@ S7::method(print, StudyCache) <- function(x, ...) {
 #' @param header_ext Header extension, without the dot.
 #' @return A `StudyCache`.
 #' @seealso [build_overview()], [read_viewport()], [read_study_signal()]
+#' @family cache
 #' @export
 study_cache <- function(
   path,
@@ -288,6 +289,7 @@ gm_regex_escape <- function(x) {
 #' @return Named character vector of record paths: `data`, `header`,
 #'   `manifest`, one `annotation_<ext>` per sidecar, and `cache` when an
 #'   overview has been built.
+#' @family cache
 #' @export
 cache_paths <- function(cache) {
   paths <- c(
@@ -314,6 +316,7 @@ cache_paths <- function(cache) {
 #'
 #' @param cache A `StudyCache`.
 #' @return Character vector of annotator extensions.
+#' @family cache
 #' @export
 cache_annotators <- function(cache) {
   names(cache@annotation_paths) %||% character()
@@ -383,6 +386,7 @@ gm_manifest_has_cache <- function(cache) {
 #' @param channels Channel labels or indices. Defaults to all channels.
 #' @param units Units passed to [EGM::read_signal()].
 #' @return An `EGM` signal table.
+#' @family viewport
 #' @export
 read_study_signal <- function(cache,
                               begin = NULL,

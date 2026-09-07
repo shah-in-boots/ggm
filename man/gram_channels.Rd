@@ -40,4 +40,9 @@ nothing is selected. Labels are \code{channels[chosen()]}.
 A Shiny module that lists the channels a record carries and reports which
 are selected. The server half returns a reactive and touches no plot.
 }
-\concept{shiny modules}
+\seealso{
+Other controller:
+\code{\link[=gram_harness]{gram_harness()}},
+\code{\link[=normalize_selection]{normalize_selection()}}
+}
+\concept{controller}

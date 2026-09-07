@@ -30,3 +30,10 @@ Fetch a \code{gram} example WFDB record — the \code{.hea} header and the \code
 — to a local directory, downloading it once and reusing the cached copy
 thereafter. Downloads use the \pkg{piggyback} package.
 }
+\seealso{
+Other cache:
+\code{\link[=cache_annotators]{cache_annotators()}},
+\code{\link[=cache_paths]{cache_paths()}},
+\code{\link[=study_cache]{study_cache()}}
+}
+\concept{cache}

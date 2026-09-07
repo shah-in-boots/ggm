@@ -45,12 +45,13 @@
 #' @param elementId Optional HTML element id.
 #' @return An `htmlwidget`.
 #' @seealso [view_uplot()], [read_viewport()]
+#' @family widgets
 #' @export
 gram_plot <- function(
   panels,
   window = NULL,
   extent = NULL,
-  backend = c("uplot"),
+  backend = c("uplot", "plotly"),
   scale = list(kind = "index", rate = 1),
   panel_height = 120,
   width = NULL,
@@ -128,7 +129,7 @@ gram_plot <- function(
 #'   [htmltools::htmlDependency()] objects.
 #' @keywords internal
 #' @noRd
-gm_backend <- function(name = c("uplot")) {
+gm_backend <- function(name = c("uplot", "plotly")) {
   name <- match.arg(name)
   gram <- function(id, version, ...) {
     htmltools::htmlDependency(
@@ -151,7 +152,30 @@ gm_backend <- function(name = c("uplot")) {
           script = "gram/gram-adapter-uplot.js", stylesheet = "gram/gram-uplot.css"
         )
       )
-    )
+    ),
+    plotly = {
+      if (!requireNamespace("plotly", quietly = TRUE)) {
+        stop(
+          "Package 'plotly' must be installed to use backend = \"plotly\"",
+          call. = FALSE
+        )
+      }
+      list(
+        spec = gm_plotly_spec,
+        dependencies = list(
+          # Named as {plotly} names its own, so htmltools deduplicates when a
+          # real plotly widget shares the page. The version is the R package's
+          # (4.12.1, ahead of the bundle's 2.25.2); the higher wins on a shared
+          # page and both name the same file.
+          htmltools::htmlDependency(
+            "plotly-main", as.character(utils::packageVersion("plotly")),
+            package = "plotly", src = "htmlwidgets/lib/plotlyjs",
+            script = "plotly-latest.min.js", all_files = FALSE
+          ),
+          gram("gram-adapter-plotly", "0.1.0", script = "gram/gram-adapter-plotly.js")
+        )
+      )
+    }
   )
 }
 
@@ -232,6 +256,7 @@ gm_validate_range <- function(range, arg) {
 #' @param outputId Output variable to read from.
 #' @param width,height Valid CSS dimensions.
 #' @return A Shiny widget output element.
+#' @family widgets
 #' @export
 gram_plotOutput <- function(outputId, width = "100%",
                            height = "400px") {
@@ -246,6 +271,7 @@ gram_plotOutput <- function(outputId, width = "100%",
 #' @param env Environment in which to evaluate `expr`.
 #' @param quoted Whether `expr` is quoted.
 #' @return A Shiny render function.
+#' @family widgets
 #' @export
 render_gram_plot <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) {

@@ -46,4 +46,9 @@ snapping; it is for drawing.
 }
 \seealso{
 \code{\link[=build_overview]{build_overview()}}, \code{\link[=read_study_signal]{read_study_signal()}}
+
+Other viewport:
+\code{\link[=build_overview]{build_overview()}},
+\code{\link[=read_study_signal]{read_study_signal()}}
 }
+\concept{viewport}
