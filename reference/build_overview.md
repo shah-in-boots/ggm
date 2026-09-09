@@ -3,7 +3,7 @@
 Streams the record through
 [`read_viewport()`](https://shah-in-boots.github.io/gram/reference/read_viewport.md)
 in chunks, reduces each chunk to per-bucket minima and maxima with
-[`gm_bucket_extrema()`](https://shah-in-boots.github.io/gram/reference/gm_bucket_extrema.md),
+[`gm_reduce_buckets()`](https://shah-in-boots.github.io/gram/reference/gm_reduce_buckets.md),
 merges the result upward until one bucket covers the whole record, and
 writes the stacked levels beside the record as `<stem>.gram.parquet` (or
 `.rds`) with a `cache` section in `<stem>.gram.json`. Peak memory is one

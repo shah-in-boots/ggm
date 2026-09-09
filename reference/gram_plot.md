@@ -50,7 +50,7 @@ gram_plot(
 - backend:
 
   Renderer to draw with. Its spec is built here in R and its library is
-  attached to the widget, both resolved by `gm_backend()`.
+  attached to the widget, both resolved by `gm_get_backend()`.
 
 - scale:
 

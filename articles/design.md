@@ -101,112 +101,21 @@ read_viewport <- function(
 }
 ```
 
-Files gram writes beside a record are named `<stem>.gram.*`, so one rule
-keeps them out of annotator discovery and the package name says where
-they came from. `<stem>.gram.json` is a manifest shared by every part of
-gram: each writer reads it, replaces only its own section, and writes
-the whole file back atomically. The cache owns the `cache` section;
-bookmarks and the annotation sidecar will own sections of their own, and
-a rebuild can never clobber them.
-
-Requirements:
-
-- Raw `.dat`/`.hea` files remain canonical and unmodified.
-- Raw windows come from `EGM::read_signal(begin, end, channels)`.
-- Chunk size bounds peak R memory during cache construction.
-- Cache is regenerable, versioned, and invalidated by the record
-  fingerprint.
-- Default cache location is user-writable; read-only study directories
-  must work.
-- Interrupted builds are resumable or safely discarded; publish cache
-  atomically.
-
-### Overview pyramid
-
-Initial reduction: **min/max per channel per bucket**, retaining each
-extremum’s sample index and emitting the pair in time order. Advantages:
-narrow spikes are not averaged away; levels can be built by merging
-adjacent buckets; one streaming pass with bounded memory.
-
-- Geometric bucket sizes, e.g. `64, 256, 1024, ...` samples.
-- Choose the finest tier that returns at most about 2–4
-  points/pixel/channel.
-- Use raw signal once the visible range is already near screen
-  resolution.
-- One table, all tiers stacked, in `<stem>.gram.parquet` (rds on
-  request): `level`, `start`, then `ch<i>.min`, `ch<i>.min_at`,
-  `ch<i>.max`, `ch<i>.max_at` per channel position. Parquet reads a
-  subset of channels without touching the rest; rds cannot.
-- The `cache` section of the manifest: version, algorithm, record
-  fingerprint, table file and format, units, sampling frequency, sample
-  count, channels, bucket sizes, and build time. Its presence is the
-  completion marker, and a fingerprint that no longer matches the record
-  reads as not built.
-- Never silently use an overview tier for measurement or annotation
-  snapping.
-
-`LTTB` remains a benchmark alternative, not the first implementation.
-Clinical acceptance tests should compare reductions on narrow His/stim
-artifacts and noisy intracardiac channels.
-
-### Viewport return contract
-
-- Raw: one shared `sample` array plus aligned channel arrays.
-- Overview: one `sample`/`value` pair per channel; extrema differ by
-  channel. Collapse a min/max pair when both refer to the same sample.
-- `time` is never stored or returned; it is `sample / sample_rate`.
-- Sample representation must remain exact for the supported maximum
-  study size.
-- `resolution`: `"raw"` or the cache bucket size.
-- `request_id`: used to reject stale asynchronous responses. Not
-  implemented: R is single-threaded and reads are serialised, so
-  responses cannot arrive out of order until reads go asynchronous.
-
-### Panel payload
-
-A renderer never learns which tier it was handed. `gm_viewport_panels()`
-flattens both viewport shapes into one list of panels, each carrying its
-own `x` and `y` in elapsed seconds. Panels are the contract **on the R
-side**: every backend starts from them. What crosses the wire is the
-backend’s own spec, built in R from those panels:
-
 ``` json
 { "backend": "plotly",
-  "spec":    { "...exactly what the library wants, built by gm_plotly_spec()..." },
+  "spec":    { "...exactly what the library wants, built by gm_build_plotly_spec()..." },
   "window":  {"min": 12.5, "max": 22.5},
   "extent":  {"min": 0,    "max": 9787.464} }
 ```
-
-`spec` is opaque to everything but the adapter of the same name.
-`window` and `extent` stay top-level because two jobs need them
-regardless of renderer: skipping the viewport request when the drawn
-range still equals what was pushed, and clamping a pan to the record.
-
-Panels rather than one shared x plus aligned y columns, because an
-overview tier reports each channel’s extrema at the samples they fell
-on. Aligning them is not merely awkward: on a 27-channel record one
-window at level 4 gives per-channel counts from 2335 to 4670, 24
-distinct lengths, and the only shared axis is the union of every
-channel’s extrema samples — a mostly-empty grid that discards the
-positions the cache exists to keep. A raw window simply hands every
-panel the same `x`.
-
-`window` is what is loaded; `extent` is the record. Panels are drawn
-against `window`, not against their own extents, or each would autoscale
-to a slightly different range and the stack would lose its alignment — a
-bucket straddling the window edge is returned whole, so points reach
-past the window by up to one bucket. Panning clamps to `extent`, so a
-reader may pan past what is loaded; the canvas is briefly empty there
-until the controller answers.
 
 ## Visualization Engine
 
 ``` mermaid
 flowchart LR
     Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
-    Panels["panels<br/>gm_viewport_panels()<br/>backend neutral, in R"]:::implemented
-    Uplot["uPlot<br/>gm_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
-    Plotly["plotly.js<br/>gm_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
+    Panels["panels<br/>gm_read_panels()<br/>backend neutral, in R"]:::implemented
+    Uplot["uPlot<br/>gm_build_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
+    Plotly["plotly.js<br/>gm_build_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
     Viewport --> Panels
@@ -252,91 +161,6 @@ view_segment <- function(x, annotations = NULL, ...) {
   # TODO
 }
 ```
-
-### Swapping the renderer
-
-The rule that decides what lives where: **JavaScript owns what happens
-at interaction speed and what needs a live DOM; R owns everything that
-is data.** So each backend’s translation – panels into what its library
-wants – is an R function, and the JavaScript per backend shrinks to the
-library call and its events. This is how [plotly](https://plotly-r.com)
-and [DT](https://github.com/rstudio/DT) are built, and it puts every
-choice about a figure where it can be read with
-[`str()`](https://rdrr.io/r/utils/str.html).
-
-A backend is one file on each side, named for it, holding everything
-specific to it and nothing else; a file named for a role holds only what
-every backend shares:
-
-    R/backend-plot.R        gram_plot(), gm_backend() -- the register -- validators
-    R/backend-viewer.R      gm_viewport_panels(): cache to panels, the seam
-    R/backend-proxy.R       gm_set_data(), normalize_selection(): controller <-> live widget
-    R/backend-uplot.R       gm_uplot_spec(), view_uplot()
-    R/backend-plotly.R      gm_plotly_spec(), view_plotly()
-    lib/gram/gram-core.js   lifecycle, emit, the set_data handler, gesture rules
-    lib/gram/gram-adapter-uplot.js    drives uPlot from the spec; hooks and sync
-    lib/gram/gram-adapter-plotly.js   drives Plotly.react from the spec; two events
-
-`gm_backend(name)` returns the backend’s `spec` function and the
-`htmlDependency` list its library needs;
-[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md)
-attaches only those, so a plotly widget never fetches uPlot and vice
-versa. `view_<backend>()` is each backend’s troubleshooting entry: cache
-and window in, that backend’s widget out, no controller. The browser
-resolves `cfg.backend` through `GRAM.adapters`, and an adapter supplies
-four methods:
-
-| Method | Called when |
-|----|----|
-| `create(el, cfg)` | first render; `cfg.spec` is the library’s input; returns the state |
-| `destroy(state)` | teardown, including a re-render of the same element |
-| `resize(state)` | the element’s box changed; emit `width` only on change |
-| `setData(state, spec, window)` | a controller pushed a new spec; re-force the x range; never emit |
-
-Which channels are on screen is a controller decision, and the
-controller is R: it narrows the already-loaded panels and pushes a
-smaller spec. There is no `setVisible`.
-
-The two adapters differ in the way their libraries do. uPlot is
-imperative – its options carry functions – so `gm_uplot_spec()` sends
-only data, labels and sizes and the adapter keeps the hooks, the sync
-and the rebuild. plotly is declarative, so `gm_plotly_spec()` is the
-whole figure (traces, a coupled grid, one shared x axis, every y fixed,
-the gesture surface) and the adapter adds the element’s width and two
-listeners. Their looks differ; that is the accepted cost of swapping,
-not something to reconcile.
-
-Navigation is one channel in the other direction. Zoom (a drag release)
-and pan (the wheel) both end in a scale change, so both are reported as
-the range wanted — debounced, and suppressed while a push is being
-applied, since a reply would otherwise be read as a fresh request and
-loop. The controller answers with whichever tier fits, so the same
-gesture refines an overview into raw without the browser knowing which
-it asked for.
-
-Design:
-
-- Shiny controller for the MWE; a static htmlwidget cannot request new R
-  reads.
-- One uPlot per visible channel, synchronized on x-range and cursor.
-- Separate charts permit independent y-gain and channel-specific min/max
-  x values.
-- One controller issues a single data request for all panels.
-- Keep the old tier visible while the next tier loads; discard stale
-  responses.
-- Debounce zoom/pan requests; later prefetch a small margin in the pan
-  direction.
-- Overview navigator always shows the study extent and current viewport.
-- Wheel/pinch zoom around cursor; drag pan; keyboard next/previous
-  window.
-- Channel order, visibility, gain, grid, and polarity are view state.
-- Annotations render in a plugin layer, not as dense uPlot signal
-  series.
-
-The canonical interactive control is visible duration. Conventional
-sweep-speed presets map to that duration. Exact `mm/s` is only
-meaningful after screen calibration; print output can use physical
-dimensions exactly.
 
 ## Annotation Interaction
 
@@ -632,112 +456,21 @@ read_viewport <- function(
 }
 ```
 
-Files gram writes beside a record are named `<stem>.gram.*`, so one rule
-keeps them out of annotator discovery and the package name says where
-they came from. `<stem>.gram.json` is a manifest shared by every part of
-gram: each writer reads it, replaces only its own section, and writes
-the whole file back atomically. The cache owns the `cache` section;
-bookmarks and the annotation sidecar will own sections of their own, and
-a rebuild can never clobber them.
-
-Requirements:
-
-- Raw `.dat`/`.hea` files remain canonical and unmodified.
-- Raw windows come from `EGM::read_signal(begin, end, channels)`.
-- Chunk size bounds peak R memory during cache construction.
-- Cache is regenerable, versioned, and invalidated by the record
-  fingerprint.
-- Default cache location is user-writable; read-only study directories
-  must work.
-- Interrupted builds are resumable or safely discarded; publish cache
-  atomically.
-
-### Overview pyramid
-
-Initial reduction: **min/max per channel per bucket**, retaining each
-extremum’s sample index and emitting the pair in time order. Advantages:
-narrow spikes are not averaged away; levels can be built by merging
-adjacent buckets; one streaming pass with bounded memory.
-
-- Geometric bucket sizes, e.g. `64, 256, 1024, ...` samples.
-- Choose the finest tier that returns at most about 2–4
-  points/pixel/channel.
-- Use raw signal once the visible range is already near screen
-  resolution.
-- One table, all tiers stacked, in `<stem>.gram.parquet` (rds on
-  request): `level`, `start`, then `ch<i>.min`, `ch<i>.min_at`,
-  `ch<i>.max`, `ch<i>.max_at` per channel position. Parquet reads a
-  subset of channels without touching the rest; rds cannot.
-- The `cache` section of the manifest: version, algorithm, record
-  fingerprint, table file and format, units, sampling frequency, sample
-  count, channels, bucket sizes, and build time. Its presence is the
-  completion marker, and a fingerprint that no longer matches the record
-  reads as not built.
-- Never silently use an overview tier for measurement or annotation
-  snapping.
-
-`LTTB` remains a benchmark alternative, not the first implementation.
-Clinical acceptance tests should compare reductions on narrow His/stim
-artifacts and noisy intracardiac channels.
-
-### Viewport return contract
-
-- Raw: one shared `sample` array plus aligned channel arrays.
-- Overview: one `sample`/`value` pair per channel; extrema differ by
-  channel. Collapse a min/max pair when both refer to the same sample.
-- `time` is never stored or returned; it is `sample / sample_rate`.
-- Sample representation must remain exact for the supported maximum
-  study size.
-- `resolution`: `"raw"` or the cache bucket size.
-- `request_id`: used to reject stale asynchronous responses. Not
-  implemented: R is single-threaded and reads are serialised, so
-  responses cannot arrive out of order until reads go asynchronous.
-
-### Panel payload
-
-A renderer never learns which tier it was handed. `gm_viewport_panels()`
-flattens both viewport shapes into one list of panels, each carrying its
-own `x` and `y` in elapsed seconds. Panels are the contract **on the R
-side**: every backend starts from them. What crosses the wire is the
-backend’s own spec, built in R from those panels:
-
 ``` json
 { "backend": "plotly",
-  "spec":    { "...exactly what the library wants, built by gm_plotly_spec()..." },
+  "spec":    { "...exactly what the library wants, built by gm_build_plotly_spec()..." },
   "window":  {"min": 12.5, "max": 22.5},
   "extent":  {"min": 0,    "max": 9787.464} }
 ```
-
-`spec` is opaque to everything but the adapter of the same name.
-`window` and `extent` stay top-level because two jobs need them
-regardless of renderer: skipping the viewport request when the drawn
-range still equals what was pushed, and clamping a pan to the record.
-
-Panels rather than one shared x plus aligned y columns, because an
-overview tier reports each channel’s extrema at the samples they fell
-on. Aligning them is not merely awkward: on a 27-channel record one
-window at level 4 gives per-channel counts from 2335 to 4670, 24
-distinct lengths, and the only shared axis is the union of every
-channel’s extrema samples — a mostly-empty grid that discards the
-positions the cache exists to keep. A raw window simply hands every
-panel the same `x`.
-
-`window` is what is loaded; `extent` is the record. Panels are drawn
-against `window`, not against their own extents, or each would autoscale
-to a slightly different range and the stack would lose its alignment — a
-bucket straddling the window edge is returned whole, so points reach
-past the window by up to one bucket. Panning clamps to `extent`, so a
-reader may pan past what is loaded; the canvas is briefly empty there
-until the controller answers.
 
 ## Visualization Engine
 
 ``` mermaid
 flowchart LR
     Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
-    Panels["panels<br/>gm_viewport_panels()<br/>backend neutral, in R"]:::implemented
-    Uplot["uPlot<br/>gm_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
-    Plotly["plotly.js<br/>gm_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
+    Panels["panels<br/>gm_read_panels()<br/>backend neutral, in R"]:::implemented
+    Uplot["uPlot<br/>gm_build_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
+    Plotly["plotly.js<br/>gm_build_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
     Viewport --> Panels
@@ -783,91 +516,6 @@ view_segment <- function(x, annotations = NULL, ...) {
   # TODO
 }
 ```
-
-### Swapping the renderer
-
-The rule that decides what lives where: **JavaScript owns what happens
-at interaction speed and what needs a live DOM; R owns everything that
-is data.** So each backend’s translation – panels into what its library
-wants – is an R function, and the JavaScript per backend shrinks to the
-library call and its events. This is how [plotly](https://plotly-r.com)
-and [DT](https://github.com/rstudio/DT) are built, and it puts every
-choice about a figure where it can be read with
-[`str()`](https://rdrr.io/r/utils/str.html).
-
-A backend is one file on each side, named for it, holding everything
-specific to it and nothing else; a file named for a role holds only what
-every backend shares:
-
-    R/backend-plot.R        gram_plot(), gm_backend() -- the register -- validators
-    R/backend-viewer.R      gm_viewport_panels(): cache to panels, the seam
-    R/backend-proxy.R       gm_set_data(), normalize_selection(): controller <-> live widget
-    R/backend-uplot.R       gm_uplot_spec(), view_uplot()
-    R/backend-plotly.R      gm_plotly_spec(), view_plotly()
-    lib/gram/gram-core.js   lifecycle, emit, the set_data handler, gesture rules
-    lib/gram/gram-adapter-uplot.js    drives uPlot from the spec; hooks and sync
-    lib/gram/gram-adapter-plotly.js   drives Plotly.react from the spec; two events
-
-`gm_backend(name)` returns the backend’s `spec` function and the
-`htmlDependency` list its library needs;
-[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md)
-attaches only those, so a plotly widget never fetches uPlot and vice
-versa. `view_<backend>()` is each backend’s troubleshooting entry: cache
-and window in, that backend’s widget out, no controller. The browser
-resolves `cfg.backend` through `GRAM.adapters`, and an adapter supplies
-four methods:
-
-| Method | Called when |
-|----|----|
-| `create(el, cfg)` | first render; `cfg.spec` is the library’s input; returns the state |
-| `destroy(state)` | teardown, including a re-render of the same element |
-| `resize(state)` | the element’s box changed; emit `width` only on change |
-| `setData(state, spec, window)` | a controller pushed a new spec; re-force the x range; never emit |
-
-Which channels are on screen is a controller decision, and the
-controller is R: it narrows the already-loaded panels and pushes a
-smaller spec. There is no `setVisible`.
-
-The two adapters differ in the way their libraries do. uPlot is
-imperative – its options carry functions – so `gm_uplot_spec()` sends
-only data, labels and sizes and the adapter keeps the hooks, the sync
-and the rebuild. plotly is declarative, so `gm_plotly_spec()` is the
-whole figure (traces, a coupled grid, one shared x axis, every y fixed,
-the gesture surface) and the adapter adds the element’s width and two
-listeners. Their looks differ; that is the accepted cost of swapping,
-not something to reconcile.
-
-Navigation is one channel in the other direction. Zoom (a drag release)
-and pan (the wheel) both end in a scale change, so both are reported as
-the range wanted — debounced, and suppressed while a push is being
-applied, since a reply would otherwise be read as a fresh request and
-loop. The controller answers with whichever tier fits, so the same
-gesture refines an overview into raw without the browser knowing which
-it asked for.
-
-Design:
-
-- Shiny controller for the MWE; a static htmlwidget cannot request new R
-  reads.
-- One uPlot per visible channel, synchronized on x-range and cursor.
-- Separate charts permit independent y-gain and channel-specific min/max
-  x values.
-- One controller issues a single data request for all panels.
-- Keep the old tier visible while the next tier loads; discard stale
-  responses.
-- Debounce zoom/pan requests; later prefetch a small margin in the pan
-  direction.
-- Overview navigator always shows the study extent and current viewport.
-- Wheel/pinch zoom around cursor; drag pan; keyboard next/previous
-  window.
-- Channel order, visibility, gain, grid, and polarity are view state.
-- Annotations render in a plugin layer, not as dense uPlot signal
-  series.
-
-The canonical interactive control is visible duration. Conventional
-sweep-speed presets map to that duration. Exact `mm/s` is only
-meaningful after screen calibration; print output can use physical
-dimensions exactly.
 
 ## Annotation Interaction
 
@@ -1163,112 +811,21 @@ read_viewport <- function(
 }
 ```
 
-Files gram writes beside a record are named `<stem>.gram.*`, so one rule
-keeps them out of annotator discovery and the package name says where
-they came from. `<stem>.gram.json` is a manifest shared by every part of
-gram: each writer reads it, replaces only its own section, and writes
-the whole file back atomically. The cache owns the `cache` section;
-bookmarks and the annotation sidecar will own sections of their own, and
-a rebuild can never clobber them.
-
-Requirements:
-
-- Raw `.dat`/`.hea` files remain canonical and unmodified.
-- Raw windows come from `EGM::read_signal(begin, end, channels)`.
-- Chunk size bounds peak R memory during cache construction.
-- Cache is regenerable, versioned, and invalidated by the record
-  fingerprint.
-- Default cache location is user-writable; read-only study directories
-  must work.
-- Interrupted builds are resumable or safely discarded; publish cache
-  atomically.
-
-### Overview pyramid
-
-Initial reduction: **min/max per channel per bucket**, retaining each
-extremum’s sample index and emitting the pair in time order. Advantages:
-narrow spikes are not averaged away; levels can be built by merging
-adjacent buckets; one streaming pass with bounded memory.
-
-- Geometric bucket sizes, e.g. `64, 256, 1024, ...` samples.
-- Choose the finest tier that returns at most about 2–4
-  points/pixel/channel.
-- Use raw signal once the visible range is already near screen
-  resolution.
-- One table, all tiers stacked, in `<stem>.gram.parquet` (rds on
-  request): `level`, `start`, then `ch<i>.min`, `ch<i>.min_at`,
-  `ch<i>.max`, `ch<i>.max_at` per channel position. Parquet reads a
-  subset of channels without touching the rest; rds cannot.
-- The `cache` section of the manifest: version, algorithm, record
-  fingerprint, table file and format, units, sampling frequency, sample
-  count, channels, bucket sizes, and build time. Its presence is the
-  completion marker, and a fingerprint that no longer matches the record
-  reads as not built.
-- Never silently use an overview tier for measurement or annotation
-  snapping.
-
-`LTTB` remains a benchmark alternative, not the first implementation.
-Clinical acceptance tests should compare reductions on narrow His/stim
-artifacts and noisy intracardiac channels.
-
-### Viewport return contract
-
-- Raw: one shared `sample` array plus aligned channel arrays.
-- Overview: one `sample`/`value` pair per channel; extrema differ by
-  channel. Collapse a min/max pair when both refer to the same sample.
-- `time` is never stored or returned; it is `sample / sample_rate`.
-- Sample representation must remain exact for the supported maximum
-  study size.
-- `resolution`: `"raw"` or the cache bucket size.
-- `request_id`: used to reject stale asynchronous responses. Not
-  implemented: R is single-threaded and reads are serialised, so
-  responses cannot arrive out of order until reads go asynchronous.
-
-### Panel payload
-
-A renderer never learns which tier it was handed. `gm_viewport_panels()`
-flattens both viewport shapes into one list of panels, each carrying its
-own `x` and `y` in elapsed seconds. Panels are the contract **on the R
-side**: every backend starts from them. What crosses the wire is the
-backend’s own spec, built in R from those panels:
-
 ``` json
 { "backend": "plotly",
-  "spec":    { "...exactly what the library wants, built by gm_plotly_spec()..." },
+  "spec":    { "...exactly what the library wants, built by gm_build_plotly_spec()..." },
   "window":  {"min": 12.5, "max": 22.5},
   "extent":  {"min": 0,    "max": 9787.464} }
 ```
-
-`spec` is opaque to everything but the adapter of the same name.
-`window` and `extent` stay top-level because two jobs need them
-regardless of renderer: skipping the viewport request when the drawn
-range still equals what was pushed, and clamping a pan to the record.
-
-Panels rather than one shared x plus aligned y columns, because an
-overview tier reports each channel’s extrema at the samples they fell
-on. Aligning them is not merely awkward: on a 27-channel record one
-window at level 4 gives per-channel counts from 2335 to 4670, 24
-distinct lengths, and the only shared axis is the union of every
-channel’s extrema samples — a mostly-empty grid that discards the
-positions the cache exists to keep. A raw window simply hands every
-panel the same `x`.
-
-`window` is what is loaded; `extent` is the record. Panels are drawn
-against `window`, not against their own extents, or each would autoscale
-to a slightly different range and the stack would lose its alignment — a
-bucket straddling the window edge is returned whole, so points reach
-past the window by up to one bucket. Panning clamps to `extent`, so a
-reader may pan past what is loaded; the canvas is briefly empty there
-until the controller answers.
 
 ## Visualization Engine
 
 ``` mermaid
 flowchart LR
     Viewport["read_viewport()<br/>raw and overview tiers"]:::implemented
-    Panels["panels<br/>gm_viewport_panels()<br/>backend neutral, in R"]:::implemented
-    Uplot["uPlot<br/>gm_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
-    Plotly["plotly.js<br/>gm_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
+    Panels["panels<br/>gm_read_panels()<br/>backend neutral, in R"]:::implemented
+    Uplot["uPlot<br/>gm_build_uplot_spec(); view_uplot()<br/>backend-uplot.R"]:::implemented
+    Plotly["plotly.js<br/>gm_build_plotly_spec(); view_plotly()<br/>backend-plotly.R"]:::implemented
     StudyExplorer["Study explorer<br/>explore_study()<br/>view_segment()"]:::planned
 
     Viewport --> Panels
@@ -1314,91 +871,6 @@ view_segment <- function(x, annotations = NULL, ...) {
   # TODO
 }
 ```
-
-### Swapping the renderer
-
-The rule that decides what lives where: **JavaScript owns what happens
-at interaction speed and what needs a live DOM; R owns everything that
-is data.** So each backend’s translation – panels into what its library
-wants – is an R function, and the JavaScript per backend shrinks to the
-library call and its events. This is how [plotly](https://plotly-r.com)
-and [DT](https://github.com/rstudio/DT) are built, and it puts every
-choice about a figure where it can be read with
-[`str()`](https://rdrr.io/r/utils/str.html).
-
-A backend is one file on each side, named for it, holding everything
-specific to it and nothing else; a file named for a role holds only what
-every backend shares:
-
-    R/backend-plot.R        gram_plot(), gm_backend() -- the register -- validators
-    R/backend-viewer.R      gm_viewport_panels(): cache to panels, the seam
-    R/backend-proxy.R       gm_set_data(), normalize_selection(): controller <-> live widget
-    R/backend-uplot.R       gm_uplot_spec(), view_uplot()
-    R/backend-plotly.R      gm_plotly_spec(), view_plotly()
-    lib/gram/gram-core.js   lifecycle, emit, the set_data handler, gesture rules
-    lib/gram/gram-adapter-uplot.js    drives uPlot from the spec; hooks and sync
-    lib/gram/gram-adapter-plotly.js   drives Plotly.react from the spec; two events
-
-`gm_backend(name)` returns the backend’s `spec` function and the
-`htmlDependency` list its library needs;
-[`gram_plot()`](https://shah-in-boots.github.io/gram/reference/gram_plot.md)
-attaches only those, so a plotly widget never fetches uPlot and vice
-versa. `view_<backend>()` is each backend’s troubleshooting entry: cache
-and window in, that backend’s widget out, no controller. The browser
-resolves `cfg.backend` through `GRAM.adapters`, and an adapter supplies
-four methods:
-
-| Method | Called when |
-|----|----|
-| `create(el, cfg)` | first render; `cfg.spec` is the library’s input; returns the state |
-| `destroy(state)` | teardown, including a re-render of the same element |
-| `resize(state)` | the element’s box changed; emit `width` only on change |
-| `setData(state, spec, window)` | a controller pushed a new spec; re-force the x range; never emit |
-
-Which channels are on screen is a controller decision, and the
-controller is R: it narrows the already-loaded panels and pushes a
-smaller spec. There is no `setVisible`.
-
-The two adapters differ in the way their libraries do. uPlot is
-imperative – its options carry functions – so `gm_uplot_spec()` sends
-only data, labels and sizes and the adapter keeps the hooks, the sync
-and the rebuild. plotly is declarative, so `gm_plotly_spec()` is the
-whole figure (traces, a coupled grid, one shared x axis, every y fixed,
-the gesture surface) and the adapter adds the element’s width and two
-listeners. Their looks differ; that is the accepted cost of swapping,
-not something to reconcile.
-
-Navigation is one channel in the other direction. Zoom (a drag release)
-and pan (the wheel) both end in a scale change, so both are reported as
-the range wanted — debounced, and suppressed while a push is being
-applied, since a reply would otherwise be read as a fresh request and
-loop. The controller answers with whichever tier fits, so the same
-gesture refines an overview into raw without the browser knowing which
-it asked for.
-
-Design:
-
-- Shiny controller for the MWE; a static htmlwidget cannot request new R
-  reads.
-- One uPlot per visible channel, synchronized on x-range and cursor.
-- Separate charts permit independent y-gain and channel-specific min/max
-  x values.
-- One controller issues a single data request for all panels.
-- Keep the old tier visible while the next tier loads; discard stale
-  responses.
-- Debounce zoom/pan requests; later prefetch a small margin in the pan
-  direction.
-- Overview navigator always shows the study extent and current viewport.
-- Wheel/pinch zoom around cursor; drag pan; keyboard next/previous
-  window.
-- Channel order, visibility, gain, grid, and polarity are view state.
-- Annotations render in a plugin layer, not as dense uPlot signal
-  series.
-
-The canonical interactive control is visible duration. Conventional
-sweep-speed presets map to that duration. Exact `mm/s` is only
-meaningful after screen calibration; print output can use physical
-dimensions exactly.
 
 ## Annotation Interaction
 
