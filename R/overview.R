@@ -13,7 +13,7 @@
 # the manifest's `buckets` vector mean the same thing in both.
 #
 # The dependency runs one way. This file calls into R/cache.R for the handle,
-# gm_manifest(), read_study_signal(), and gm_cache_channel_index(); nothing
+# gm_read_manifest(), read_study_signal(), and gm_match_channels(); nothing
 # in R/cache.R calls back into here.
 
 # design.qmd latency target: no more than four plotted points per pixel per
@@ -41,7 +41,7 @@ gm_bucket_factor <- 4L
 #'   `max`, `max_at`. A bucket containing `NA` reports `NA`, so a gap in the
 #'   signal stays a gap in the overview.
 #' @keywords internal
-gm_bucket_extrema <- function(values, samples, bucket) {
+gm_reduce_buckets <- function(values, samples, bucket) {
   # Pad a partial last bucket by repeating its final element. This is safe
   # only because the real sample precedes its copies and ties.method = "first"
   # keeps the earlier one. NA padding is not an option: max.col() returns NA
@@ -69,7 +69,7 @@ gm_bucket_extrema <- function(values, samples, bucket) {
 #' Build the overview cache for a study
 #'
 #' Streams the record through [read_viewport()] in chunks, reduces each chunk
-#' to per-bucket minima and maxima with [gm_bucket_extrema()], merges the
+#' to per-bucket minima and maxima with [gm_reduce_buckets()], merges the
 #' result upward until one bucket covers the whole record, and writes the
 #' stacked levels beside the record as `<stem>.gram.parquet` (or `.rds`) with
 #' a `cache` section in `<stem>.gram.json`. Peak memory is one chunk, not the
@@ -108,7 +108,7 @@ build_overview <- function(cache,
   if (!is.finite(cache@n_samples) || cache@n_samples < 1) {
     stop("the WFDB header has no usable sample count", call. = FALSE)
   }
-  if (!rebuild && !is.null(gm_manifest(cache))) {
+  if (!rebuild && !is.null(gm_read_manifest(cache))) {
     message("overview already built (rebuild = TRUE to build again)")
     return(invisible(cache))
   }
@@ -138,7 +138,7 @@ build_overview <- function(cache,
     finish <- min(start + chunkSamples, nSamples)
     raw <- read_viewport(cache, list(begin = start, end = finish), resolution = "raw")$data
     perChannel <- lapply(seq_len(nChannels), function(i) {
-      extrema <- gm_bucket_extrema(raw[[i + 1L]], raw$sample, gm_bucket_base)
+      extrema <- gm_reduce_buckets(raw[[i + 1L]], raw$sample, gm_bucket_base)
       names(extrema) <- columns(i, names(extrema))
       extrema
     })
@@ -161,8 +161,8 @@ build_overview <- function(cache,
   while (nrow(level) > 1L) {
     bucket <- buckets[length(buckets)] * gm_bucket_factor
     perChannel <- lapply(seq_len(nChannels), function(i) {
-      lo <- gm_bucket_extrema(level[[columns(i, "min")]], level[[columns(i, "min_at")]], gm_bucket_factor)
-      hi <- gm_bucket_extrema(level[[columns(i, "max")]], level[[columns(i, "max_at")]], gm_bucket_factor)
+      lo <- gm_reduce_buckets(level[[columns(i, "min")]], level[[columns(i, "min_at")]], gm_bucket_factor)
+      hi <- gm_reduce_buckets(level[[columns(i, "max")]], level[[columns(i, "max_at")]], gm_bucket_factor)
       stats::setNames(
         data.frame(lo$min, lo$min_at, hi$max, hi$max_at),
         columns(i, c("min", "min_at", "max", "max_at"))
@@ -284,7 +284,7 @@ read_viewport <- function(cache,
                                 !is.finite(width_px) || width_px <= 0)) {
     stop("`width_px` must be a single positive number unless resolution = \"raw\"", call. = FALSE)
   }
-  index <- gm_cache_channel_index(cache, channels)
+  index <- gm_match_channels(channels, cache@channels)
   span <- end - begin
 
   if (resolution == "raw" || (resolution == "auto" && span <= gm_points_per_pixel * width_px)) {
@@ -317,7 +317,7 @@ read_viewport <- function(cache,
     return(list(data = signal, resolution = "raw", level = 0L))
   }
 
-  section <- gm_manifest(cache)
+  section <- gm_read_manifest(cache)
   if (is.null(section)) {
     stop("overview not built or stale for this record; run build_overview()", call. = FALSE)
   }

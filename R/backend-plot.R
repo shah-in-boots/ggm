@@ -2,7 +2,7 @@
 # to one renderer: `gram_plot()` validates the neutral panels, asks the chosen
 # backend for its spec, ships that with the window and extent, and attaches
 # only that backend's assets. What a backend is on the R side is settled by
-# `gm_backend()`: a spec builder and a dependency list, under a name the
+# `gm_get_backend()`: a spec builder and a dependency list, under a name the
 # browser resolves through GRAM.adapters.
 #
 # Panels are per-channel rather than one shared x plus aligned y columns. The
@@ -36,7 +36,7 @@
 #'   clamped to this, so a reader may pan beyond what is loaded and have the
 #'   controller fill it in. Defaults to `window`.
 #' @param backend Renderer to draw with. Its spec is built here in R and its
-#'   library is attached to the widget, both resolved by `gm_backend()`.
+#'   library is attached to the widget, both resolved by `gm_get_backend()`.
 #' @param scale X-scale description. `kind` may be `"index"` for sample
 #'   numbers, `"elapsed"` for elapsed seconds, or `"timestamp"` for Unix
 #'   timestamps.
@@ -46,6 +46,7 @@
 #' @return An `htmlwidget`.
 #' @seealso [view_uplot()], [read_viewport()]
 #' @family widgets
+#' @keywords internal
 #' @export
 gram_plot <- function(
   panels,
@@ -83,7 +84,7 @@ gram_plot <- function(
     stop("`panel_height` must be a single number of at least 80", call. = FALSE)
   }
 
-  chosen <- gm_backend(backend)
+  chosen <- gm_get_backend(backend)
 
   # payload -> renderValue(x) in gram_plot.js; `spec` is opaque to everything
   # but the adapter that asked for it
@@ -129,7 +130,7 @@ gram_plot <- function(
 #'   [htmltools::htmlDependency()] objects.
 #' @keywords internal
 #' @noRd
-gm_backend <- function(name = c("uplot", "plotly")) {
+gm_get_backend <- function(name = c("uplot", "plotly")) {
   name <- match.arg(name)
   gram <- function(id, version, ...) {
     htmltools::htmlDependency(
@@ -141,7 +142,7 @@ gm_backend <- function(name = c("uplot", "plotly")) {
   switch(
     name,
     uplot = list(
-      spec = gm_uplot_spec,
+      spec = gm_build_uplot_spec,
       dependencies = list(
         gram(
           "uplot", "1.6.32",
@@ -161,7 +162,7 @@ gm_backend <- function(name = c("uplot", "plotly")) {
         )
       }
       list(
-        spec = gm_plotly_spec,
+        spec = gm_build_plotly_spec,
         dependencies = list(
           # Named as {plotly} names its own, so htmltools deduplicates when a
           # real plotly widget shares the page. The version is the R package's
@@ -257,6 +258,7 @@ gm_validate_range <- function(range, arg) {
 #' @param width,height Valid CSS dimensions.
 #' @return A Shiny widget output element.
 #' @family widgets
+#' @keywords internal
 #' @export
 gram_plotOutput <- function(outputId, width = "100%",
                            height = "400px") {
@@ -272,6 +274,7 @@ gram_plotOutput <- function(outputId, width = "100%",
 #' @param quoted Whether `expr` is quoted.
 #' @return A Shiny render function.
 #' @family widgets
+#' @keywords internal
 #' @export
 render_gram_plot <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) {

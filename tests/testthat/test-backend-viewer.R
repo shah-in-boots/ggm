@@ -8,7 +8,7 @@ test_that("an overview tier becomes panels of differing length", {
   # 3522 samples clears 4 * width_px at any ordinary panel width, so `auto`
   # would read raw; the overview path has to be asked for
   window <- list(begin = 1000, end = 2000)
-  view <- gm_viewport_panels(cache, window, width_px = 100)
+  view <- gm_read_panels(cache, window, width_px = 100)
 
   expect_equal(view$resolution, 64L)
   expect_equal(view$level, 1L)

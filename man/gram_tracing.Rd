@@ -38,3 +38,4 @@ Other tracing:
 \code{\link[=tracing_spec]{tracing_spec()}}
 }
 \concept{tracing}
+\keyword{internal}

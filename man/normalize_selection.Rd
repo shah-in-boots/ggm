@@ -26,3 +26,4 @@ Other controller:
 \code{\link[=gram_harness]{gram_harness()}}
 }
 \concept{controller}
+\keyword{internal}

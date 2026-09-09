@@ -6,7 +6,7 @@
 # panels in step, the cursor sync -- which cannot be serialised from R. So the
 # spec holds what R can decide and nothing more: the per-panel data, labels
 # and strokes, the axis label, the sizes. Small on purpose; compare
-# gm_plotly_spec(), where a declarative library lets R say nearly everything.
+# gm_build_plotly_spec(), where a declarative library lets R say nearly everything.
 
 #' Build the uPlot spec for a set of panels
 #'
@@ -20,7 +20,7 @@
 #'   `panel_height`.
 #' @keywords internal
 #' @noRd
-gm_uplot_spec <- function(panels, window, scale, panel_height) {
+gm_build_uplot_spec <- function(panels, window, scale, panel_height) {
   list(
     panels = lapply(panels, function(panel) {
       list(
@@ -58,6 +58,7 @@ gm_uplot_spec <- function(panels, window, scale, panel_height) {
 #' @return An `htmlwidget`.
 #' @family backend viewers
 #' @seealso [gram_plot()], [read_viewport()]
+#' @keywords internal
 #' @export
 view_uplot <- function(cache,
                        window = NULL,
@@ -67,7 +68,7 @@ view_uplot <- function(cache,
                        width = NULL,
                        height = 500) {
   window <- window %||% list(begin = 0, end = cache@n_samples)
-  view <- gm_viewport_panels(
+  view <- gm_read_panels(
     cache = cache,
     window = window,
     channels = channels,

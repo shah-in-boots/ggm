@@ -1,4 +1,4 @@
-// Drives uPlot from the spec gm_uplot_spec() built in R: one uPlot instance
+// Drives uPlot from the spec gm_build_uplot_spec() built in R: one uPlot instance
 // per panel, independent y-scales, one shared x-range and cursor.
 //
 // uPlot is imperative, so R could only send what serialises -- the per-panel

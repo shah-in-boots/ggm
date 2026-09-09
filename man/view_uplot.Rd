@@ -53,3 +53,4 @@ Other backend viewers:
 \code{\link[=view_plotly]{view_plotly()}}
 }
 \concept{backend viewers}
+\keyword{internal}

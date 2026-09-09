@@ -7,6 +7,7 @@
 #' @param cache A `StudyCache`, bound as the source for [tracing()].
 #' @return An environment.
 #' @family grammar
+#' @keywords internal
 #' @export
 gram_verbs <- function(cache) {
   env <- new.env(parent = emptyenv())
@@ -34,6 +35,7 @@ gram_verbs <- function(cache) {
 #' @param cache A `StudyCache`.
 #' @return The `Tracing` the script produced.
 #' @family grammar
+#' @keywords internal
 #' @export
 eval_tracing <- function(text, cache) {
   if (length(text) != 1L || !is.character(text)) {

@@ -4,7 +4,7 @@
 #
 # plotly is declarative, so nearly the whole figure is decided here -- traces,
 # axes, the grid, the gestures allowed -- and the adapter has little to add
-# beyond the element's width and two event listeners. Compare gm_uplot_spec(),
+# beyond the element's width and two event listeners. Compare gm_build_uplot_spec(),
 # where an imperative library keeps most of the work in JavaScript. Every
 # choice below was checked against plotly.js 2.25.2, the bundle {plotly}
 # ships; where a behaviour is decided by a particular line of that source, the
@@ -26,7 +26,7 @@
 #'   the adapter measures it.
 #' @keywords internal
 #' @noRd
-gm_plotly_spec <- function(panels, window, scale, panel_height) {
+gm_build_plotly_spec <- function(panels, window, scale, panel_height) {
   n <- length(panels)
   yaxis <- function(i) paste0("y", if (i > 1L) i else "")
 
@@ -112,6 +112,7 @@ gm_plotly_spec <- function(panels, window, scale, panel_height) {
 #' @return An `htmlwidget`.
 #' @family backend viewers
 #' @seealso [view_uplot()], [gram_plot()]
+#' @keywords internal
 #' @export
 view_plotly <- function(cache,
                         window = NULL,
@@ -121,7 +122,7 @@ view_plotly <- function(cache,
                         width = NULL,
                         height = 500) {
   window <- window %||% list(begin = 0, end = cache@n_samples)
-  view <- gm_viewport_panels(
+  view <- gm_read_panels(
     cache = cache,
     window = window,
     channels = channels,

@@ -82,8 +82,8 @@ test_that("a starting set that names no channel is refused", {
     gram_channelsUI("picker", leads, selected = "V6"),
     "does not carry: V6"
   )
-  expect_error(gram_channelsUI("picker", leads, selected = 0), "outside the 3")
-  expect_error(gram_channelsUI("picker", leads, selected = 4), "outside the 3")
+  expect_error(gram_channelsUI("picker", leads, selected = 0), "whole 1-based indices within the 3 channels")
+  expect_error(gram_channelsUI("picker", leads, selected = 4), "whole 1-based indices within the 3 channels")
   expect_error(gram_channelsUI("picker", leads, selected = NA), "labels or 1-based")
   expect_error(gram_channelsUI("picker", character()), "non-empty character")
   expect_error(gram_channelsUI("picker", leads, variant = "carousel"), "'arg'")

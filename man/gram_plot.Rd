@@ -31,7 +31,7 @@ clamped to this, so a reader may pan beyond what is loaded and have the
 controller fill it in. Defaults to \code{window}.}
 
 \item{backend}{Renderer to draw with. Its spec is built here in R and its
-library is attached to the widget, both resolved by \code{gm_backend()}.}
+library is attached to the widget, both resolved by \code{gm_get_backend()}.}
 
 \item{scale}{X-scale description. \code{kind} may be \code{"index"} for sample
 numbers, \code{"elapsed"} for elapsed seconds, or \code{"timestamp"} for Unix
@@ -66,3 +66,4 @@ Other widgets:
 \code{\link[=render_gram_tracing]{render_gram_tracing()}}
 }
 \concept{widgets}
+\keyword{internal}

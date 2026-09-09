@@ -116,12 +116,12 @@ test_that("an arrow crossing lanes lands on both baselines", {
     interval = "500 ms",
     channels = c("HIS D", "RV 1-2")
   )
-  geom <- gram:::gm_tracing_geometry(x)
+  geom <- gram:::tr_geometry(x)
 
-  expect_equal(gram:::gm_geom_baseline(x, "HIS D"), 60)
-  expect_equal(gram:::gm_geom_baseline(x, "RV 1-2"), 180)
-  expect_equal(gram:::gm_geom_x(geom, x@samples[[1L]]), 0)
-  expect_equal(gram:::gm_geom_x(geom, x@samples[[length(x@samples)]]), 1000)
+  expect_equal(gram:::tr_geom_baseline(x, "HIS D"), 60)
+  expect_equal(gram:::tr_geom_baseline(x, "RV 1-2"), 180)
+  expect_equal(gram:::tr_geom_x(geom, x@samples[[1L]]), 0)
+  expect_equal(gram:::tr_geom_x(geom, x@samples[[length(x@samples)]]), 1000)
 })
 
 

@@ -53,3 +53,4 @@ Other backend viewers:
 \code{\link[=view_uplot]{view_uplot()}}
 }
 \concept{backend viewers}
+\keyword{internal}

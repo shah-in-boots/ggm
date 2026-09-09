@@ -7,14 +7,14 @@
 
 # bucket reduction ------------------------------------------------------
 
-test_that("gm_bucket_extrema returns each bucket's extrema and resolves a tie to the earliest sample", {
+test_that("gm_reduce_buckets returns each bucket's extrema and resolves a tie to the earliest sample", {
   set.seed(1)
   values <- rnorm(3522)
   samples <- seq_along(values) - 1L
   # 3522 = 55 * 64 + 2, so the last bucket is partial
   group <- samples %/% 64L
 
-  extrema <- gm_bucket_extrema(values, samples, 64L)
+  extrema <- gm_reduce_buckets(values, samples, 64L)
 
   expect_equal(nrow(extrema), 56L)
   expect_equal(extrema$min, as.vector(tapply(values, group, min)))
@@ -34,7 +34,7 @@ test_that("gm_bucket_extrema returns each bucket's extrema and resolves a tie to
 
   # padding repeats the last element, so this is also what proves the
   # partial-bucket padding cannot move an extremum onto a copied sample
-  tied <- gm_bucket_extrema(c(2, 1, 1, 5, 5), 0:4, 4L)
+  tied <- gm_reduce_buckets(c(2, 1, 1, 5, 5), 0:4, 4L)
   expect_equal(tied$min_at, c(1L, 4L))
   expect_equal(tied$max_at, c(3L, 4L))
 })
@@ -78,7 +78,7 @@ test_that("build_overview writes a correct pyramid beside the record", {
   )$data)
 
   level2 <- overview[overview$level == 2L, ]
-  direct <- gm_bucket_extrema(raw[["I"]], raw$sample, 256L)
+  direct <- gm_reduce_buckets(raw[["I"]], raw$sample, 256L)
   expect_equal(level2$start, seq(0L, by = 256L, length.out = 14L))
   expect_equal(level2$ch1.min, direct$min)
   expect_equal(level2$ch1.min_at, direct$min_at)
@@ -286,7 +286,7 @@ test_that("read_viewport refuses a bad window, an unknown channel, and an unbuil
   expect_error(read_viewport(cache, list(begin = 0.5, end = 10), width_px = 100), "whole-number")
   expect_error(read_viewport(cache, list(begin = 10, end = 10), width_px = 100), "0 <= begin < end <= 3522")
   expect_error(read_viewport(cache, list(begin = 0, end = 4000), width_px = 100), "0 <= begin < end <= 3522")
-  expect_error(read_viewport(cache, list(begin = 0, end = 100), channels = "nosuch", width_px = 100), "unknown channel")
+  expect_error(read_viewport(cache, list(begin = 0, end = 100), channels = "nosuch", width_px = 100), "does not carry: nosuch")
   expect_error(read_viewport(cache, list(begin = 0, end = 100)), "`width_px` must be a single positive number")
 
   # a full-study window with nothing built must not fall back to reading the

@@ -46,7 +46,7 @@ gm_set_data <- function(proxy,
                         panel_height = 120) {
   panels <- gm_validate_panels(panels)
   window <- gm_validate_range(window, "window")
-  chosen <- gm_backend(match.arg(backend))
+  chosen <- gm_get_backend(match.arg(backend))
   gm_send(
     proxy,
     "gram:set_data",
@@ -69,6 +69,7 @@ gm_set_data <- function(proxy,
 #'   range, clamped to the record. `NULL` when nothing is selected and when the
 #'   selection holds no samples.
 #' @family controller
+#' @keywords internal
 #' @export
 normalize_selection <- function(cache, selection) {
   if (is.null(selection)) {
@@ -84,7 +85,7 @@ normalize_selection <- function(cache, selection) {
   }
 
   # a right-to-left drag reports its ends in the order they were drawn
-  samples <- gm_study_seconds_to_sample(sort(seconds), cache@sample_rate)
+  samples <- gm_seconds_to_samples(sort(seconds), cache@sample_rate)
   samples <- pmin(pmax(samples, 0), cache@n_samples)
 
   if (samples[[2L]] <= samples[[1L]]) {

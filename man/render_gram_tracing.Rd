@@ -27,3 +27,4 @@ Other widgets:
 \code{\link[=render_gram_plot]{render_gram_plot()}}
 }
 \concept{widgets}
+\keyword{internal}

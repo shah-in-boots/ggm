@@ -19,6 +19,7 @@
 #'
 #' @name gram_channels
 #' @family controller
+#' @keywords internal
 NULL
 
 #' @rdname gram_channels
@@ -33,9 +34,9 @@ gram_channelsUI <- function(id,
     stop("gram_channelsUI() needs the shiny package", call. = FALSE)
   }
 
-  labels <- gm_channel_labels(channels)
+  labels <- gm_get_labels(channels)
   values <- seq_along(labels)
-  chosen <- gm_channel_selection(selected, labels)
+  chosen <- sort(unique(gm_match_channels(selected, labels, arg = "selected")))
   ns <- shiny::NS(id)
 
   switch(
@@ -76,7 +77,7 @@ gram_channelsServer <- function(id) {
 
 # internals -------------------------------------------------------------
 
-gm_channel_labels <- function(channels) {
+gm_get_labels <- function(channels) {
   if (S7::S7_inherits(channels, StudyCache)) {
     channels <- channels@channels
   }
@@ -87,35 +88,4 @@ gm_channel_labels <- function(channels) {
     )
   }
   channels
-}
-
-gm_channel_selection <- function(selected, labels) {
-  if (is.null(selected)) {
-    return(seq_along(labels))
-  }
-
-  if (is.character(selected)) {
-    at <- match(selected, labels)
-    if (anyNA(at)) {
-      stop(
-        "`selected` names channels this record does not carry: ",
-        paste(selected[is.na(at)], collapse = ", "),
-        call. = FALSE
-      )
-    }
-    return(sort(at))
-  }
-
-  if (!is.numeric(selected) || any(!is.finite(selected))) {
-    stop("`selected` must be channel labels or 1-based indices", call. = FALSE)
-  }
-  selected <- as.integer(selected)
-  if (any(selected < 1L) || any(selected > length(labels))) {
-    stop(
-      "`selected` is outside the ", length(labels),
-      " channels this record carries",
-      call. = FALSE
-    )
-  }
-  sort(unique(selected))
 }

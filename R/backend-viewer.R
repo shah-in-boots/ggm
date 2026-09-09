@@ -1,4 +1,4 @@
-# Cache to panels. gm_viewport_panels() is the seam: it turns whichever shape
+# Cache to panels. gm_read_panels() is the seam: it turns whichever shape
 # read_viewport() hands back into the backend-neutral panels every renderer
 # starts from, so a backend never learns whether it is drawing raw samples or
 # bucket extrema. Each backend's viewer -- view_uplot() and its siblings --
@@ -17,7 +17,7 @@
 #'   reported by [read_viewport()].
 #' @keywords internal
 #' @noRd
-gm_viewport_panels <- function(cache,
+gm_read_panels <- function(cache,
                                window,
                                channels = NULL,
                                width_px = 1200,
@@ -31,7 +31,7 @@ gm_viewport_panels <- function(cache,
   )
 
   rate <- cache@sample_rate
-  labels <- cache@channels[gm_cache_channel_index(cache, channels)]
+  labels <- cache@channels[gm_match_channels(channels, cache@channels)]
 
   # Index both branches positionally, never by label. EGM::read_signal() names
   # signal columns from the header, so a record carrying two channels with the

@@ -27,3 +27,4 @@ Other widgets:
 \code{\link[=render_gram_tracing]{render_gram_tracing()}}
 }
 \concept{widgets}
+\keyword{internal}

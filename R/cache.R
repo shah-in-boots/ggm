@@ -94,14 +94,14 @@ S7::method(print, StudyCache) <- function(x, ...) {
     "[none found]"
   }, "\n", sep = "")
 
-  section <- gm_manifest(x)
+  section <- gm_read_manifest(x)
   cat("  overview:   ", if (!is.null(section)) {
     paste0(
       length(section$buckets), " level", if (length(section$buckets) != 1L) "s",
       " (", min(section$buckets), "..", max(section$buckets), " samples), ",
       section$file
     )
-  } else if (gm_manifest_has_cache(x)) {
+  } else if (gm_has_cache_section(x)) {
     "stale, run build_overview(cache, rebuild = TRUE)"
   } else {
     "[not built]"
@@ -257,7 +257,7 @@ gm_find_annotation_paths <- function(dir, stem, annotators = NULL,
 
   files <- list.files(
     dir,
-    pattern = paste0("^", gm_regex_escape(stem), "\\."),
+    pattern = paste0("^", gm_escape_regex(stem), "\\."),
     full.names = TRUE,
     no.. = TRUE
   )
@@ -265,7 +265,7 @@ gm_find_annotation_paths <- function(dir, stem, annotators = NULL,
     return(stats::setNames(character(), character()))
   }
 
-  ext <- sub(paste0("^", gm_regex_escape(stem), "\\."), "", basename(files))
+  ext <- sub(paste0("^", gm_escape_regex(stem), "\\."), "", basename(files))
   excluded <- c(data_ext, header_ext, "txt")
   # anything gram wrote beside the record is `<stem>.gram.*`, never an annotator
   keep <- !(tolower(ext) %in% tolower(excluded)) &
@@ -276,7 +276,7 @@ gm_find_annotation_paths <- function(dir, stem, annotators = NULL,
   paths
 }
 
-gm_regex_escape <- function(x) {
+gm_escape_regex <- function(x) {
   gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", x)
 }
 
@@ -304,7 +304,7 @@ cache_paths <- function(cache) {
     paths <- c(paths, ann)
   }
 
-  section <- gm_manifest(cache)
+  section <- gm_read_manifest(cache)
   if (!is.null(section)) {
     paths <- c(paths, cache = file.path(dirname(cache@manifest_path), section$file))
   }
@@ -339,7 +339,7 @@ cache_annotators <- function(cache) {
 #'   use this overview", and every caller treats it as "not built" rather than
 #'   serving a stale reduction as if it were current.
 #' @keywords internal
-gm_manifest <- function(cache) {
+gm_read_manifest <- function(cache) {
   if (!file.exists(cache@manifest_path)) {
     return(NULL)
   }
@@ -361,7 +361,7 @@ gm_manifest <- function(cache) {
 
 # A cache section exists at all, usable or not; the print method uses this to
 # tell "stale" from "never built".
-gm_manifest_has_cache <- function(cache) {
+gm_has_cache_section <- function(cache) {
   file.exists(cache@manifest_path) &&
     !is.null(jsonlite::read_json(cache@manifest_path)$cache)
 }
@@ -404,43 +404,56 @@ read_study_signal <- function(cache,
     end = end,
     interval = interval,
     units = units,
-    channels = gm_cache_channel_index(cache, channels)
+    channels = gm_match_channels(channels, cache@channels)
   )
 }
 
-# Channel positions, from labels or positions. Positions are what EGM and the
-# overview table are addressed by, so two channels with the same label still
-# read as two channels.
-gm_cache_channel_index <- function(cache, channels = NULL) {
+
+# Channel positions from labels or 1-based indices, in the order given and with
+# duplicates kept: EGM::read_signal() accepts both, and a reordered or repeated
+# channel is a request, not a mistake. A caller that wants a set sorts and
+# uniques the result. Labels match exactly first and case-insensitively second,
+# which is how header labels tend to be typed. `arg` names the caller's own
+# argument in a refusal, as gm_validate_range() does.
+gm_match_channels <- function(channels, labels, arg = "channels") {
   if (is.null(channels) || length(channels) == 0L) {
-    return(seq_along(cache@channels))
+    return(seq_along(labels))
   }
 
   if (is.numeric(channels)) {
-    if (any(is.na(channels)) || any(channels < 1L | channels > length(cache@channels))) {
-      stop("requested channel indices are outside the available range", call. = FALSE)
+    if (
+      any(!is.finite(channels)) ||
+        any(channels != trunc(channels)) ||
+        any(channels < 1L | channels > length(labels))
+    ) {
+      stop(
+        "`", arg, "` must be whole 1-based indices within the ", length(labels),
+        " channels this record carries",
+        call. = FALSE
+      )
     }
     return(as.integer(channels))
   }
 
-  channels <- as.character(channels)
-  matched <- match(channels, cache@channels)
+  if (!is.character(channels)) {
+    stop("`", arg, "` must be channel labels or 1-based indices", call. = FALSE)
+  }
+  matched <- match(channels, labels)
   missing <- is.na(matched)
   if (any(missing)) {
-    matched[missing] <- match(toupper(channels[missing]), toupper(cache@channels))
+    matched[missing] <- match(toupper(channels[missing]), toupper(labels))
   }
-  if (any(is.na(matched))) {
+  if (anyNA(matched)) {
     stop(
-      "unknown channel(s): ",
-      paste(sQuote(channels[is.na(matched)]), collapse = ", "),
+      "`", arg, "` names channels this record does not carry: ",
+      paste(channels[is.na(matched)], collapse = ", "),
       call. = FALSE
     )
   }
-
   matched
 }
 
-gm_study_seconds_to_sample <- function(seconds, sample_rate) {
+gm_seconds_to_samples <- function(seconds, sample_rate) {
   rawSample <- seconds * sample_rate
   tolerance <- .Machine$double.eps * max(1, abs(rawSample)) * 8
   ceiling(rawSample - tolerance)

@@ -29,7 +29,7 @@ handle, so no reassignment is needed.
 }
 \description{
 Streams the record through \code{\link[=read_viewport]{read_viewport()}} in chunks, reduces each chunk
-to per-bucket minima and maxima with \code{\link[=gm_bucket_extrema]{gm_bucket_extrema()}}, merges the
+to per-bucket minima and maxima with \code{\link[=gm_reduce_buckets]{gm_reduce_buckets()}}, merges the
 result upward until one bucket covers the whole record, and writes the
 stacked levels beside the record as \verb{<stem>.gram.parquet} (or \code{.rds}) with
 a \code{cache} section in \verb{<stem>.gram.json}. Peak memory is one chunk, not the

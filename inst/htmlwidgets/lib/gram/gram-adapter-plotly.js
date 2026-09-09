@@ -1,4 +1,4 @@
-// Drives Plotly.react from the spec gm_plotly_spec() built in R. plotly is
+// Drives Plotly.react from the spec gm_build_plotly_spec() built in R. plotly is
 // declarative, so the spec already is the figure -- traces, axes, grid, the
 // gestures allowed -- and this file adds only what R cannot know or do: the
 // element's width, the wheel pan, and the report of where the reader has

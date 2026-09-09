@@ -90,7 +90,7 @@ test_that("only the chosen backend's assets travel with the widget", {
 })
 
 test_that("a backend is a spec function and a dependency list", {
-  backend <- gm_backend("uplot")
+  backend <- gm_get_backend("uplot")
 
   expect_named(backend, c("spec", "dependencies"))
   expect_true(is.function(backend$spec))
@@ -99,7 +99,7 @@ test_that("a backend is a spec function and a dependency list", {
     function(d) inherits(d, "html_dependency"),
     logical(1)
   )))
-  expect_error(gm_backend("bogus"), "should be")
+  expect_error(gm_get_backend("bogus"), "should be")
 })
 
 

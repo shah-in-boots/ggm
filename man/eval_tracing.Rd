@@ -23,3 +23,4 @@ Other grammar:
 \code{\link[=gram_verbs]{gram_verbs()}}
 }
 \concept{grammar}
+\keyword{internal}

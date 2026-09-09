@@ -161,3 +161,31 @@ test_that("study_cache refuses a record group it cannot open", {
   )
   expect_equal(cache_annotators(cache), "qrs")
 })
+
+
+# channels --------------------------------------------------------------
+
+test_that("channels match by label or index, in the order asked for", {
+  labels <- c("I", "III", "V1", "HIS D")
+
+  # order and repeats are kept: EGM reads channels in the order given, and a
+  # repeated channel is a request
+  expect_equal(gm_match_channels(c("V1", "I", "V1"), labels), c(3L, 1L, 3L))
+  expect_equal(gm_match_channels(c(4, 2), labels), c(4L, 2L))
+  expect_equal(gm_match_channels(NULL, labels), 1:4)
+
+  # header labels are typed in either case
+  expect_equal(gm_match_channels("his d", labels), 4L)
+})
+
+test_that("channels that do not exist are refused, naming the caller's argument", {
+  labels <- c("I", "III")
+
+  expect_error(gm_match_channels("V6", labels), "`channels` names channels this record does not carry: V6")
+  expect_error(gm_match_channels("V6", labels, arg = "selected"), "`selected` names")
+  expect_error(gm_match_channels(3, labels), "within the 2 channels")
+  expect_error(gm_match_channels(0, labels), "within the 2 channels")
+  # a fractional index would silently truncate to a real channel
+  expect_error(gm_match_channels(1.5, labels), "whole 1-based")
+  expect_error(gm_match_channels(TRUE, labels), "labels or 1-based indices")
+})

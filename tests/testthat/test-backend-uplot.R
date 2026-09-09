@@ -6,7 +6,7 @@ test_that("the uPlot spec carries what R can decide and nothing else", {
     list(label = "II", x = 0:2, y = c(2, 1, 3))
   ))
 
-  spec <- gm_uplot_spec(
+  spec <- gm_build_uplot_spec(
     panels,
     window = list(min = 0, max = 2),
     scale = list(kind = "elapsed", unit = "s"),
@@ -29,7 +29,7 @@ test_that("the uPlot spec carries what R can decide and nothing else", {
 test_that("the x-axis label follows the scale kind", {
   panels <- gm_validate_panels(list(list(x = 1:3, y = 1:3)))
   spec_for <- function(kind) {
-    gm_uplot_spec(panels, list(min = 1, max = 3), list(kind = kind), 120)
+    gm_build_uplot_spec(panels, list(min = 1, max = 3), list(kind = kind), 120)
   }
 
   expect_equal(spec_for("index")$x_axis_label, "Sample")

@@ -22,3 +22,4 @@ Other tracing:
 \code{\link[=tracing]{tracing()}}
 }
 \concept{tracing}
+\keyword{internal}

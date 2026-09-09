@@ -51,3 +51,4 @@ Other controller:
 \code{\link[=normalize_selection]{normalize_selection()}}
 }
 \concept{controller}
+\keyword{internal}

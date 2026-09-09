@@ -36,6 +36,7 @@ harnessScript <- 'tracing(
 #' @param ... Passed to [shiny::shinyApp()].
 #' @return A Shiny app object.
 #' @family controller
+#' @keywords internal
 #' @export
 gram_harness <- function(cache,
                         window = NULL,
@@ -82,7 +83,7 @@ gram_harness <- function(cache,
     # The browser is the only party that knows how wide a panel is, and the
     # tier depends on it. 1200 stands in until the widget reports.
     view <- shiny::reactive({
-      gm_viewport_panels(
+      gm_read_panels(
         cache,
         window = window(),
         channels = viewChannels,

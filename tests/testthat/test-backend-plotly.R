@@ -10,7 +10,7 @@ test_that("the plotly spec is the whole figure", {
     list(label = "II", x = c(0.5, 2.5), y = c(1, 0))
   ))
 
-  spec <- gm_plotly_spec(
+  spec <- gm_build_plotly_spec(
     panels,
     window = list(min = 0, max = 3),
     scale = list(kind = "elapsed", unit = "s"),
